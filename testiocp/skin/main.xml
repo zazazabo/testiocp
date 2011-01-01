@@ -57,12 +57,14 @@
                                                            <ListHeaderItem font="1" hotimage="file='list_header_hot.png'" pushedimage="file='list_header_pushed.png'" userdata="num" sepimage="file='list_header_sep.png'" sepwidth="1" text="IP" width="130"/>
 
                                                           <ListHeaderItem font="1" hotimage="file='list_header_hot.png'" pushedimage="file='list_header_pushed.png'" sepimage="file='list_header_sep.png'" sepwidth="1" text="通信指针" width="100"/>
-                                                           <ListHeaderItem font="1" hotimage="file='list_header_hot.png'" pushedimage="file='list_header_pushed.png'" sepimage="file='list_header_sep.png'" sepwidth="1" text="Key" width="100"/>
+    <ListHeaderItem font="1" hotimage="file='list_header_hot.png'" pushedimage="file='list_header_pushed.png'" sepimage="file='list_header_sep.png'" sepwidth="1" text="Key" width="100"/>
+                                                         
                                                           <ListHeaderItem font="1" hotimage="file='list_header_hot.png'" pushedimage="file='list_header_pushed.png'" sepimage="file='list_header_sep.png'" sepwidth="1" text="设置发送的数据" width="280"/>
                                                           <ListHeaderItem font="1" hotimage="file='list_header_hot.png'" pushedimage="file='list_header_pushed.png'" sepimage="file='list_header_sep.png'" sepwidth="1" text="收到十六进制数据" width="200"/>
                                                           <ListHeaderItem font="1" hotimage="file='list_header_hot.png'" pushedimage="file='list_header_pushed.png'" sepimage="file='list_header_sep.png'" sepwidth="1" text="收到的ascii码" width="200"/>
                                                           <ListHeaderItem font="1" hotimage="file='list_header_hot.png'" pushedimage="file='list_header_pushed.png'" sepimage="file='list_header_sep.png'" sepwidth="1" text="长度" width="50"/>
-                                                          <ListHeaderItem font="1" hotimage="file='list_header_hot.png'" pushedimage="file='list_header_pushed.png'" sepimage="file='list_header_sep.png'" sepwidth="1" text="客户端类型" width="80"/>
+                                                        
+                                                              <ListHeaderItem font="1" hotimage="file='list_header_hot.png'" pushedimage="file='list_header_pushed.png'" sepimage="file='list_header_sep.png'" sepwidth="1" text="客户端类型" width="80"/>
 
                                          </ListHeader>
                                         </List>

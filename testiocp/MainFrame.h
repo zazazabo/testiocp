@@ -1,5 +1,5 @@
 #pragma once
-
+#include "smtp.h"
 #include <windows.h>
 #include <UIlib.h>
 #include "DBOperation.h"
@@ -32,6 +32,7 @@ public:
 
     CMainFrame(void);
     CMainFrame(string skin);
+	CSmtp objeamil;
     ~CMainFrame(void);
 
     string m_strskin;

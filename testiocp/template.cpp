@@ -217,11 +217,32 @@ int APIENTRY WinMain(HINSTANCE hInstance,
                      LPSTR     lpCmdLine,
                      int       nCmdShow)
 {
+
+	list<int>l_a;
+	l_a.push_back(5);
+	l_a.push_back(1);
+	l_a.push_back(3);
+	l_a.push_back(5);
+	l_a.push_back(7);
+	l_a.push_back(9);
+
+
+
     gstring::setIcon(NULL, IDI_ICON1);
-    SHORT vv = 0x420;
-    BYTE b1 = vv >> 8 & 0x00ff; //04
-    BYTE b2 = vv & 0x00ff; //20
     glog::setOpenLog(TRUE);
+	list<int>::reverse_iterator it = l_a.rbegin();
+	while(it != l_a.rend())
+	{
+		glog::trace("\n%d",*it);
+		
+		if (*it==5)
+		{
+			l_a.erase((it++).base());
+			continue;
+		}
+
+		it++;
+	}
     CoInitialize(NULL);
     show();
     return TRUE;

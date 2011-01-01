@@ -4,7 +4,7 @@
 //////////////////////////////////////////////////////////////////////////
 
 #include "resource.h"
-#include "smtp.h"
+
 #include <winsock2.h>
 #include <mswsock.h>
 #include <windows.h>
@@ -102,10 +102,9 @@ public:
   {
     IOCP_IO_PTR lp_io;
     BYTE seq;
-    char comaddr[20];
   } _MSGPACK;
 
-  map<string, vector<MSGPACK>>m_MsgPack;
+  map<string, list<MSGPACK>>m_MsgPack;
 
   HANDLE              m_h_iocp;
   SOCKET              m_listen_socket;
@@ -129,8 +128,7 @@ public:
   HANDLE              m_h_thread[MAXTHREAD_COUNT];
   HANDLE              m_h_accept_event;
   void        Init();
-  gListCtr*           m_listctr;
-  HWND                hWnd;
+  HWND                hWnd; 
 public:
   BOOL                InitAll();
   BOOL                MainLoop();
@@ -167,9 +165,10 @@ private:
 
   BOOL        AppendByte(BYTE src[], int len, pBREAKPCK pack, IOCP_IO_PTR& lp_io);
   static DWORD WINAPI TimeThread(LPVOID lp_param);
+  static DWORD WINAPI TimeEmail(LPVOID lp_param);
   int  buidByte(string comaddr, BYTE C, BYTE AFN, BYTE SEQ, SHORT DA, SHORT DT, vector<BYTE>&v_b, BYTE des[]);
   void   CheckForInvalidConnection();
-  void       ExitSocket(IOCP_IO_PTR& lp_io, IOCP_KEY_PTR& lp_key);
+  void       ExitSocket(IOCP_IO_PTR& lp_io, IOCP_KEY_PTR& lp_key,int errcode);
 };
 
 //////////////////////////////////////////////////////////////////////////

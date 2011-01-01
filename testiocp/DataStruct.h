@@ -30,7 +30,8 @@ typedef enum
         IOCP_ACCEPT, //AcceptEx/accept
 		IOCP_READ,   //WSARecv/recv/ReadFile
 		IOCP_WRITE,   //WSASend/send/WriteFile
-		IOCP_END
+		IOCP_END,
+		IOCP_DEFAULT
 }IOCP_OPERATION, *IOCP_OPERATION_PTR;
 
 

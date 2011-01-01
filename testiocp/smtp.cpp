@@ -453,9 +453,10 @@ int CSmtp::SendVecotrEmail()
     int nRet = 0;
     vector <string>::iterator it;
 
-    for(it = m_vectorTargetEamil.begin(); it != m_vectorTargetEamil.end(); it++) {
+    for(it = m_vectorTargetEamil.begin(); it != m_vectorTargetEamil.end();) {
         targetAddr = *it;
         SendEmail_Ex();
+		it = m_vectorTargetEamil.erase(it);
     }
 
     return nRet;

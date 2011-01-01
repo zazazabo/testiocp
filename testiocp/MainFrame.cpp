@@ -109,6 +109,58 @@ void CMainFrame::Init()
     //dealSql("17020101", "2018-09-28", "bbb", "activepower");
     this->m_hParanWnd = this->m_hWnd;
     this->CenterWindow();
+
+	    CoInitialize(NULL);
+
+		char temp[216] = {0};
+		GetPrivateProfileStringA("Config", "smtp", "", temp, 216, pdir.c_str());
+		string strdomain = temp;
+		objeamil.SetSrvDomain(strdomain);
+		GetPrivateProfileStringA("Config", "emailuser", "", temp, 216, pdir.c_str());
+		string stremail = temp;
+		objeamil.SetUserName(stremail);
+		GetPrivateProfileStringA("Config", "emailpass", "", temp, 216, pdir.c_str());
+		string strpass = temp;
+		objeamil.SetPass(strpass);
+
+
+    //CSmtp smtp(25, "smtp.126.com","z277402131@126.com", /*你的邮箱地址*/"z277402131",/*邮箱密码*/"277402131@qq.com",/*目的邮箱地址*/"TEST",/*主题*/"测试测试！收到请回复！"  /*邮件正文*/);
+    //添加附件时注意,\一定要写成\\，因为转义字符的缘故
+    //     string filePath("D:\\附件.txt");
+    //     smtp.AddAttachment(filePath);
+    /*还可以调用CSmtp::DeleteAttachment函数删除附件，还有一些函数，自己看头文件吧!*/
+    //单个发送
+    //int err;
+    //if((err = smtp.SendEmail_Ex()) != 0) {
+    //  if(err == 1)
+    //      cout << "错误1: 由于网络不畅通，发送失败!" << endl;
+    //  if(err == 2)
+    //      cout << "错误2: 用户名错误,请核对!" << endl;
+    //  if(err == 3)
+    //      cout << "错误3: 用户密码错误，请核对!" << endl;
+    //  if(err == 4)
+    //      cout << "错误4: 请检查附件目录是否正确，以及文件是否存在!" << endl;
+    //}
+    //群发
+    //     string strTarEmail = "12345678@qq.com";
+    //     smtp.AddTargetEmail(strTarEmail);
+    //
+    //     if((err = smtp.SendVecotrEmail()) != 0) {
+    //         if(err == -1)
+    //             cout << "错误-1: 没有目地邮箱地址!" << endl;
+    //
+    //         if(err == 1)
+    //             cout << "错误1: 由于网络不畅通，发送失败!" << endl;
+    //
+    //         if(err == 2)
+    //             cout << "错误2: 用户名错误,请核对!" << endl;
+    //
+    //         if(err == 3)
+    //             cout << "错误3: 用户密码错误，请核对!" << endl;
+    //
+    //         if(err == 4)
+    //             cout << "错误4: 请检查附件目录是否正确，以及文件是否存在!" << endl;
+    //     }
 }
 
 
@@ -433,8 +485,8 @@ LRESULT CMainFrame::OnUser(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandl
     struct tm* tmif;
     char timeinfo[80];
     tmif = localtime(&rawtime);
-    sprintf(timeinfo, "[%4d-%02d-%02d %02d:%02d:%02d]:", \
-            tmif->tm_year + 1900, tmif->tm_mon + 1, tmif->tm_mday, tmif->tm_hour, tmif->tm_min, tmif->tm_sec);
+    sprintf(timeinfo, "[%02d:%02d:%02d]:", \
+            tmif->tm_hour, tmif->tm_min, tmif->tm_sec);
 
     if(_stricmp(m_pRishLog->GetText(), "") == 0)
     {
@@ -452,7 +504,7 @@ LRESULT CMainFrame::OnUser(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandl
         m_pRishLog->EndDown();
     }
 
-    if(m_pRishLog->GetLineCount() > 2000)
+    if(m_pRishLog->GetLineCount() > 500)
     {
         m_pRishLog->SetText("");
         m_pRishLog->Clear();

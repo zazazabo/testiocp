@@ -196,6 +196,8 @@ BOOL CIOCP::PostAcceptEx()
         lp_io->fromtype = SOCKET_FROM_UNKNOW;
         lp_io->loginstatus = SOCKET_STATUS_UNKNOW;
         lp_io->lp_key = NULL;
+        lp_io->nexttime         = 0;
+        lp_io->logintime        = 0;
         //glog::GetInstance()->AddLine("post accecptex socket:%d IOCP_IO_PTR:%p", socket, lp_io);
         /////////////////////////////////////////////////
         bRet = lpAcceptEx(m_listen_socket, lp_io->socket, lp_io->buf,
@@ -426,42 +428,144 @@ void CIOCP::CheckForInvalidConnection()
     int         op, op_len, nRet;
     IOCP_IO_PTR lp_io = NULL;
     IO_POS      pos;
-    m_io_group.GetHeadPosition(pos);
-    //  while( pos != NULL )
-    //  {
-    //      lp_io = m_io_group.GetNext( pos );
-    //      //看看哪个是没有登陆的，再查查它没登陆多长时间了
-    //      if( lp_io->state != SOCKET_STATE_CONNECT_AND_READ )
-    //      {
-    //          op_len = sizeof(op);
-    //
-    //          nRet = getsockopt( lp_io->socket, SOL_SOCKET, SO_CONNECT_TIME, (char*)&op, &op_len );
-    //
-    //          if( SOCKET_ERROR == nRet )
-    //          {
-    //              MSG("SO_CONNECT_TIME failed:");
-    //              MSG(WSAGetLastError());
-    //
-    //              continue;
-    //          }
-    //          if( op != 0xffffffff && op > 20 )
-    //          {
-    //              closesocket( lp_io->socket );
-    //
-    //              m_io_group.RemoveAt( lp_io );
-    //
-    //              MSG("有一个连接，但没有接收到数据,已经被踢出去了");
-    //
-    //              MSG( lp_io );
-    //          }
-    //          else
-    //          {
-    // //               cout<<op<<endl;
-    //          }
-    //      }
-    //  }
-}
+    // EnterCriticalSection(&crtc_sec);
+    vector<IOCP_IO_PTR>v_socket;
+    v_socket.clear();
+    lp_io =  m_io_group.GetHeadPosition(pos);
 
+    while(lp_io != NULL)
+    {
+        // glog::GetInstance()->AddLine("lp_io:%p", lp_io);
+        if(lp_io->state == SOCKET_STATE_CONNECT_AND_READ)
+        {
+            if(lp_io->fromtype == SOCKET_FROM_Concentrator)
+            {
+                DWORD d = GetTickCount() - lp_io->nexttime;
+                DWORD min = d / 60000;
+
+                if(min > 1)
+                {
+                    glog::GetInstance()->AddLine("lp_io:%p 隔%d分钟末接收到消息 客户端类型:%d\n", lp_io, min, lp_io->fromtype);
+                    v_socket.push_back(lp_io);
+                }
+
+//                 op_len = sizeof(op);
+//                 nRet = getsockopt(lp_io->socket, SOL_SOCKET, SO_CONNECT_TIME, (char*)&op, &op_len);
+//
+//                 if(SOCKET_ERROR == nRet)
+//                 {
+//                     glog::trace("SO_CONNECT_TIME failed:");
+//                     glog::traceErrorInfo("getsockopt", WSAGetLastError());
+//                 }
+//
+//                 if(op != 0xffffffff && op > 80)
+//                 {
+//                     v_socket.push_back(lp_io);
+//                 }
+            }
+        }
+
+        lp_io = m_io_group.GetNext(pos);
+        //  LeaveCriticalSection(&crtc_sec);
+    }
+
+    for(int i = 0; i < v_socket.size(); i++)
+    {
+        IOCP_IO_PTR lp_io1 = v_socket[i];
+
+        if(lp_io1->fromtype == SOCKET_FROM_Concentrator)
+        {
+            map<string, IOCP_IO_PTR>::iterator  it;
+
+            for(it = m_mcontralcenter.begin(); it != m_mcontralcenter.end();)
+            {
+                if(it->second == lp_io1)
+                {
+                    m_mcontralcenter.erase(it++);
+                }
+            }
+        }
+
+        //glog::GetInstance()->AddLine("移除集中器map 集完成");
+        int n1 = m_listctr->getRowCount();
+
+        //删除界面条项
+        for(int i = 0; i < n1; i++)
+        {
+            string vv = m_listctr->getCellText(i, 1);
+            char pp[50] = {0};
+            sprintf(pp, "%p", lp_io1);
+
+            if(_stricmp(pp, vv.c_str()) == 0)
+            {
+                m_listctr->deleteIndex(i);
+                break;
+            }
+        }
+
+        closesocket(lp_io1->socket);
+    }
+
+//     IO_POS posEnd;
+//     m_io_group.GetEndPosition(posEnd);
+    //while(pos != posEnd)
+    //{
+    //    IOCP_IO_PTR  lp_io = *pos;
+    //    if(lp_io->state == SOCKET_STATE_CONNECT_AND_READ)
+    //    {
+    //        if(lp_io->fromtype == SOCKET_FROM_Concentrator)
+    //        {
+    //            op_len = sizeof(op);
+    //            nRet = getsockopt(lp_io->socket, SOL_SOCKET, SO_CONNECT_TIME, (char*)&op, &op_len);
+    //            if(SOCKET_ERROR == nRet)
+    //            {
+    //                glog::trace("SO_CONNECT_TIME failed:");
+    //                glog::traceErrorInfo("getsockopt", WSAGetLastError());
+    //                pos++;
+    //                continue;
+    //            }
+    //            if(op != 0xffffffff && op > 20)
+    //            {
+    //                glog::GetInstance()->AddLine("开始移除集中器");
+    //                EnterCriticalSection(&crtc_sec);
+    //                //移除集中器
+    //                //集中器客户端去端
+    //                map<string, IOCP_IO_PTR>::iterator  it;
+    //                for(it = m_mcontralcenter.begin(); it != m_mcontralcenter.end();)
+    //                {
+    //                    if(it->second == lp_io)
+    //                    {
+    //                        m_mcontralcenter.erase(it++);
+    //                    }
+    //                }
+    //  glog::GetInstance()->AddLine("移除集中器map 集完成");
+    //                int n1 = m_listctr->getRowCount();
+    //                //删除界面条项
+    // //               for(int i = 0; i < n1; i++)
+    // //               {
+    // //                   string vv = m_listctr->getCellText(i, 1);
+    // //                   char pp[50] = {0};
+    // //                   sprintf(pp, "%p", lp_io);
+    // //                   if(_stricmp(pp, vv.c_str()) == 0)
+    // //                   {
+    // //                       m_listctr->deleteIndex(i);
+    // //                       break;
+    // //                   }
+    // //               }
+    //  //glog::GetInstance()->AddLine("移除界面项目完成");
+    //                closesocket(lp_io->socket);
+    //                m_io_group.RemoveAt(pos++);
+    //                m_key_group.RemoveAt(lp_io->lp_key);
+    //                LeaveCriticalSection(&crtc_sec);
+    //        glog::GetInstance()->AddLine("有一个集中器连接，但长久没有接收到数据,已经被踢出去了");
+    //                continue;
+    //            }
+    //        }
+    //    }
+    //    //glog::GetInstance()->AddLine("CheckForInvalidConnection:%p   state:%d", lp_io, lp_io->state);
+    //    pos++;
+    //}
+}
 /*-------------------------------------------------------------------------------------------
 函数功能：注册FD_ACCEPTG事件到m_h_accept_event事件，以便所有发出去的连接耗耗尽时，得到通知。
 函数说明：
@@ -487,13 +591,12 @@ BOOL CIOCP::RegAcceptEvent()
 
     return TRUE;
 }
-
 /*-------------------------------------------------------------------------------------------
 函数功能：得到连接上来的客户端IP和PORT
 函数说明：
 函数返回：成功，TRUE；失败，FALSE
 -------------------------------------------------------------------------------------------*/
-BOOL CIOCP::GetAddrAndPort(char*buf, char ip[], UINT &port)
+BOOL CIOCP::GetAddrAndPort(char*buf, char ip[], UINT & port)
 {
     int     len = BUFFER_SIZE - sizeof(SOCKADDR_IN) - 16;
     char    *lp_buf = buf + len;    //直接读取远端地址
@@ -507,9 +610,7 @@ BOOL CIOCP::GetAddrAndPort(char*buf, char ip[], UINT &port)
     MSG(port);
     return TRUE;
 }
-
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 /*-------------------------------------------------------------------------------------------
 函数功能：初始化完成端口及相关的所有东西，并发出每一个10个连接.
 函数说明：
@@ -517,6 +618,8 @@ BOOL CIOCP::GetAddrAndPort(char*buf, char ip[], UINT &port)
 -------------------------------------------------------------------------------------------*/
 BOOL CIOCP::Init()
 {
+    CoInitialize(NULL);
+
     while(!m_listmsg.empty())
     {
         m_listmsg.clear();
@@ -533,6 +636,7 @@ BOOL CIOCP::Init()
     char upass[216] = {0};
     GetPrivateProfileStringA("Config", "upass", "", upass, 216, pdir.c_str());
     BOOL bcon = dbopen.ConnToDB(source, database, uname, upass);
+    //_RecordsetPtr rs =    dbopen.ExecuteWithResSQL("select * from t_lamp");
 
     if(WSAStartup(MAKEWORD(2, 2), &data) != 0)
     {
@@ -602,7 +706,6 @@ BOOL CIOCP::Init()
 
     return TRUE;
 }
-
 /*-------------------------------------------------------------------------------------------
 函数功能：主循环
 函数说明：
@@ -613,10 +716,11 @@ BOOL CIOCP::MainLoop()
     DWORD   dwRet;
     int     nCount = 0;
     cout << "Server is running.........." << nCount++ << " times" << endl;
+    int ii = 0;
 
     while(TRUE)
     {
-        dwRet = WaitForSingleObject(m_h_accept_event, 10000);
+        dwRet = WaitForSingleObject(m_h_accept_event, 3000);
 
         switch(dwRet)
         {
@@ -629,14 +733,9 @@ BOOL CIOCP::MainLoop()
 
             case WAIT_TIMEOUT:
                 {
-                    if(nCount > 100)
-                    {
-                        nCount = 0;
-                    }
-
-                    //超时处理
+                    //检测集中器超时处理
                     //cout << "Server is running.........." << nCount++ << " times" << endl;
-                    //CheckForInvalidConnection();
+                    CheckForInvalidConnection();
                 }
                 break;
 
@@ -654,7 +753,6 @@ BOOL CIOCP::MainLoop()
 
     return TRUE;
 }
-
 /*-------------------------------------------------------------------------------------------
 函数功能：数据处理线程函数
 函数说明：
@@ -708,6 +806,22 @@ DWORD CIOCP::CompletionRoutine(LPVOID lp_param)
             string towrite = "";
             EnterCriticalSection(&lp_this->crtc_sec);
 
+            //移除集中器
+            if(lp_io->fromtype == SOCKET_FROM_Concentrator)
+            {
+                //集中器客户端去端
+                map<string, IOCP_IO_PTR>::iterator  it;
+
+                for(it = lp_this->m_mcontralcenter.begin(); it != lp_this->m_mcontralcenter.end();)
+                {
+                    if(it->second == lp_io)
+                    {
+                        lp_this->m_mcontralcenter.erase(it++);
+                    }
+                }
+            }
+
+            //删除界面条项
             for(int i = 0; i < n1; i++)
             {
                 string vv = lp_this->m_listctr->getCellText(i, 1);
@@ -721,6 +835,7 @@ DWORD CIOCP::CompletionRoutine(LPVOID lp_param)
                 }
             }
 
+            //消息队列删除   消息队列存的是网页客户端
             list<IOCP_IO*>::iterator it;
 
             for(it = lp_this->m_listmsg.begin(); it != lp_this->m_listmsg.end();)
@@ -979,7 +1094,6 @@ TOHear:
 
     return 0;
 }
-
 BOOL CIOCP::SendData(ULONG_PTR s, ULONG_PTR key)
 {
     IOCP_IO_PTR  piocp_prt = (IOCP_IO_PTR)s;
@@ -1009,9 +1123,6 @@ BOOL CIOCP::SendData(ULONG_PTR s, ULONG_PTR key)
     DataAction(piocp_prt, piocp_prt->lp_key);
     return TRUE;
 }
-
-
-
 BOOL CIOCP::SendWebsocket(ULONG_PTR s)
 {
     IOCP_IO_PTR  lp_io = (IOCP_IO_PTR)s;
@@ -1032,7 +1143,6 @@ BOOL CIOCP::SendWebsocket(ULONG_PTR s)
     DataAction(lp_io, lp_io->lp_key);
     return TRUE;
 }
-
 int CIOCP::hex2str(string str, BYTE tosend[])
 {
     string vvv = gstring::replace(str, " ", "");
@@ -1052,8 +1162,7 @@ int CIOCP::hex2str(string str, BYTE tosend[])
     //memcpy(tosend,, i);
     return i;
 }
-
-int CIOCP::wsHandshake(string &request, string &response)
+int CIOCP::wsHandshake(string & request, string & response)
 {
     // 解析http请求头信息
     int ret = WS_STATUS_UNCONNECT;
@@ -1112,8 +1221,7 @@ int CIOCP::wsHandshake(string &request, string &response)
     response += strtmp;
     return ret;
 }
-
-int CIOCP::wsDecodeFrame(char inFrame[], string &outMessage, int len)
+int CIOCP::wsDecodeFrame(char inFrame[], string & outMessage, int len)
 {
     int ret = WS_OPENING_FRAME;
     const char *frameData = inFrame;
@@ -1214,7 +1322,6 @@ int CIOCP::wsDecodeFrame(char inFrame[], string &outMessage, int len)
 
     return ret;
 }
-
 int CIOCP::wsEncodeFrame(string inMessage, char outFrame[], enum WS_FrameType frameType, int& lenret)
 {
     int ret = WS_EMPTY_FRAME;
@@ -1262,21 +1369,8 @@ int CIOCP::wsEncodeFrame(string inMessage, char outFrame[], enum WS_FrameType fr
     delete[] frameHeader;
     return ret;
 }
-
-void CIOCP::dealws(IOCP_IO_PTR& lp_io, string& jsondata)
+void CIOCP::dealws(IOCP_IO_PTR & lp_io, string & jsondata)
 {
-    //if(jsondata == "11")
-    //{
-    //    string str = "aaa";
-    //    string outmsg = "";
-    //    this->InitIoContext(lp_io);
-    //    this->wsEncodeFrame(str, outmsg, WS_TEXT_FRAME);
-    //    lp_io->wsaBuf.len = outmsg.size();
-    //    memcpy(lp_io->buf, outmsg.c_str(), outmsg.size());
-    //    lp_io->wsaBuf.buf = lp_io->buf;
-    //    lp_io->operation = IOCP_WRITE;
-    //    return;
-    //}
     Json::Value root;
     Json::Reader reader;
 
@@ -1392,11 +1486,11 @@ void CIOCP::dealws(IOCP_IO_PTR& lp_io, string& jsondata)
                 if(len > 0)
                 {
                     string addrarea = root["addr"].asString();
-                    map<string, IOCP_IO_PTR>::iterator ite = m_mcontralcenter.find(addrarea);
+                    map<string, IOCP_IO_PTR>::iterator ite2 = m_mcontralcenter.find(addrarea);
 
-                    if(ite != m_mcontralcenter.end())
+                    if(ite2 != m_mcontralcenter.end())
                     {
-                        IOCP_IO_PTR lp_io1 = ite->second;
+                        IOCP_IO_PTR lp_io1 = ite2->second;
                         memcpy(lp_io1->buf, bitSend, len);
                         lp_io1->wsaBuf.buf = lp_io1->buf;
                         lp_io1->wsaBuf.len = len;
@@ -1408,9 +1502,6 @@ void CIOCP::dealws(IOCP_IO_PTR& lp_io, string& jsondata)
         }
     }
 }
-
-
-
 void CIOCP::getall()
 {
     ITERATOR ite;
@@ -1421,9 +1512,7 @@ void CIOCP::getall()
         p1 = m_io_group.GetNext(ite);
     }
 }
-
 std::string CIOCP::GetDataDir(string name)
-
 {
     char pdir[216] = {0};
     GetModuleFileNameA(NULL, pdir, 216);
@@ -1437,8 +1526,6 @@ std::string CIOCP::GetDataDir(string name)
 
     return string(pdir);
 }
-
-
 BOOL CIOCP::checkFlag(BYTE vv[], int len)
 {
     if(len < 6)
@@ -1467,7 +1554,6 @@ BOOL CIOCP::checkFlag(BYTE vv[], int len)
 
     return FALSE;
 }
-
 void  CIOCP::changeByte(char data[], BYTE vv[], int& len)
 {
     char *p = data;
@@ -1485,14 +1571,13 @@ void  CIOCP::changeByte(char data[], BYTE vv[], int& len)
 
     len = i;
 }
-
 //生成响应代码  src
 /*
 *  src 源收到的数据包
 *  srclen 源包长度
 *  des  生成目标的包
 */
-void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL& isrespos, IOCP_IO_PTR& lp_io)
+void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & isrespos, IOCP_IO_PTR & lp_io)
 {
     //链路检测 登陆  控制域 c4: 1100 0100  功能码：0x02 src[13] da1 src[14] da2 src[15] dt0    p0  f1  登陆   6控制域  13帧序列 12
     //&&src[14]==0x0&&src[15]==0x0&&src[16]==0x01&&src[17]==1   1100 0000 1100 0000   1 dir  1 yn PRM  6控制域  帧是是否要回复 src[13]
@@ -1526,11 +1611,18 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL& isr
                         memcpy(addr1, &src[7], 4);
                         string addrarea = gstring::char2hex(addr1, 4);
                         map<string, IOCP_IO_PTR>::iterator it = m_mcontralcenter.find(addrarea);
+                        lp_io->nexttime =  GetTickCount();
 
                         if(it == m_mcontralcenter.end())
                         {
                             m_mcontralcenter.insert(pair<string, IOCP_IO_PTR>(addrarea, lp_io));
                         }
+                        else
+                        {
+								//m_mcontralcenter.erase(it);
+							  // m_mcontralcenter.insert(pair<string, IOCP_IO_PTR>(addrarea, lp_io));
+
+						}
 
                         buildConCode(src, des, deslen, 1);
                     }
@@ -1539,7 +1631,8 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL& isr
                         //02170101
                         //m_mcontralcenter
                         glog::GetInstance()->AddLine("心跳包");
-                        glog::trace("心跳包");
+                        glog::trace("心跳包\n");
+                        lp_io->nexttime = GetTickCount();
                         lp_io->loginstatus = SOCKET_STATUS_LOGIN;
                         buildConCode(src, des, deslen, 1);
                     }
@@ -1671,6 +1764,444 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL& isr
             {
                 IOCP_IO_PTR lp_io1 = m_listmsg.back();
                 m_listmsg.pop_back();
+            }
+        }
+    }
+    else if(AFN == 0xAC)
+    {
+        glog::GetInstance()->AddLine("请求1类数据命令");
+        BYTE    con =    src[13] & 0x10;
+        BYTE   DirPrmCode = src[6] & 0xc0;   //上行  从动
+        BYTE   FC = src[6] & 0xF; //控制域名的功能码
+        BYTE DA[2] = {0};
+        BYTE DT[2] = {0};
+        memcpy(DA, &src[14], 2);    //PN P0
+        memcpy(DT, &src[16], 2);   //F35  三相电压   00 00 04 04 昨天三相电压
+
+        if(DirPrmCode == 0x80 && con == 0x0 && FC == 0x8) //  上行 从动 响应帧   0x80 上行 从动
+        {
+            //三相电压
+            if(DA[0] == 0 && DA[1] == 0 && DT[0] == 0x4 && DT[1] == 0x4)
+            {
+                BYTE* p1 = src;
+                Json::Value jsonRoot;
+                int p = 0;
+                string strA;
+                string strB;
+                string strC;
+
+                for(int i = 18; i < srclen - 2; i += 6)
+                {
+                    BYTE A1[2] = {0};
+                    BYTE B1[2] = {0};
+                    BYTE C1[2] = {0};
+                    memcpy(A1, &src[i], 2);
+                    memcpy(B1, &src[i + 2], 2);
+                    memcpy(C1, &src[i + 4], 2);
+                    char strA1[16] = {0};
+                    char strB1[16] = {0};
+                    char strC1[16] = {0};
+                    BYTE b = A1[1] >> 4 & 0x0f;
+                    BYTE s = A1[1] & 0x0f;
+                    BYTE g = A1[0] >> 4 & 0x0f;
+                    BYTE sfw = A1[0] & 0x0f;
+                    sprintf(strA1, "%d%d%d.%d", b, s, g, sfw);
+                    b = B1[1] >> 4 & 0x0f;
+                    s = B1[1] & 0x0f;
+                    g = B1[0] >> 4 & 0x0f;
+                    sfw = B1[0] & 0x0f;
+                    sprintf(strB1, "%d%d%d.%d", b, s, g, sfw);
+                    b = C1[1] >> 4 & 0x0f;
+                    s = C1[1] & 0x0f;
+                    g = C1[0] >> 4 & 0x0f;
+                    sfw = C1[0] & 0x0f;
+                    sprintf(strC1, "%d%d%d.%d", b, s, g, sfw);
+                    strA.append(strA1);
+                    strA.append("|");
+                    strB.append(strB1);
+                    strB.append("|");
+                    strC.append(strC1);
+                    strC.append("|");
+                    p += 1;
+                }
+
+                jsonRoot["len"] = p;
+                jsonRoot["A"] = strA;
+                jsonRoot["B"] = strB;
+                jsonRoot["C"] = strC;
+                string inmsg = jsonRoot.toStyledString();
+                string sql = "select * from t_records where 1=1 and CONVERT(Nvarchar, day, 23)=\'2017-07-29\'";
+                _RecordsetPtr rs = this->dbopen.ExecuteWithResSQL(sql.c_str());
+
+                if(rs && this->dbopen.GetNum(rs) == 0)
+                {
+                    sql = "insert into t_records(day,voltage) values(";
+                    sql.append("\'2018-07-29\',\'");
+                    sql.append(inmsg.c_str());
+                    sql.append("\'");
+                    sql.append(")");
+                    _RecordsetPtr rs = this->dbopen.ExecuteWithResSQL(sql.c_str());
+                    glog::trace("%s", sql.c_str());
+
+                    if(rs)
+                    {
+                    }
+                }
+                else if(rs && this->dbopen.GetNum(rs) == 1)
+                {
+                    sql = "update t_records set voltage=\'";
+                    sql.append(inmsg.c_str());
+                    sql.append("\'");
+                    sql.append(" where day=\'");
+                    sql.append("2018-07-29");   //以后会变的
+                    sql.append("\'");
+                    _RecordsetPtr rs = this->dbopen.ExecuteWithResSQL(sql.c_str());
+                    glog::trace("%s", sql.c_str());
+
+                    if(rs)
+                    {
+                    }
+                }
+            }
+
+            //三相电流
+            if(DA[0] == 0 && DA[1] == 0 && DT[0] == 0x20 && DT[1] == 0x4)
+            {
+                BYTE* p1 = src;
+                Json::Value jsonRoot;
+                int p = 0;
+                string strA;
+                string strB;
+                string strC;
+
+                for(int i = 18; i < srclen - 2; i += 9)
+                {
+                    BYTE A1[3] = {0};
+                    BYTE B1[3] = {0};
+                    BYTE C1[3] = {0};
+                    memcpy(A1, &src[i], 3);
+                    memcpy(B1, &src[i + 3], 3);
+                    memcpy(C1, &src[i + 6], 3);
+                    char strA1[16] = {0};
+                    char strB1[16] = {0};
+                    char strC1[16] = {0};
+                    BYTE b = A1[2] >> 4 & 0x0f;
+                    BYTE s = A1[2] & 0x0f;
+                    BYTE g = A1[1] >> 4 & 0x0f;
+                    BYTE sfw = A1[1] & 0x0f;
+                    BYTE bfw = A1[0] >> 4 & 0x0f;
+                    BYTE qfw = A1[0] & 0x0f;
+                    sprintf(strA1, "%d%d%d.%d%d%d", b, s, g, sfw, bfw, qfw);
+                    b = B1[2] >> 4 & 0x0f;
+                    s = B1[2] & 0x0f;
+                    g = B1[1] >> 4 & 0x0f;
+                    sfw = B1[1] & 0x0f;
+                    bfw = B1[0] >> 4 & 0x0f;
+                    qfw = B1[0] & 0x0f;
+                    sprintf(strB1, "%d%d%d.%d%d%d", b, s, g, sfw, bfw, qfw);
+                    b = C1[2] >> 4 & 0x0f;
+                    s = C1[2] & 0x0f;
+                    g = C1[1] >> 4 & 0x0f;
+                    sfw = C1[1] & 0x0f;
+                    bfw = C1[0] >> 4 & 0x0f;
+                    qfw = C1[0] & 0x0f;
+                    sprintf(strC1, "%d%d%d.%d%d%d", b, s, g, sfw, bfw, qfw);
+                    strA.append(strA1);
+                    strA.append("|");
+                    strB.append(strB1);
+                    strB.append("|");
+                    strC.append(strC1);
+                    strC.append("|");
+                    p += 1;
+                }
+
+                jsonRoot["len"] = p;
+                jsonRoot["A"] = strA;
+                jsonRoot["B"] = strB;
+                jsonRoot["C"] = strC;
+                string inmsg = jsonRoot.toStyledString();
+                string sql = "select * from t_records where 1=1 and CONVERT(Nvarchar, day, 23)=\'2017-07-29\'";
+                _RecordsetPtr rs = this->dbopen.ExecuteWithResSQL(sql.c_str());
+
+                if(rs && this->dbopen.GetNum(rs) == 0)
+                {
+                    sql = "insert into t_records(day,electric) values(";
+                    sql.append("\'2018-07-29\',\'");
+                    sql.append(inmsg.c_str());
+                    sql.append("\'");
+                    sql.append(")");
+                    _RecordsetPtr rs = this->dbopen.ExecuteWithResSQL(sql.c_str());
+                    glog::trace("%s", sql.c_str());
+
+                    if(rs)
+                    {
+                    }
+                }
+                else if(rs && this->dbopen.GetNum(rs) == 1)
+                {
+                    sql = "update t_records set electric=\'";
+                    sql.append(inmsg.c_str());
+                    sql.append("\' ");
+                    sql.append(" where day=\'");
+                    sql.append("2018-07-29");
+                    sql.append("\'");
+                    _RecordsetPtr rs = this->dbopen.ExecuteWithResSQL(sql.c_str());
+                    glog::trace("%s", sql.c_str());
+
+                    if(rs)
+                    {
+                    }
+                }
+            }
+
+            //三相有功功率
+            if(DA[0] == 0 && DA[1] == 0 && DT[0] == 0x01 && DT[1] == 0x03)
+            {
+                BYTE* p1 = src;
+                Json::Value jsonRoot;
+                int p = 0;
+                string strA;
+                string strB;
+                string strC;
+
+                for(int i = 18; i < srclen - 2; i += 9)
+                {
+                    BYTE A1[3] = {0};
+                    BYTE B1[3] = {0};
+                    BYTE C1[3] = {0};
+                    memcpy(A1, &src[i], 3);
+                    memcpy(B1, &src[i + 3], 3);
+                    memcpy(C1, &src[i + 6], 3);
+                    char strA1[16] = {0};
+                    char strB1[16] = {0};
+                    char strC1[16] = {0};
+                    BYTE s = A1[2] >> 4 & 0x0f;
+                    BYTE g = A1[2] & 0x0f;
+                    BYTE sfw = A1[1] >> 4 & 0x0f;
+                    BYTE bfw = A1[1] & 0x0f;
+                    BYTE qfw = A1[0] >> 4 & 0x0f;
+                    BYTE wfw = A1[0] & 0x0f;
+                    sprintf(strA1, "%d%d.%d%d%d%d", s, g, sfw, bfw, qfw, wfw);
+                    s = B1[2] >> 4 & 0x0f;
+                    g = B1[2] & 0x0f;
+                    sfw = B1[1] >> 4 & 0x0f;
+                    bfw = B1[1] & 0x0f;
+                    qfw = B1[0] >> 4 & 0x0f;
+                    wfw = B1[0] & 0x0f;
+                    sprintf(strB1, "%d%d.%d%d%d%d", s, g, sfw, bfw, qfw, wfw);
+                    s = C1[2] >> 4 & 0x0f;
+                    g = C1[2] & 0x0f;
+                    sfw = C1[1] >> 4 & 0x0f;
+                    bfw = C1[1] & 0x0f;
+                    qfw = C1[0] >> 4 & 0x0f;
+                    wfw = C1[0] & 0x0f;
+                    sprintf(strC1, "%d%d.%d%d%d%d", s, g, sfw, bfw, qfw, wfw);
+                    strA.append(strA1);
+                    strA.append("|");
+                    strB.append(strB1);
+                    strB.append("|");
+                    strC.append(strC1);
+                    strC.append("|");
+                    p += 1;
+                }
+
+                jsonRoot["len"] = p;
+                jsonRoot["A"] = strA;
+                jsonRoot["B"] = strB;
+                jsonRoot["C"] = strC;
+                string inmsg = jsonRoot.toStyledString();
+                string sql = "select * from t_records where 1=1 and CONVERT(Nvarchar, day, 23)=\'2017-07-29\'";
+                _RecordsetPtr rs = this->dbopen.ExecuteWithResSQL(sql.c_str());
+
+                if(rs && this->dbopen.GetNum(rs) == 0)
+                {
+                    sql = "insert into t_records(day,activepower) values(";
+                    sql.append("\'2018-07-29\',\'");
+                    sql.append(inmsg.c_str());
+                    sql.append("\'");
+                    sql.append(")");
+                    _RecordsetPtr rs = this->dbopen.ExecuteWithResSQL(sql.c_str());
+                    glog::trace("%s", sql.c_str());
+
+                    if(rs)
+                    {
+                    }
+                }
+                else if(rs && this->dbopen.GetNum(rs) == 1)
+                {
+                    sql = "update t_records set activepower=\'";
+                    sql.append(inmsg.c_str());
+                    sql.append("\' ");
+                    sql.append(" where day=\'");
+                    sql.append("2018-07-29");
+                    sql.append("\'");
+                    _RecordsetPtr rs = this->dbopen.ExecuteWithResSQL(sql.c_str());
+                    glog::trace("%s", sql.c_str());
+
+                    if(rs)
+                    {
+                    }
+                }
+            }
+
+            //三相功率因数
+            if(DA[0] == 0 && DA[1] == 0 && DT[0] == 0x40 && DT[1] == 0x03)
+            {
+                BYTE* p1 = src;
+                Json::Value jsonRoot;
+                int p = 0;
+                string strA;
+                string strB;
+                string strC;
+                string strD;
+
+                for(int i = 18; i < srclen - 2; i += 8)
+                {
+                    BYTE A1[2] = {0};
+                    BYTE B1[2] = {0};
+                    BYTE C1[2] = {0};
+                    BYTE D1[2] = {0};
+                    memcpy(A1, &src[i], 2);
+                    memcpy(B1, &src[i + 2], 2);
+                    memcpy(C1, &src[i + 4], 2);
+                    memcpy(D1, &src[i + 6], 2);
+                    char strA1[16] = {0};
+                    char strB1[16] = {0};
+                    char strC1[16] = {0};
+                    char strD1[16] = {0};
+                    BYTE g = A1[1] >> 4 & 0x0f;
+                    BYTE sfw = A1[1] & 0x0f;
+                    BYTE bfw = A1[0] >> 4 & 0x0f;
+                    BYTE qfw = A1[0] & 0x0f;
+                    sprintf(strA1, "%d.%d%d%d", g, sfw, bfw, qfw);
+                    g = B1[1] >> 4 & 0x0f;
+                    sfw = B1[1] & 0x0f;
+                    bfw = B1[0] >> 4 & 0x0f;
+                    qfw = B1[0] & 0x0f;
+                    sprintf(strB1, "%d.%d%d%d", g, sfw, bfw, qfw);
+                    g = C1[1] >> 4 & 0x0f;
+                    sfw = C1[1] & 0x0f;
+                    bfw = C1[0] >> 4 & 0x0f;
+                    qfw = C1[0] & 0x0f;
+                    sprintf(strC1, "%d.%d%d%d", g, sfw, bfw, qfw);
+                    g = D1[1] >> 4 & 0x0f;
+                    sfw = D1[1] & 0x0f;
+                    bfw = D1[0] >> 4 & 0x0f;
+                    qfw = D1[0] & 0x0f;
+                    sprintf(strD1, "%d.%d%d%d", g, sfw, bfw, qfw);
+                    strA.append(strA1);
+                    strA.append("|");
+                    strB.append(strB1);
+                    strB.append("|");
+                    strC.append(strC1);
+                    strC.append("|");
+                    strD.append(strD1);
+                    strD.append("|");
+                    p += 1;
+                }
+
+                jsonRoot["len"] = p;
+                jsonRoot["A"] = strA;
+                jsonRoot["B"] = strB;
+                jsonRoot["C"] = strC;
+                jsonRoot["D"] = strD;
+                string inmsg = jsonRoot.toStyledString();
+                string sql = "select * from t_records where 1=1 and CONVERT(Nvarchar, day, 23)=\'2017-07-29\'";
+                _RecordsetPtr rs = this->dbopen.ExecuteWithResSQL(sql.c_str());
+
+                if(rs && this->dbopen.GetNum(rs) == 0)
+                {
+                    sql = "insert into t_records(day,powerfactor) values(";
+                    sql.append("\'2018-07-29\',\'");
+                    sql.append(inmsg.c_str());
+                    sql.append("\'");
+                    sql.append(")");
+                    _RecordsetPtr rs = this->dbopen.ExecuteWithResSQL(sql.c_str());
+                    glog::trace("%s", sql.c_str());
+
+                    if(rs)
+                    {
+                    }
+                }
+                else if(rs && this->dbopen.GetNum(rs) == 1)
+                {
+                    sql = "update t_records set powerfactor=\'";
+                    sql.append(inmsg.c_str());
+                    sql.append("\' ");
+                    sql.append(" where day=\'");
+                    sql.append("2018-07-29");
+                    sql.append("\'");
+                    _RecordsetPtr rs = this->dbopen.ExecuteWithResSQL(sql.c_str());
+                    glog::trace("%s", sql.c_str());
+
+                    if(rs)
+                    {
+                    }
+                }
+            }
+
+            //正向有功电能量
+            if(DA[0] == 0 && DA[1] == 0 && DT[0] == 0x01 && DT[1] == 0x05)
+            {
+                BYTE* p1 = src;
+                Json::Value jsonRoot;
+                int p = 0;
+                string strA;
+
+                for(int i = 18; i < srclen - 2; i += 4)
+                {
+                    BYTE A1[4] = {0};
+                    memcpy(A1, &src[i], 4);
+                    char strA1[16] = {0};
+                    BYTE sw = A1[3] >> 4 & 0x0f;
+                    BYTE w = A1[3]  & 0x0f;
+                    BYTE q = A1[2] >> 4 & 0x0f;
+                    BYTE b = A1[2]  & 0x0f;
+                    BYTE s = A1[1] >> 4 & 0x0f;
+                    BYTE g = A1[1] & 0x0f;
+                    BYTE sfw = A1[0] >> 4 & 0x0f;
+                    BYTE bfw = A1[0] & 0x0f;
+                    sprintf(strA1, "%d%d%d%d%d%d.%d%d", sw, w, q, b, s, g, sfw, bfw);
+                    strA.append(strA1);
+                    strA.append("|");
+                    p += 1;
+                }
+
+                jsonRoot["len"] = p;
+                jsonRoot["A"] = strA;
+                string inmsg = jsonRoot.toStyledString();
+                string sql = "select * from t_records where 1=1 and CONVERT(Nvarchar, day, 23)=\'2018-07-29\'";
+                _RecordsetPtr rs = this->dbopen.ExecuteWithResSQL(sql.c_str());
+
+                if(rs && this->dbopen.GetNum(rs) == 0)
+                {
+                    sql = "insert into t_records(day,power) values(";
+                    sql.append("\'2018-07-29\',\'");
+                    sql.append(inmsg.c_str());
+                    sql.append("\'");
+                    sql.append(")");
+                    _RecordsetPtr rs = this->dbopen.ExecuteWithResSQL(sql.c_str());
+                    glog::trace("%s", sql.c_str());
+
+                    if(rs)
+                    {
+                    }
+                }
+                else if(rs && this->dbopen.GetNum(rs) == 1)
+                {
+                    sql = "update t_records set power=\'";
+                    sql.append(inmsg.c_str());
+                    sql.append("\' ");
+                    sql.append(" where day=\'");
+                    sql.append("2018-07-29");
+                    sql.append("\'");
+                    _RecordsetPtr rs = this->dbopen.ExecuteWithResSQL(sql.c_str());
+                    glog::trace("%s", sql.c_str());
+
+                    if(rs)
+                    {
+                    }
+                }
             }
         }
     }

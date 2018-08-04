@@ -46,6 +46,10 @@ public:
 
     T*                  GetHeadPosition(ITERATOR& pos);
 
+
+    T*                  GetEndPosition(ITERATOR& pos);
+
+
     BOOL                bGetIteratior(ITERATOR&pos);
     T*                  GetNext(ITERATOR& pos);
 
@@ -64,6 +68,15 @@ public:
     T*                  PutToUse(T*lp_t);
 };
 
+template<class T, int COUNT>
+T* CDoubleList<T, COUNT>::GetEndPosition(ITERATOR& pos)
+{
+    T* lp_t = NULL;
+    EnterCriticalSection(&m_critical_section);
+    pos = m_1_list.end();
+    LeaveCriticalSection(&m_critical_section);
+    return NULL;
+}
 
 
 //template<class T, int COUNT>
@@ -308,6 +321,7 @@ T* CDoubleList<T, COUNT>::GetHeadPosition(ITERATOR& pos)
     if(pos == m_1_list.end())
     {
         pos = m_1_list.end();
+		lp_t=NULL;
     }
     else
     {
@@ -315,7 +329,7 @@ T* CDoubleList<T, COUNT>::GetHeadPosition(ITERATOR& pos)
     }
 
     LeaveCriticalSection(&m_critical_section);
-    return *pos;
+    return lp_t;
 }
 
 
@@ -332,6 +346,13 @@ T* CDoubleList<T, COUNT>::GetNext(ITERATOR&pos)
 {
     T*  lp_t = NULL;
     EnterCriticalSection(&m_critical_section);
+
+    //if(pos == m_1_list.end())
+    //{
+    //    lp_t = NULL;
+    //    return lp_t;
+    //}
+
     pos++;
 
     if(pos == m_1_list.end())

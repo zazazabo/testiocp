@@ -17,13 +17,11 @@
 #ifdef _WIN64
 
 #else
-#pragma comment(lib,"E:\\code\\glib\\lib\\glib_d.lib")
+#pragma comment(lib,"E:\\code\\glib\\lib\\glib.lib")
 #endif
 #else
 #ifdef _WIN64
-#pragma comment(lib,"E:\\code\\glib\\x64\\Release\\glib.lib")
-#pragma comment(lib,"E:\\code\\Detours Pro v3.0.316\\lib.X64\\detours.lib")
-#pragma comment(lib,"E:\\code\\zlib\\x64\\Release\\zlib.lib")
+
 
 #else
 
@@ -207,11 +205,20 @@ void init(HWND hwnd)
     list1.insertHead(v_head);
 }
 
+typedef std::list<int > TESTLIST;
+
 int APIENTRY WinMain(HINSTANCE hInstance,
                      HINSTANCE hPrevInstance,
                      LPSTR     lpCmdLine,
                      int       nCmdShow)
 {
+
+
+	//24    0x18    0001 1000
+
+	//BYTE b=0x28;
+
+	//BYTE bbb= b>>4&0x0f;
 
 	short aa=258;
 	short* pp=&aa;
@@ -219,6 +226,29 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 	BYTE b2=(BYTE)rr;
     glog::setOpenLog(TRUE);
     CoInitialize(NULL);
+
+
+	TESTLIST t;
+	for (int i = 0; i < 10;i++)
+	{
+		t.push_back(i);
+	}
+
+	for (TESTLIST::iterator it = t.begin(); it != t.end();)
+	{
+		TESTLIST::iterator it1=it;
+		it1++;
+		t.erase(it);
+		it=it1;
+	}
+
+
+
+
+
+
+
+
 
 //  Json::Value root;
 //  Json::Reader reader;

@@ -81,9 +81,9 @@ public:
 public:
     IO_GROUP            m_io_group;
     KEY_GROUP           m_key_group;
-
+	char m_configTime[216];				//采集时间
     typedef   list<IOCP_IO_PTR>::iterator ITERATOR;
-
+	map<string,BOOL>m_day;
 
 //     typedef struct _WEBSOCKET
 //     {
@@ -130,6 +130,7 @@ public:
     void                changeByte(char data[], BYTE vv[], int& len);
     void                buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL& isrespos, IOCP_IO_PTR& lp_io);
     void                buildConCode(BYTE src[], BYTE res[], int& len, BYTE bcon);
+	BOOL				CloseMySocket(IOCP_IO_PTR lp_io);
 private:
     void                InitIoContext(IOCP_IO_PTR lp_io);
     void                Close();
@@ -145,6 +146,7 @@ private:
     static DWORD WINAPI CompletionRoutine(LPVOID lp_param);
     BOOL                PostAcceptEx();
     BOOL                GetAddrAndPort(char*buf, char ip[], UINT &port);
+	 static DWORD WINAPI	TimeThread(LPVOID lp_param);
 };
 
 //////////////////////////////////////////////////////////////////////////

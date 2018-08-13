@@ -44,6 +44,8 @@ public:
     T*                  RemoveAt(ITERATOR   pos);
     T*                  RemoveAt(T*         lp_t);
 
+    T*                  RemoveAtUse(T*         lp_t);
+
     T*                  GetHeadPosition(ITERATOR& pos);
 
 
@@ -263,10 +265,28 @@ T* CDoubleList<T, COUNT>::GetBlank()
     {
         m_1_list.push_back(lp_t);
     }
-
     LeaveCriticalSection(&m_critical_section);
     return lp_t;
 }
+
+
+
+/*---------------------------------------------------------------------------------
+功能：根据结点指针，删除使用表中的一个结点
+说明：
+返回：
+---------------------------------------------------------------------------------*/
+template<class T, int COUNT>
+T* CDoubleList<T, COUNT>::RemoveAtUse(T* lp_t)
+{
+    EnterCriticalSection(&m_critical_section);
+    m_1_list.remove(lp_t);
+    //m_0_list.push_back(lp_t);
+    LeaveCriticalSection(&m_critical_section);
+    return lp_t;
+}
+
+
 
 /*---------------------------------------------------------------------------------
 功能：根据叠代器，删除使用表中的一个结点
@@ -285,6 +305,8 @@ T* CDoubleList<T, COUNT>::RemoveAt(ITERATOR pos)
     return lp_t;
 }
 
+
+
 /*---------------------------------------------------------------------------------
 功能：根据结点指针，删除使用表中的一个结点
 说明：
@@ -294,8 +316,15 @@ template<class T, int COUNT>
 T* CDoubleList<T, COUNT>::RemoveAt(T* lp_t)
 {
     EnterCriticalSection(&m_critical_section);
+    int n1 = m_1_list.size();
     m_1_list.remove(lp_t);
-    m_0_list.push_back(lp_t);
+    int n2 = m_1_list.size();
+
+    if(n1 != n2)
+    {
+        m_0_list.push_back(lp_t);
+    }
+
     LeaveCriticalSection(&m_critical_section);
     return lp_t;
 }
@@ -321,7 +350,7 @@ T* CDoubleList<T, COUNT>::GetHeadPosition(ITERATOR& pos)
     if(pos == m_1_list.end())
     {
         pos = m_1_list.end();
-		lp_t=NULL;
+        lp_t = NULL;
     }
     else
     {
@@ -346,13 +375,11 @@ T* CDoubleList<T, COUNT>::GetNext(ITERATOR&pos)
 {
     T*  lp_t = NULL;
     EnterCriticalSection(&m_critical_section);
-
     //if(pos == m_1_list.end())
     //{
     //    lp_t = NULL;
     //    return lp_t;
     //}
-
     pos++;
 
     if(pos == m_1_list.end())

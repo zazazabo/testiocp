@@ -63,6 +63,19 @@ void dealCommand(int wid)
         DWORD tid = 0;
         HANDLE h1 = CreateThread(NULL, NULL, (LPTHREAD_START_ROUTINE)dealiocp, NULL, NULL, &tid);
     }
+    else if(wid == IDC_BUTTON8)
+    {
+        int n1 = list1.getSelectIndex();
+
+        if(n1 >= 0)
+        {
+            string socket = list1.getCellText(n1, 1);
+            ULONG_PTR s =  strtol(socket.c_str(), NULL, 16);
+            string socketkey = list1.getCellText(n1, 3);
+            ULONG_PTR key = strtol(socketkey.c_str(), NULL, 16);
+            io.CloseMySocket((IOCP_IO_PTR)s);
+        }
+    }
     else if(wid == IDC_BUTTON2)
     {
         int n1 = list1.getSelectIndex();
@@ -87,26 +100,25 @@ void dealCommand(int wid)
             io.SendData(s, key);
         }
     }
-	else if (wid==IDC_BUTTON7)
-	{
-		int n1 = list1.getSelectIndex();
+    else if(wid == IDC_BUTTON7)
+    {
+        int n1 = list1.getSelectIndex();
 
-		if(n1 >= 0)
-		{
-			string socket = list1.getCellText(n1, 1);
-			ULONG_PTR s =  strtol(socket.c_str(), NULL, 16);
-			string socketkey = list1.getCellText(n1, 3);
-			ULONG_PTR key = strtol(socketkey.c_str(), NULL, 16);
-			io.SendWebsocket(s);
-		}
-	}
+        if(n1 >= 0)
+        {
+            string socket = list1.getCellText(n1, 1);
+            ULONG_PTR s =  strtol(socket.c_str(), NULL, 16);
+            string socketkey = list1.getCellText(n1, 3);
+            ULONG_PTR key = strtol(socketkey.c_str(), NULL, 16);
+            io.SendWebsocket(s);
+        }
+    }
     else if(wid == IDC_BUTTON4)
     {
         int nnn = list1.getSelectIndex();
 
         if(nnn >= 0)
         {
-			
             string val = list1.getCellText(nnn, 4);
             gstring::copyToclip(val.c_str(), val.size());
             list1.setItemText("", nnn, 4);
@@ -115,7 +127,7 @@ void dealCommand(int wid)
     }
     else if(wid == IDC_BUTTON6)
     {
-       io.getall();
+        io.getall();
     }
     else if(wid == IDC_BUTTON5)
     {
@@ -195,7 +207,7 @@ void init(HWND hwnd)
     vector<string>v_head;
     v_head.push_back("ip");
     v_head.push_back("socket");
-    v_head.push_back("数据");
+    v_head.push_back("设置发送数据");
     v_head.push_back("key");
     v_head.push_back("收到的数据");
     v_head.push_back("收到asic数据");
@@ -203,6 +215,8 @@ void init(HWND hwnd)
     v_head.push_back("登陆状态");
     list1.initList(GetDlgItem(hwnd, IDC_LIST1));
     list1.insertHead(v_head);
+    list1.setColumWide(0, 180);
+    list1.setColumWide(2, 120);
 }
 
 typedef std::list<int > TESTLIST;
@@ -212,43 +226,29 @@ int APIENTRY WinMain(HINSTANCE hInstance,
                      LPSTR     lpCmdLine,
                      int       nCmdShow)
 {
-
-
-	//24    0x18    0001 1000
-
-	//BYTE b=0x28;
-
-	//BYTE bbb= b>>4&0x0f;
-
-	short aa=258;
-	short* pp=&aa;
-	int rr=100%256;
-	BYTE b2=(BYTE)rr;
+    //24    0x18    0001 1000
+    //BYTE b=0x28;
+    //BYTE bbb= b>>4&0x0f;
+    short aa = 258;
+    short* pp = &aa;
+    int rr = 100 % 256;
+    BYTE b2 = (BYTE)rr;
     glog::setOpenLog(TRUE);
     CoInitialize(NULL);
+    TESTLIST t;
 
+    for(int i = 0; i < 10; i++)
+    {
+        t.push_back(i);
+    }
 
-	TESTLIST t;
-	for (int i = 0; i < 10;i++)
-	{
-		t.push_back(i);
-	}
-
-	for (TESTLIST::iterator it = t.begin(); it != t.end();)
-	{
-		TESTLIST::iterator it1=it;
-		it1++;
-		t.erase(it);
-		it=it1;
-	}
-
-
-
-
-
-
-
-
+    for(TESTLIST::iterator it = t.begin(); it != t.end();)
+    {
+        TESTLIST::iterator it1 = it;
+        it1++;
+        t.erase(it);
+        it = it1;
+    }
 
 //  Json::Value root;
 //  Json::Reader reader;

@@ -98,6 +98,9 @@ public:
     list<IOCP_IO_PTR>      m_listmsg;        //消息列表
     map<string, IOCP_IO_PTR> m_mcontralcenter;  //集中器队列
 
+	map<IOCP_IO_PTR,pBREAKPCK>m_pack;			//断包结构
+
+
 
     CRITICAL_SECTION    crtc_sec;
     LPFN_TRANSMITFILE   lpTransmitFile;
@@ -123,7 +126,6 @@ public:
     int                 wsDecodeFrame(char inFrame[], string &outMessage, int len);
     int                 wsEncodeFrame(string inMessage, char outFrame[], enum WS_FrameType frameType,int& lenret);
     void                dealws(IOCP_IO_PTR& lp_io, string& jsondata);
-    void                getall();
     string              GetDataDir(string filename);
     //集中器
     BOOL                checkFlag(BYTE vv[], int len);
@@ -135,7 +137,7 @@ private:
     void                InitIoContext(IOCP_IO_PTR lp_io);
     void                Close();
     BOOL                RegAcceptEvent();
-    void                CheckForInvalidConnection();
+
     BOOL                DataAction(IOCP_IO_PTR lp_io, IOCP_KEY_PTR lp_key);
     BOOL                HandleData(IOCP_IO_PTR lp_io, int nFlags, IOCP_KEY_PTR lp_key);
     BOOL                GetFunPointer();
@@ -146,6 +148,10 @@ private:
     static DWORD WINAPI CompletionRoutine(LPVOID lp_param);
     BOOL                PostAcceptEx();
     BOOL                GetAddrAndPort(char*buf, char ip[], UINT &port);
+
+	BOOL				IsBreakPack(BYTE src[],int len);
+	BOOL				IsTailPack(BYTE src[],int len,pBREAKPCK pack,IOCP_IO_PTR& lp_io);
+
 	 static DWORD WINAPI	TimeThread(LPVOID lp_param);
 };
 

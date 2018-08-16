@@ -125,10 +125,6 @@ void dealCommand(int wid)
             ;
         }
     }
-    else if(wid == IDC_BUTTON6)
-    {
-        io.getall();
-    }
     else if(wid == IDC_BUTTON5)
     {
         int nnn = list1.getSelectIndex();

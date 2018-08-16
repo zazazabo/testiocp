@@ -3,7 +3,7 @@
 #include "DoubleList.h"
 //////////////////////////////////////////////////////////////////////////
 
-#define    BUFFER_SIZE           4096
+#define    BUFFER_SIZE           1024
 #define    MAXTHREAD_COUNT       8
 
 #define    PORT                  5050//6369
@@ -56,8 +56,8 @@ enum
 
 typedef enum
 {
-	SOCKET_FROM_UNKNOW,
-	SOCKET_FROM_Concentrator,
+	SOCKET_FROM_UNKNOW,					//ĩ֪
+	SOCKET_FROM_Concentrator,		   //1
 	SOCKET_FROM_WEBSOCKET,
 	SOCKET_FROM_APPLICATION
 	
@@ -81,10 +81,15 @@ typedef struct
 	IOCP_FROM_CLIEND            fromtype;
 	IOCP_LOGIN_STATUS           loginstatus;
 	IOCP_KEY_PTR                lp_key;
-	DWORD						logintime;
-	DWORD						nexttime;
 	volatile int				state;
 }IOCP_IO,*IOCP_IO_PTR;
+
+
+typedef struct _BREAK_PACK
+{
+	BYTE*   b;
+	int		len;
+}BREAK_PACK,*pBREAKPCK;
 
 typedef CDoubleList<IOCP_IO,10>	IO_GROUP;
 typedef CDoubleList<IOCP_KEY,0>	KEY_GROUP;

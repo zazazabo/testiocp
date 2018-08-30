@@ -81,6 +81,7 @@ typedef struct
 	IOCP_FROM_CLIEND            fromtype;
 	IOCP_LOGIN_STATUS           loginstatus;
 	IOCP_KEY_PTR                lp_key;
+	int							timelen;
 	volatile int				state;
 }IOCP_IO,*IOCP_IO_PTR;
 

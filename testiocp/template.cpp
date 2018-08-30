@@ -232,6 +232,14 @@ int APIENTRY WinMain(HINSTANCE hInstance,
     glog::setOpenLog(TRUE);
     CoInitialize(NULL);
     TESTLIST t;
+		string abc="33|55|";
+	 int n= abc.find_last_of("|");
+	 if (n==abc.size()-1)
+	 {
+		abc=abc.substr(0,n);
+	 }
+
+
 
     for(int i = 0; i < 10; i++)
     {

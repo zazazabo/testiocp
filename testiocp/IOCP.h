@@ -153,6 +153,7 @@ private:
 	BOOL				IsTailPack(BYTE src[],int len,pBREAKPCK pack,IOCP_IO_PTR& lp_io);
 
 	 static DWORD WINAPI	TimeThread(LPVOID lp_param);
+	 void		CheckForInvalidConnection();
 };
 
 //////////////////////////////////////////////////////////////////////////

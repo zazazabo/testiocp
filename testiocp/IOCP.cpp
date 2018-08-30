@@ -8,7 +8,6 @@
 CIOCP::CIOCP()
 {
     m_mcontralcenter.clear();
-
     ::InitializeCriticalSection(&crtc_sec);
 }
 //构造函数
@@ -56,6 +55,7 @@ void CIOCP::InitIoContext(IOCP_IO_PTR lp_io)
     memset(&lp_io->buf, 0, BUFFER_SIZE);
     lp_io->wsaBuf.buf       = lp_io->buf;
     lp_io->wsaBuf.len       = BUFFER_SIZE;
+
 }
 
 /*-------------------------------------------------------------------------------------------
@@ -201,6 +201,7 @@ BOOL CIOCP::PostAcceptEx()
         lp_io->fromtype = SOCKET_FROM_UNKNOW;
         lp_io->loginstatus = SOCKET_STATUS_UNKNOW;
         lp_io->lp_key = NULL;
+		lp_io->timelen=0;
         //glog::GetInstance()->AddLine("post accecptex socket:%d IOCP_IO_PTR:%p", socket, lp_io);
         /////////////////////////////////////////////////
         bRet = lpAcceptEx(m_listen_socket, lp_io->socket, lp_io->buf,
@@ -873,7 +874,7 @@ BOOL CIOCP::MainLoop()
                 {
                     //检测集中器超时处理
                     //cout << "Server is running.........." << nCount++ << " times" << endl;
-                    //  CheckForInvalidConnection();
+                   CheckForInvalidConnection();
                 }
                 break;
 
@@ -891,6 +892,93 @@ BOOL CIOCP::MainLoop()
 
     return TRUE;
 }
+
+
+
+
+
+/*-------------------------------------------------------------------------------------------
+函数功能：看看是否有连接了，但很长时间没有数据的“无效连接”，有的话，就踢掉
+函数说明：
+函数返回：成功，TRUE；失败，FALSE
+-------------------------------------------------------------------------------------------*/
+void CIOCP::CheckForInvalidConnection()
+{
+	int         op, op_len, nRet;
+	IOCP_IO_PTR lp_start = NULL;
+	IO_POS      pos;
+	lp_start=  m_io_group.GetHeadPosition(pos);
+	//IOCP_IO_PTR lp_end =		 m_io_group.GetEndPosition(pos);
+	while (lp_start!=NULL)
+	{
+
+		if (lp_start->fromtype==SOCKET_FROM_Concentrator)
+		{
+			
+			op_len = sizeof(op);
+			nRet = getsockopt( lp_start->socket, SOL_SOCKET, SO_CONNECT_TIME, (char*)&op, &op_len );
+			if( SOCKET_ERROR == nRet )
+			{
+				glog::traceErrorInfo("getsockopt",WSAGetLastError());
+				continue;
+			}
+			if( op != 0xffffffff)
+			{
+				int len= op-lp_start->timelen;
+					if (len/60>2)
+					{
+						closesocket( lp_start->socket );
+					}
+				//closesocket( lp_io->socket );
+
+			}
+			//glog::trace("\nlp_start:%p  op:%d",lp_start,op);
+
+		}
+
+		lp_start=m_io_group.GetNext(pos);
+	}
+
+// 	  while( pos != NULL )
+// 	  {
+// 	      lp_io = m_io_group.GetNext( pos );
+// 	      //看看哪个是没有登陆的，再查查它没登陆多长时间了
+// 	      if( lp_io->state != SOCKET_STATE_CONNECT_AND_READ )
+// 	      {
+// 	          op_len = sizeof(op);
+// 	
+// 	          nRet = getsockopt( lp_io->socket, SOL_SOCKET, SO_CONNECT_TIME, (char*)&op, &op_len );
+// 	
+// 	          if( SOCKET_ERROR == nRet )
+// 	          {
+// 	              MSG("SO_CONNECT_TIME failed:");
+// 	              MSG(WSAGetLastError());
+// 	
+// 	              continue;
+// 	          }
+// 	          if( op != 0xffffffff && op > 20 )
+// 	          {
+// 	              closesocket( lp_io->socket );
+// 	
+// 	              m_io_group.RemoveAt( lp_io );
+// 	
+// 	              MSG("有一个连接，但没有接收到数据,已经被踢出去了");
+// 	
+// 	              MSG( lp_io );
+// 	          }
+// 
+// 	      }
+	//  }
+}
+
+
+
+
+
+
+
+
+
 /*-------------------------------------------------------------------------------------------
 函数功能：数据处理线程函数
 函数说明：
@@ -1007,6 +1095,35 @@ DWORD CIOCP::CompletionRoutine(LPVOID lp_param)
             glog::trace("\n CompletionRoutine IOCP_END lp_io:%p  list1 count:%d list0 count:%d from:%d", lp_io, n11, n00, lp_io->fromtype);
             continue;
         }
+
+
+
+
+		//socket 通信时长
+		int op_len = 0;
+		int op = 0;
+		op_len = sizeof(op);
+		nRet = getsockopt(lp_io->socket, SOL_SOCKET, SO_CONNECT_TIME, (char*)&op, &op_len);
+
+		if(SOCKET_ERROR == nRet)
+		{
+			glog::traceErrorInfo("getsockopt", WSAGetLastError());
+			//continue;
+		}
+
+		if(op != 0xffffffff)
+		{
+			lp_io->timelen = op;
+			//glog::trace("\nlp_io:%p timelen:%d",lp_io,lp_io->timelen);
+		}
+
+
+
+
+
+
+
+
 
         switch(lp_io->operation)
         {
@@ -1205,54 +1322,56 @@ DWORD CIOCP::CompletionRoutine(LPVOID lp_param)
 
                         if(lp_io->fromtype == SOCKET_FROM_WEBSOCKET)
                         {
-									strret = "";
-									int lenread = lp_this->wsDecodeFrame(lp_io->buf, strret, lp_io->ol.InternalHigh);
+                            strret = "";
+                            int lenread = lp_this->wsDecodeFrame(lp_io->buf, strret, lp_io->ol.InternalHigh);
 
-									if(lenread == WS_CLOSING_FRAME)
-									{
-										int n1 = lp_this-> m_listctr->getRowCount();
-										int nrow = -1;
-										string towrite = "";
-										EnterCriticalSection(&lp_this->crtc_sec);
-										//删除消息队列
-										list<IOCP_IO*>::iterator it;
+                            if(lenread == WS_CLOSING_FRAME)
+                            {
+                                int n1 = lp_this-> m_listctr->getRowCount();
+                                int nrow = -1;
+                                string towrite = "";
+                                EnterCriticalSection(&lp_this->crtc_sec);
+                                //删除消息队列
+                                list<IOCP_IO*>::iterator it;
 
-										for(it = lp_this->m_listmsg.begin(); it != lp_this->m_listmsg.end();)
-										{
-											IOCP_IO_PTR tem = *it;
+                                for(it = lp_this->m_listmsg.begin(); it != lp_this->m_listmsg.end();)
+                                {
+                                    IOCP_IO_PTR tem = *it;
 
-											if(tem == lp_io)
-											{
-												it = lp_this->m_listmsg.erase(it);
-											}
-											else
-											{
-												it++;
-											}
-										}
+                                    if(tem == lp_io)
+                                    {
+                                        it = lp_this->m_listmsg.erase(it);
+                                    }
+                                    else
+                                    {
+                                        it++;
+                                    }
+                                }
 
-										for(int i = 0; i < n1; i++)
-										{
-											string vv = lp_this->m_listctr->getCellText(i, 1);
-											char pp[50] = {0};
-											sprintf(pp, "%p", lp_io);
+                                for(int i = 0; i < n1; i++)
+                                {
+                                    string vv = lp_this->m_listctr->getCellText(i, 1);
+                                    char pp[50] = {0};
+                                    sprintf(pp, "%p", lp_io);
 
-											if(_stricmp(pp, vv.c_str()) == 0)
-											{
-												lp_this->m_listctr->deleteIndex(i);
-												break;
-											}
-										}
+                                    if(_stricmp(pp, vv.c_str()) == 0)
+                                    {
+                                        lp_this->m_listctr->deleteIndex(i);
+                                        break;
+                                    }
+                                }
 
-										LeaveCriticalSection(&lp_this->crtc_sec);
-										lp_io->operation = IOCP_END;
-									}
-									else if(lenread != WS_ERROR_FRAME)
-									{
-										glog::trace("\n%s", strret.c_str());
-										lp_this->dealws(lp_io, strret);
-										goto TOHear;
-									}
+                                LeaveCriticalSection(&lp_this->crtc_sec);
+                                lp_io->operation = IOCP_END;
+                            }
+                            else if(lenread != WS_ERROR_FRAME)
+                            {
+                                glog::trace("\n%s", strret.c_str());
+							
+                                lp_this->dealws(lp_io, strret);
+				
+                                goto TOHear;
+                            }
                         }
                     }
 
@@ -1598,9 +1717,26 @@ void CIOCP::dealws(IOCP_IO_PTR & lp_io, string & jsondata)
                     Json::Value row = root["row"];
                     root["data"] = TRUE;
                 }
-
+				glog::trace("\naddress:%s",addrarea.c_str());
                 string inmsg = root.toStyledString();
                 //  string inmsg = root.toStyledString();
+                char outmsg[1048] = {0};
+                int lenret = 0;
+                int len = wsEncodeFrame(inmsg, outmsg, WS_TEXT_FRAME, lenret);
+
+                if(len != WS_ERROR_FRAME)
+                {
+                    memcpy(lp_io->buf, outmsg, lenret);
+                    lp_io->wsaBuf.buf = lp_io->buf;
+                    lp_io->wsaBuf.len = lenret;
+                    lp_io->operation = IOCP_WRITE;
+                }
+            }
+            else if(vtemp == "Online")
+            {
+                root["count"] = m_mcontralcenter.size();
+                root["status"] = "success";
+                string inmsg = root.toStyledString();
                 char outmsg[1048] = {0};
                 int lenret = 0;
                 int len = wsEncodeFrame(inmsg, outmsg, WS_TEXT_FRAME, lenret);
@@ -2033,6 +2169,27 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
                     p += 1;
                 }
 
+                int n1 = strA.find_last_of("|");
+
+                if(n1 == strA.size() - 1)
+                {
+                    strA = strA.substr(0, n1);
+                }
+
+                int n2 = strB.find_last_of("|");
+
+                if(n2 == strB.size() - 1)
+                {
+                    strB = strB.substr(0, n2);
+                }
+
+                int n3 = strC.find_last_of("|");
+
+                if(n3 == strC.size() - 1)
+                {
+                    strC = strC.substr(0, n3);
+                }
+
                 jsonRoot["len"] = p;
                 jsonRoot["A"] = strA;
                 jsonRoot["B"] = strB;
@@ -2136,6 +2293,27 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
                     p += 1;
                 }
 
+                int n1 = strA.find_last_of("|");
+
+                if(n1 == strA.size() - 1)
+                {
+                    strA = strA.substr(0, n1);
+                }
+
+                int n2 = strB.find_last_of("|");
+
+                if(n2 == strB.size() - 1)
+                {
+                    strB = strB.substr(0, n2);
+                }
+
+                int n3 = strC.find_last_of("|");
+
+                if(n3 == strC.size() - 1)
+                {
+                    strC = strC.substr(0, n3);
+                }
+
                 jsonRoot["len"] = p;
                 jsonRoot["A"] = strA;
                 jsonRoot["B"] = strB;
@@ -2233,6 +2411,27 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
                     strC.append(strC1);
                     strC.append("|");
                     p += 1;
+                }
+
+                int n1 = strA.find_last_of("|");
+
+                if(n1 == strA.size() - 1)
+                {
+                    strA = strA.substr(0, n1);
+                }
+
+                int n2 = strB.find_last_of("|");
+
+                if(n2 == strB.size() - 1)
+                {
+                    strB = strB.substr(0, n2);
+                }
+
+                int n3 = strC.find_last_of("|");
+
+                if(n3 == strC.size() - 1)
+                {
+                    strC = strC.substr(0, n3);
                 }
 
                 jsonRoot["len"] = p;
@@ -2339,6 +2538,34 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
                     p += 1;
                 }
 
+                int n1 = strA.find_last_of("|");
+
+                if(n1 == strA.size() - 1)
+                {
+                    strA = strA.substr(0, n1);
+                }
+
+                int n2 = strB.find_last_of("|");
+
+                if(n2 == strB.size() - 1)
+                {
+                    strB = strB.substr(0, n2);
+                }
+
+                int n3 = strC.find_last_of("|");
+
+                if(n3 == strC.size() - 1)
+                {
+                    strC = strC.substr(0, n3);
+                }
+
+                int n4 = strD.find_last_of("|");
+
+                if(n4 == strD.size() - 1)
+                {
+                    strD = strD.substr(0, n4);
+                }
+
                 jsonRoot["len"] = p;
                 jsonRoot["A"] = strA;
                 jsonRoot["B"] = strB;
@@ -2395,6 +2622,8 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
                 Json::Value jsonRoot;
                 int p = 0;
                 string strA;
+                float fbegin = 0;
+                float fend = 0;
 
                 for(int i = 18; i < srclen - 2; i += 4)
                 {
@@ -2413,10 +2642,34 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
                     strA.append(strA1);
                     strA.append("|");
                     p += 1;
+
+                    if(i == 18)
+                    {
+                        fbegin = atof(strA1);
+                    }
+
+                    int n1 = i + 4;
+
+                    if(n1 >= srclen - 2)
+                    {
+                        fend = atof(strA1);
+                    }
                 }
 
+                glog::trace("\nbegin:%0.2f  end:%0.2f", fbegin, fend);
+                int n1 = strA.find_last_of("|");
+
+                if(n1 == strA.size() - 1)
+                {
+                    strA = strA.substr(0, n1);
+                }
+
+                float fenergy = fend - fbegin;
+                char  strenergy[20] = {0};
+                sprintf(strenergy, "%0.2f", fenergy);
                 jsonRoot["len"] = p;
                 jsonRoot["A"] = strA;
+                jsonRoot["energy"] = strenergy;
                 string inmsg = jsonRoot.toStyledString();
                 string sql = "select * from t_records where 1=1 and CONVERT(Nvarchar, day, 23)=\'";
                 sql.append(myday);
@@ -2482,6 +2735,77 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
             char time[30] = {0};
             sprintf(time, "%d%d:%d%d", s, g, sw, gw);
             glog::trace("换日时间 time:%s", time);
+        }
+    }
+    else if(AFN == 0x0E)             //报警和故障事件
+    {
+        string a1 = gstring::char2hex((const char*)src, srclen);
+        glog::GetInstance()->AddLine("故障:%s", a1.c_str());
+        BYTE    con =    src[13] & 0x10;
+        BYTE   DirPrmCode = src[6] & 0xc0;   //上行  从动          上行  启动    1100  c0
+        BYTE   FC = src[6] & 0xF; //控制域名的功能码
+        char addr1[10] = {0};
+        memcpy(addr1, &src[7], 4);
+        string addrarea = gstring::char2hex(addr1, 4);
+        BYTE DA[2] = {0};
+        BYTE DT[2] = {0};
+        memcpy(DA, &src[14], 2);
+        memcpy(DT, &src[16], 2);
+
+        if(DirPrmCode == 0xC0 && con == 0) //上行 启动站     主动上报故障和预警  不需要响应
+        {
+            if(DA[0] == 0 && DA[1] == 0 && DT[0] == 0x01 && DT[1] == 0x00)
+            {
+                int j = 19;
+                BYTE errcode = src[j + 0];
+                BYTE datalen = src[j + 1];
+                BYTE min = src[j + 2];
+                BYTE hour = src[j + 3];
+                BYTE day = src[j + 4];
+                BYTE month = src[j + 5];
+                BYTE year = src[j + 6];
+                char cmin[20] = {0};
+                char chour[20] = {0};
+                char cday[20] = {0};
+                char cmonth[20] = {0};
+                char cyear[20] = {0};
+                //5字节 时间  后是内容
+                string hexdata = gstring::char2hex((const char*)&src[j + 2], datalen);
+                sprintf(cmin, "%d%d", min >> 4 & 0x0f, min & 0xf);
+                sprintf(chour, "%d%d", hour >> 4 & 0x0f, hour & 0xf);
+                sprintf(cday, "%d%d", day >> 4 & 0x0f, day & 0xf);
+                sprintf(cmonth, "%d%d", month >> 4 & 0x0f, month & 0xf);
+                sprintf(cyear, "%d%d", year >> 4 & 0x0f, year & 0xf);
+                char date[30] = {0};
+                sprintf(date, "%s-%s-%s", cyear, cmonth, cday);
+                char err[20] = {0};
+                sprintf(err, "ERC%d", errcode);
+                string sql = "select * from t_fault where 1=1 and CONVERT(Nvarchar, f_day, 23)=\'";
+                sql.append(date);
+                sql.append("\' and f_comaddr='");
+                sql.append(addrarea);
+                sql.append("'");
+                _RecordsetPtr rs = this->dbopen.ExecuteWithResSQL(sql.c_str());
+
+                if(rs && this->dbopen.GetNum(rs) == 0)
+                {
+                    map<string, _variant_t>m_var;
+                    _variant_t  vdate(date);
+                    _variant_t  vcomaddr(addrarea.c_str());
+                    _variant_t  verr(err);
+                    _variant_t  vdata(err);
+                    m_var.insert(pair<string, _variant_t>("f_day", vdate));
+                    m_var.insert(pair<string, _variant_t>("f_comaddr", vcomaddr));
+                    m_var.insert(pair<string, _variant_t>("f_type", verr));
+                    string sql = this->dbopen.GetInsertSql(m_var, "t_fault");
+                    _RecordsetPtr rs1 = this->dbopen.ExecuteWithResSQL(sql.c_str());
+
+                    if(!rs1)
+                    {
+                        glog::GetInstance()->AddLine("插入报警事件失败");
+                    }
+                }
+            }
         }
     }
 }

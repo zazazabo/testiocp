@@ -123,7 +123,7 @@ public:
 
     int                 hex2str(string str, BYTE tosend[]);
     int                 wsHandshake(string &request, string &response);
-    int                 wsDecodeFrame(char inFrame[], string &outMessage, int len);
+    int                 wsDecodeFrame(char inFrame[], string &outMessage, int len,BOOL& fullpack);
     int                 wsEncodeFrame(string inMessage, char outFrame[], enum WS_FrameType frameType,int& lenret);
     void                dealws(IOCP_IO_PTR& lp_io, string& jsondata);
     string              GetDataDir(string filename);
@@ -151,7 +151,7 @@ private:
 
 	BOOL				IsBreakPack(BYTE src[],int len);
 	BOOL				IsTailPack(BYTE src[],int len,pBREAKPCK pack,IOCP_IO_PTR& lp_io);
-
+	BOOL				IsTailPackWeb(BYTE src[], int len, pBREAKPCK pack, IOCP_IO_PTR& lp_io);
 	 static DWORD WINAPI	TimeThread(LPVOID lp_param);
 	 void		CheckForInvalidConnection();
 };

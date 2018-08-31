@@ -55,7 +55,6 @@ void CIOCP::InitIoContext(IOCP_IO_PTR lp_io)
     memset(&lp_io->buf, 0, BUFFER_SIZE);
     lp_io->wsaBuf.buf       = lp_io->buf;
     lp_io->wsaBuf.len       = BUFFER_SIZE;
-
 }
 
 /*-------------------------------------------------------------------------------------------
@@ -201,7 +200,7 @@ BOOL CIOCP::PostAcceptEx()
         lp_io->fromtype = SOCKET_FROM_UNKNOW;
         lp_io->loginstatus = SOCKET_STATUS_UNKNOW;
         lp_io->lp_key = NULL;
-		lp_io->timelen=0;
+        lp_io->timelen = 0;
         //glog::GetInstance()->AddLine("post accecptex socket:%d IOCP_IO_PTR:%p", socket, lp_io);
         /////////////////////////////////////////////////
         bRet = lpAcceptEx(m_listen_socket, lp_io->socket, lp_io->buf,
@@ -490,6 +489,52 @@ BOOL CIOCP::IsBreakPack(BYTE src[], int len)
 
     return FALSE;
 }
+
+
+BOOL CIOCP::IsTailPackWeb(BYTE src[], int len, pBREAKPCK pack, IOCP_IO_PTR& lp_io)
+{
+    int lenall = len + pack->len;
+    BYTE* allbyte = new BYTE[lenall];
+    memset(allbyte, 0, lenall);
+    memcpy(allbyte, pack->b, pack->len);
+    memcpy(allbyte +  pack->len, src, len);
+
+	if (lenall<=1024)
+	{
+			memset(lp_io->wsaBuf.buf,0,1024);
+			memcpy(lp_io->wsaBuf.buf,allbyte,lenall);
+			lp_io->wsaBuf.len=lenall;
+			
+
+	}
+	delete allbyte;
+	return FALSE;
+
+//     delete pack->b;
+//     pack->b = allbyte;
+//     pack->len = lenall;
+//  string ss="";
+//  BOOL b1=FALSE;
+//  wsDecodeFrame((char*)allbyte,ss,lenall,b1);
+    //string begin = "{\"begin\":\"6A\"";
+    //string end = "\"end\":\"6A\"}";
+    //int n1 = len - end.size();
+    //if(n1 >= 0 && _strnicmp(end.c_str(), (const char*)&src[n1], end.size()) == 0)
+    //{
+    //    return TRUE;
+    //}
+    //else
+    //{
+    //    return FALSE;
+    //}
+}
+
+
+
+
+
+
+
 
 BOOL CIOCP::IsTailPack(BYTE src[], int len, pBREAKPCK pack, IOCP_IO_PTR& lp_io)
 {
@@ -874,7 +919,7 @@ BOOL CIOCP::MainLoop()
                 {
                     //检测集中器超时处理
                     //cout << "Server is running.........." << nCount++ << " times" << endl;
-                   CheckForInvalidConnection();
+                    CheckForInvalidConnection();
                 }
                 break;
 
@@ -904,71 +949,73 @@ BOOL CIOCP::MainLoop()
 -------------------------------------------------------------------------------------------*/
 void CIOCP::CheckForInvalidConnection()
 {
-	int         op, op_len, nRet;
-	IOCP_IO_PTR lp_start = NULL;
-	IO_POS      pos;
-	lp_start=  m_io_group.GetHeadPosition(pos);
-	//IOCP_IO_PTR lp_end =		 m_io_group.GetEndPosition(pos);
-	while (lp_start!=NULL)
-	{
+    int         op, op_len, nRet;
+    IOCP_IO_PTR lp_start = NULL;
+    IO_POS      pos;
+    lp_start =  m_io_group.GetHeadPosition(pos);
 
-		if (lp_start->fromtype==SOCKET_FROM_Concentrator)
-		{
-			
-			op_len = sizeof(op);
-			nRet = getsockopt( lp_start->socket, SOL_SOCKET, SO_CONNECT_TIME, (char*)&op, &op_len );
-			if( SOCKET_ERROR == nRet )
-			{
-				glog::traceErrorInfo("getsockopt",WSAGetLastError());
-				continue;
-			}
-			if( op != 0xffffffff)
-			{
-				int len= op-lp_start->timelen;
-					if (len/60>2)
-					{
-						closesocket( lp_start->socket );
-					}
-				//closesocket( lp_io->socket );
+    //IOCP_IO_PTR lp_end =       m_io_group.GetEndPosition(pos);
+    while(lp_start != NULL)
+    {
+        if(lp_start->fromtype == SOCKET_FROM_Concentrator)
+        {
+            op_len = sizeof(op);
+            nRet = getsockopt(lp_start->socket, SOL_SOCKET, SO_CONNECT_TIME, (char*)&op, &op_len);
 
-			}
-			//glog::trace("\nlp_start:%p  op:%d",lp_start,op);
+            if(SOCKET_ERROR == nRet)
+            {
+                glog::traceErrorInfo("getsockopt", WSAGetLastError());
+                continue;
+            }
 
-		}
+            if(op != 0xffffffff)
+            {
+                int len = op - lp_start->timelen;
 
-		lp_start=m_io_group.GetNext(pos);
-	}
+                if(len / 60 > 2)
+                {
+                    closesocket(lp_start->socket);
+                }
 
-// 	  while( pos != NULL )
-// 	  {
-// 	      lp_io = m_io_group.GetNext( pos );
-// 	      //看看哪个是没有登陆的，再查查它没登陆多长时间了
-// 	      if( lp_io->state != SOCKET_STATE_CONNECT_AND_READ )
-// 	      {
-// 	          op_len = sizeof(op);
-// 	
-// 	          nRet = getsockopt( lp_io->socket, SOL_SOCKET, SO_CONNECT_TIME, (char*)&op, &op_len );
-// 	
-// 	          if( SOCKET_ERROR == nRet )
-// 	          {
-// 	              MSG("SO_CONNECT_TIME failed:");
-// 	              MSG(WSAGetLastError());
-// 	
-// 	              continue;
-// 	          }
-// 	          if( op != 0xffffffff && op > 20 )
-// 	          {
-// 	              closesocket( lp_io->socket );
-// 	
-// 	              m_io_group.RemoveAt( lp_io );
-// 	
-// 	              MSG("有一个连接，但没有接收到数据,已经被踢出去了");
-// 	
-// 	              MSG( lp_io );
-// 	          }
-// 
-// 	      }
-	//  }
+                //closesocket( lp_io->socket );
+            }
+
+            //glog::trace("\nlp_start:%p  op:%d",lp_start,op);
+        }
+
+        lp_start = m_io_group.GetNext(pos);
+    }
+
+//    while( pos != NULL )
+//    {
+//        lp_io = m_io_group.GetNext( pos );
+//        //看看哪个是没有登陆的，再查查它没登陆多长时间了
+//        if( lp_io->state != SOCKET_STATE_CONNECT_AND_READ )
+//        {
+//            op_len = sizeof(op);
+//
+//            nRet = getsockopt( lp_io->socket, SOL_SOCKET, SO_CONNECT_TIME, (char*)&op, &op_len );
+//
+//            if( SOCKET_ERROR == nRet )
+//            {
+//                MSG("SO_CONNECT_TIME failed:");
+//                MSG(WSAGetLastError());
+//
+//                continue;
+//            }
+//            if( op != 0xffffffff && op > 20 )
+//            {
+//                closesocket( lp_io->socket );
+//
+//                m_io_group.RemoveAt( lp_io );
+//
+//                MSG("有一个连接，但没有接收到数据,已经被踢出去了");
+//
+//                MSG( lp_io );
+//            }
+//
+//        }
+    //  }
 }
 
 
@@ -1096,34 +1143,23 @@ DWORD CIOCP::CompletionRoutine(LPVOID lp_param)
             continue;
         }
 
+        //socket 通信时长
+        int op_len = 0;
+        int op = 0;
+        op_len = sizeof(op);
+        nRet = getsockopt(lp_io->socket, SOL_SOCKET, SO_CONNECT_TIME, (char*)&op, &op_len);
 
+        if(SOCKET_ERROR == nRet)
+        {
+            glog::traceErrorInfo("getsockopt", WSAGetLastError());
+            //continue;
+        }
 
-
-		//socket 通信时长
-		int op_len = 0;
-		int op = 0;
-		op_len = sizeof(op);
-		nRet = getsockopt(lp_io->socket, SOL_SOCKET, SO_CONNECT_TIME, (char*)&op, &op_len);
-
-		if(SOCKET_ERROR == nRet)
-		{
-			glog::traceErrorInfo("getsockopt", WSAGetLastError());
-			//continue;
-		}
-
-		if(op != 0xffffffff)
-		{
-			lp_io->timelen = op;
-			//glog::trace("\nlp_io:%p timelen:%d",lp_io,lp_io->timelen);
-		}
-
-
-
-
-
-
-
-
+        if(op != 0xffffffff)
+        {
+            lp_io->timelen = op;
+            //glog::trace("\nlp_io:%p timelen:%d",lp_io,lp_io->timelen);
+        }
 
         switch(lp_io->operation)
         {
@@ -1322,8 +1358,53 @@ DWORD CIOCP::CompletionRoutine(LPVOID lp_param)
 
                         if(lp_io->fromtype == SOCKET_FROM_WEBSOCKET)
                         {
+                            map<IOCP_IO_PTR, pBREAKPCK>::iterator itepack =  lp_this->m_pack.find(lp_io);
+
+                            if(itepack != lp_this->m_pack.end())
+                            {
+
+
+#ifdef _DEBUG
+                                glog::trace("\nweb socket 断包包尾:lp_io:%p", lp_io);
+#endif
+                                BOOL bret =  lp_this->IsTailPackWeb((BYTE*)lp_io->buf, lp_io->ol.InternalHigh, itepack->second, lp_io);
+
+                                //delete itepack->second;
+                                BREAK_PACK* p1 = (BREAK_PACK*)itepack->second;
+							//	p1->b
+
+                                delete p1->b;
+                                p1->b = NULL;
+                                delete p1;
+								 lp_this->m_pack.erase(itepack);
+                            }
+
+                           
                             strret = "";
-                            int lenread = lp_this->wsDecodeFrame(lp_io->buf, strret, lp_io->ol.InternalHigh);
+                            BOOL bFullPack = TRUE;
+                            int lenread = lp_this->wsDecodeFrame(lp_io->buf, strret, lp_io->ol.InternalHigh, bFullPack);
+
+                            if(bFullPack == FALSE)
+                            {
+                                //websocket断包处理
+                                map<IOCP_IO_PTR, pBREAKPCK>::iterator itepack =  lp_this->m_pack.find(lp_io);
+
+                                if(itepack == lp_this->m_pack.end())
+                                {
+                                    pBREAKPCK b = new BREAK_PACK;
+                                    BYTE *b1 = new BYTE[lp_io->ol.InternalHigh];
+                                    memset(b1, 0, lp_io->ol.InternalHigh);
+                                    memcpy(b1, lp_io->buf, lp_io->ol.InternalHigh);
+                                    b->b = b1;
+                                    b->len = lp_io->ol.InternalHigh;
+                                    lp_this->m_pack.insert(make_pair(lp_io, b));
+#ifdef _DEBUG
+                                    glog::trace("\nweb socket 断包包头:lp_io:%p", lp_io);
+#endif
+                                }
+                            }
+
+                            glog::trace("\n%s", strret.c_str());
 
                             if(lenread == WS_CLOSING_FRAME)
                             {
@@ -1366,10 +1447,7 @@ DWORD CIOCP::CompletionRoutine(LPVOID lp_param)
                             }
                             else if(lenread != WS_ERROR_FRAME)
                             {
-                                glog::trace("\n%s", strret.c_str());
-							
                                 lp_this->dealws(lp_io, strret);
-				
                                 goto TOHear;
                             }
                         }
@@ -1536,7 +1614,7 @@ int CIOCP::wsHandshake(string & request, string & response)
     response += strtmp;
     return ret;
 }
-int CIOCP::wsDecodeFrame(char inFrame[], string & outMessage, int len)
+int CIOCP::wsDecodeFrame(char inFrame[], string & outMessage, int len, BOOL& fullpack)
 {
     int ret = WS_OPENING_FRAME;
     const char *frameData = inFrame;
@@ -1617,22 +1695,35 @@ int CIOCP::wsDecodeFrame(char inFrame[], string & outMessage, int len)
             payloadData[i] = payloadData[i] ^ maskingKey[i % 4];
         }
 
-        size_t len1 = 0;
-        int num = payloadLength * 3;
-        WCHAR* poutBuf = new WCHAR[num];
-        memset(poutBuf, 0, num);
-        char outbuff[4096] = {0};
-        int lenout = payloadLength;
-        BOOL bchar = gstring::UrlDecode(payloadData, outbuff, lenout);
-        outMessage = outbuff;
-        //  WCHAR* ddd = QXUtf82Unicode(payloadData, &len1, poutBuf);
-        //outMessage=gstring::WStringToString(ddd);
-        //    outMessage = payloadData;
-        delete[] payloadData;
-//         if(poutBuf)
-//         {
-//             delete[] ddd;
-//         }
+        string begin = "{\"begin\":\"6A\"";
+        string end = "\"end\":\"6A\"}";
+
+        if(_strnicmp(begin.c_str(), payloadData, begin.size()) == 0)
+        {
+            int n1 = payloadLength - end.size();
+
+            if(n1 >= 0 && _strnicmp(end.c_str(), &payloadData[n1], begin.size()) == 0)
+            {
+                glog::trace("websocket is one pack");
+                outMessage = payloadData;
+                fullpack = TRUE;
+            }
+            else
+            {
+                glog::trace("websocket is break pack");
+                fullpack = FALSE;
+            }
+        }
+
+//         size_t len1 = 0;
+//         int num = payloadLength * 3;
+//         WCHAR* poutBuf = new WCHAR[num];
+//         memset(poutBuf, 0, num);
+//         char outbuff[4096] = {0};
+//         int lenout = payloadLength;
+//         BOOL bchar = gstring::UrlDecode(payloadData, outbuff, lenout);
+//         outMessage = outbuff;
+//         delete[] payloadData;
     }
 
     return ret;
@@ -1717,7 +1808,8 @@ void CIOCP::dealws(IOCP_IO_PTR & lp_io, string & jsondata)
                     Json::Value row = root["row"];
                     root["data"] = TRUE;
                 }
-				glog::trace("\naddress:%s",addrarea.c_str());
+
+                glog::trace("\naddress:%s", addrarea.c_str());
                 string inmsg = root.toStyledString();
                 //  string inmsg = root.toStyledString();
                 char outmsg[1048] = {0};
@@ -1749,7 +1841,7 @@ void CIOCP::dealws(IOCP_IO_PTR & lp_io, string & jsondata)
                     lp_io->operation = IOCP_WRITE;
                 }
             }
-            else if(vtemp == "setParam")
+            else if(vtemp == "A4")          //设置命令
             {
                 Json::Value isres = root["res"];
 
@@ -1790,7 +1882,7 @@ void CIOCP::dealws(IOCP_IO_PTR & lp_io, string & jsondata)
                     }
                 }
             }
-            else if(vtemp == "contrParam")
+            else if(vtemp == "A5")                  //控制命令
             {
                 Json::Value isres = root["res"];
 
@@ -1996,7 +2088,8 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
                     IOCP_IO_PTR lp_io1 = m_listmsg.back();
                     m_listmsg.pop_back();
                     string strret = "";
-                    int lenread = wsDecodeFrame(lp_io1->buf, strret, lp_io1->ol.InternalHigh);
+                    BOOL bFullPack = FALSE;
+                    int lenread = wsDecodeFrame(lp_io1->buf, strret, lp_io1->ol.InternalHigh, bFullPack);
                     Json::Value root;
                     Json::Reader reader;
 
@@ -2062,7 +2155,8 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
                     IOCP_IO_PTR lp_io1 = m_listmsg.back();
                     m_listmsg.pop_back();
                     string strret = "";
-                    int lenread = wsDecodeFrame(lp_io1->buf, strret, lp_io1->ol.InternalHigh);
+                    BOOL bFullPack = FALSE;
+                    int lenread = wsDecodeFrame(lp_io1->buf, strret, lp_io1->ol.InternalHigh, bFullPack);
                     Json::Value root;
                     Json::Reader reader;
 

@@ -225,6 +225,9 @@ int APIENTRY WinMain(HINSTANCE hInstance,
     //24    0x18    0001 1000
     //BYTE b=0x28;
     //BYTE bbb= b>>4&0x0f;
+
+
+
     short aa = 258;
     short* pp = &aa;
     int rr = 100 % 256;

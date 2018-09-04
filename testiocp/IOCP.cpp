@@ -2881,30 +2881,38 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
                     char a[16] = {0};
                     int z = 18;
                     sprintf(a, "%d.%d.%d.%d", src[z], src[z + 1], src[z + 2], src[z + 3]);
-                    SHORT aport = (SHORT)&src[z + 4];
+                    SHORT aport = *(SHORT*)&src[z + 4];
                     z = z + 6;
                     char b[16] = {0};
                     sprintf(b, "%d.%d.%d.%d", src[z], src[z + 1], src[z + 2], src[z + 3]);
-                    SHORT bport = (SHORT)&src[z + 4];
+                    SHORT bport = *(SHORT*)&src[z + 4];
                     z = z + 6;
                     char c[16] = {0};
                     sprintf(c, "%d.%d.%d.%d", src[z], src[z + 1], src[z + 2], src[z + 3]);
-                    SHORT cport = (SHORT)&src[z + 4];
+                    SHORT cport =*(SHORT*)&src[z + 4];
                     z = z + 6;
                     char d[16] = {0};
                     sprintf(d, "%d.%d.%d.%d", src[z], src[z + 1], src[z + 2], src[z + 3]);
-                    SHORT dport = (SHORT)&src[z + 4];
-                    z = z + 6;
-                    char d[16] = {0};
-                    sprintf(d, "%d.%d.%d.%d", src[z], src[z + 1], src[z + 2], src[z + 3]);
-                    SHORT dport = (SHORT)&src[z + 4];
+                    SHORT dport = *(SHORT*)&src[z + 4];
+
 
                     z = z + 6;
-                    char apn[20] = {0};
-                    memcpy(apn, &src[z], 16);
+					char* apn="";
+					for (int i=z;i<16;i++)
+					{
+						if (src[i]==0x00)
+						{
+							i++;
+						}else{
+							apn=(char*)&src[i];
+							break;
+						}
+					}
+
+                    //memcpy(apn, &src[z], 16);
                     SHORT areanLen = *(SHORT*)&src[z + 16];
 
-
+					glog::trace("a:%s-%d b:%s-%d c:%s-%d d:%s-%d",a,aport,b,bport,c,cport,d,dport);
 
                     IOCP_IO_PTR lp_io1 = m_listmsg.back();
                     m_listmsg.pop_back();
@@ -2922,11 +2930,21 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
                         root["frame"] = frame;
                   
                         root["dnsip"] =a;
-						
-                        root["data"] = gstring::char2hex((const char*)src, srclen);
-                        root["length"] = srclen;
+						root["dnsport"]=aport;
+						root["dnsip_"] =b;
+						root["dnsport_"]=bport;
+						root["siteip"] =c;
+						root["siteport"]=cport;
+						root["siteip_"] =d;
+						root["siteport_"]=dport;
+						root["apn"]=apn;
+						root["areanLen"]=areanLen;
+
+
+//                         root["data"] = gstring::char2hex((const char*)src, srclen);
+//                         root["length"] = srclen;
                         string inmsg = root.toStyledString();
-                        char outmsg[1048] = {0};
+                        char outmsg[1024] = {0};
                         int lenret = 0;
                         int len = wsEncodeFrame(inmsg, outmsg, WS_TEXT_FRAME, lenret);
 

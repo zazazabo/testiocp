@@ -225,13 +225,20 @@ int APIENTRY WinMain(HINSTANCE hInstance,
     //24    0x18    0001 1000
     //BYTE b=0x28;
     //BYTE bbb= b>>4&0x0f;
+	char* ppp=NULL;
+	char vv[10]={0x00,0x00,0x00,0x00,0x63,0x6d,0x6e,0x65,0x74};
+	for (int i=0;i<16;i++)
+	{
+		if (vv[i]==0x00)
+		{
+			i++;
+		}else{
+			ppp=&vv[i];
+			break;
+		}
+	}
+	SHORT b =*(SHORT*)vv;
 
-
-
-    short aa = 258;
-    short* pp = &aa;
-    int rr = 100 % 256;
-    BYTE b2 = (BYTE)rr;
     glog::setOpenLog(TRUE);
     CoInitialize(NULL);
     TESTLIST t;

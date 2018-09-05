@@ -951,8 +951,10 @@ void CIOCP::CheckForInvalidConnection()
     IOCP_IO_PTR lp_start = NULL;
     IO_POS      pos;
     lp_start =  m_io_group.GetHeadPosition(pos);
-
     //IOCP_IO_PTR lp_end =       m_io_group.GetEndPosition(pos);
+    map<IOCP_IO_PTR, DWORD>m_io;
+    m_io.clear();
+
     while(lp_start != NULL)
     {
         if(lp_start->fromtype == SOCKET_FROM_Concentrator)
@@ -963,6 +965,7 @@ void CIOCP::CheckForInvalidConnection()
             if(SOCKET_ERROR == nRet)
             {
                 glog::traceErrorInfo("getsockopt", WSAGetLastError());
+                lp_start = m_io_group.GetNext(pos);
                 continue;
             }
 
@@ -970,8 +973,12 @@ void CIOCP::CheckForInvalidConnection()
             {
                 int len = op - lp_start->timelen;
 
-                if(len / 60 > 2)
+                if(len / 60 > 1)
                 {
+//                     if(m_io.find(lp_start) == m_io.end())
+//                     {
+//                         m_io.insert(make_pair(lp_start, len));
+//                     }
                     closesocket(lp_start->socket);
                 }
 
@@ -982,6 +989,23 @@ void CIOCP::CheckForInvalidConnection()
         }
 
         lp_start = m_io_group.GetNext(pos);
+    }
+
+    map<IOCP_IO_PTR, DWORD>::iterator ite = m_io.begin();
+
+    while(ite != m_io.end())
+    {
+        glog::trace("\nlpio:%p time:%d", ite->first, ite->second);
+        closesocket(ite->first->socket);
+        m_io.erase(ite++);
+//      if(ite->second == lp_io)
+//      {
+//          m_io.erase(ite++);   //erase 删除后指向下一个迭代器
+//      }
+//      else
+//      {
+//          ite++;
+//      }
     }
 
 //    while( pos != NULL )
@@ -1062,6 +1086,11 @@ DWORD CIOCP::CompletionRoutine(LPVOID lp_param)
         {
             glog::trace("\nlp_io:%p ThreadId:%d  fromtype:%d  state:%d", lp_io, GetCurrentThreadId(), lp_io->fromtype, lp_io->state);
             glog::traceErrorInfo("\nGetQueuedCompletionStatus", GetLastError());
+			if (WSAGetLastError()==64)
+			{
+				lp_this->m_io_group.RemoveAt(lp_io);
+				lp_this->m_key_group.RemoveAt(lp_key);
+			}
             continue;
             //归还IO句柄；continue;
         }
@@ -1150,6 +1179,7 @@ DWORD CIOCP::CompletionRoutine(LPVOID lp_param)
         if(SOCKET_ERROR == nRet)
         {
             glog::traceErrorInfo("getsockopt", WSAGetLastError());
+            closesocket(lp_io->socket);
             //continue;
         }
 
@@ -1966,6 +1996,30 @@ void CIOCP::dealws(IOCP_IO_PTR & lp_io, string & jsondata)
                     }
                 }
             }
+            else if(vtemp == "00")
+            {
+                Json::Value tosend = root["data"];
+                string data = tosend.asString();
+                data = gstring::replace(data, " ", "");
+                BYTE bitSend[512] = {0};
+                int len = hex2str(data, bitSend);
+
+                if(len > 0)
+                {
+                    string addrarea = root["addr"].asString();
+                    map<string, IOCP_IO_PTR>::iterator ite = m_mcontralcenter.find(addrarea);
+
+                    if(ite != m_mcontralcenter.end())
+                    {
+                        IOCP_IO_PTR lp_io1 = ite->second;
+                        memcpy(lp_io1->buf, bitSend, len);
+                        lp_io1->wsaBuf.buf = lp_io1->buf;
+                        lp_io1->wsaBuf.len = len;
+                        lp_io1->operation = IOCP_WRITE;
+                        DataAction(lp_io1, lp_io1->lp_key);
+                    }
+                }
+            }
         }
     }
 }
@@ -2158,28 +2212,61 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
                 //全部否认
                 if(!m_listmsg.empty())
                 {
-                    IOCP_IO_PTR lp_io1 = m_listmsg.back();
-                    m_listmsg.pop_back();
-                    Json::Value jsonRoot; //定义根节点
-                    Json::Value jsonItem; //定义一个子对象
-                    jsonItem["msg"] = "fail "; //添加数据
-                    jsonItem["frame"] = frame;
-                    jsonRoot.append(jsonItem);
-                    jsonRoot["data"] = gstring::char2hex((const char*)src, srclen);
-                    jsonRoot["length"] = srclen;
-                    string inmsg = jsonRoot.toStyledString();
-                    char outmsg[1048] = {0};
-                    int lenret = 0;
-                    int len = wsEncodeFrame(inmsg, outmsg, WS_TEXT_FRAME, lenret);
 
-                    if(len != WS_ERROR_FRAME)
-                    {
-                        memcpy(lp_io1->buf, outmsg, lenret);
-                        lp_io1->wsaBuf.buf = lp_io1->buf;
-                        lp_io1->wsaBuf.len = lenret;
-                        lp_io1->operation = IOCP_WRITE;
-                        DataAction(lp_io1, lp_io1->lp_key);
-                    }
+					IOCP_IO_PTR lp_io1 = m_listmsg.back();
+					m_listmsg.pop_back();
+					string strret = "";
+					BOOL bFullPack = FALSE;
+					int lenread = wsDecodeFrame(lp_io1->buf, strret, lp_io1->ol.InternalHigh, bFullPack);
+					Json::Value root;
+					Json::Reader reader;
+					if(reader.parse(strret.c_str(), root))
+					{
+						SHORT setnum = (SHORT) * (src + 18); //错误的装置号
+						BYTE  errcode = (BYTE) * (src + 20);
+						root["status"] = "fail";
+						root["frame"] = frame;
+						root["errcode"] = errcode;
+						root["data"] = gstring::char2hex((const char*)src, srclen);
+						root["length"] = srclen;
+						string inmsg = root.toStyledString();
+						char outmsg[1048] = {0};
+						int lenret = 0;
+						int len = wsEncodeFrame(inmsg, outmsg, WS_TEXT_FRAME, lenret);
+
+						if(len != WS_ERROR_FRAME)
+						{
+							memcpy(lp_io1->buf, outmsg, lenret);
+							lp_io1->wsaBuf.buf = lp_io1->buf;
+							lp_io1->wsaBuf.len = lenret;
+							lp_io1->operation = IOCP_WRITE;
+							DataAction(lp_io1, lp_io1->lp_key);
+						}
+					}
+
+
+                    //IOCP_IO_PTR lp_io1 = m_listmsg.back();
+                    //m_listmsg.pop_back();
+                    //Json::Value jsonRoot; //定义根节点
+                    //Json::Value jsonItem; //定义一个子对象
+                    //jsonItem["msg"] = "fail "; //添加数据
+                    //jsonItem["frame"] = frame;
+                    //jsonRoot.append(jsonItem);
+                    //jsonRoot["data"] = gstring::char2hex((const char*)src, srclen);
+                    //jsonRoot["length"] = srclen;
+                    //string inmsg = jsonRoot.toStyledString();
+                    //char outmsg[1048] = {0};
+                    //int lenret = 0;
+                    //int len = wsEncodeFrame(inmsg, outmsg, WS_TEXT_FRAME, lenret);
+
+                    //if(len != WS_ERROR_FRAME)
+                    //{
+                    //    memcpy(lp_io1->buf, outmsg, lenret);
+                    //    lp_io1->wsaBuf.buf = lp_io1->buf;
+                    //    lp_io1->wsaBuf.len = lenret;
+                    //    lp_io1->operation = IOCP_WRITE;
+                    //    DataAction(lp_io1, lp_io1->lp_key);
+                    //}
                 }
             }
             else if(Fn == 4)      //按单元标识事件确认
@@ -2870,7 +2957,15 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
                 BYTE gw = A1[1]  & 0x0f;
                 char time[30] = {0};
                 sprintf(time, "%d%d:%d%d", s, g, sw, gw);
-                glog::trace("\n换日时间 time:%s", time);
+                BYTE A2[2] = {0};
+                memcpy(A2, &src[20], 2);
+                BYTE s2 = A2[0] >> 4 & 0x0f;
+                BYTE g2 = A2[0]  & 0x0f;
+                BYTE sw2 = A2[1] >> 4 & 0x0f;
+                BYTE gw2 = A2[1]  & 0x0f;
+                char time2[30] = {0};
+                sprintf(time2, "%d%d:%d%d", s2, g2, sw2, gw2);
+                glog::trace("\n换日时间 time:%s 冻结时间:%s", time, time2);
 
                 if(!m_listmsg.empty())
                 {
@@ -2889,6 +2984,7 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
                         root["status"] = "success";
                         root["frame"] = frame;
                         root["chgdaytime"] = time;
+                        root["flozetime"] = time2;
                         string inmsg = root.toStyledString();
                         char outmsg[1024] = {0};
                         int lenret = 0;
@@ -2977,7 +3073,7 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
                         root["siteport_"] = dport;
                         root["apn"] = p;
                         root["areanLen"] = areanLen;
-                        root["domain"] = "zhizhichun.eicp.net";
+                        root["domain"] = domain;
 //                         root["data"] = gstring::char2hex((const char*)src, srclen);
 //                         root["length"] = srclen;
                         string inmsg = root.toStyledString();
@@ -2997,7 +3093,12 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
                     }
                 }
             }
-        }
+        
+
+
+
+
+			}
     }
     else if(AFN == 0x0E)             //报警和故障事件
     {
@@ -3070,102 +3171,101 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
             }
         }
     }
+    else if(AFN == 0xA4)
+    {
+        BYTE    con =    src[13] & 0x10;
+        BYTE   DirPrmCode = src[6] & 0xc0;   //上行  从动
+        BYTE   FC = src[6] & 0xF; //控制域名的功能码
+        BYTE DA[2] = {0};
+        BYTE DT[2] = {0};
+        memcpy(DA, &src[14], 2);    //PN P0
+        memcpy(DT, &src[16], 2);   //FN  1 登陆 | 3 心跳
 
-	else if (AFN==0xA4)
-	{
-		BYTE    con =    src[13] & 0x10;
-		BYTE   DirPrmCode = src[6] & 0xc0;   //上行  从动
-		BYTE   FC = src[6] & 0xF; //控制域名的功能码
-		BYTE DA[2] = {0};
-		BYTE DT[2] = {0};
-		memcpy(DA, &src[14], 2);    //PN P0
-		memcpy(DT, &src[16], 2);   //FN  1 登陆 | 3 心跳
+        // 参数设置
 
-		// 参数设置
+        if(DirPrmCode == 0x80 && con == 0x0 && FC == 0x8)   //  上行 从动 响应帧   0x80 上行 从动
+        {
+            BYTE frame = src[13] & 0xf;   //帧序号
+            BYTE Fn = DT[1] * 8 + DT[0];
+            glog::GetInstance()->AddLine("参数查询 集中器响应帧:%d 确认 Fn:%d", frame, Fn);
 
-		if(DirPrmCode == 0x80 && con == 0x0 && FC == 0x8)   //  上行 从动 响应帧   0x80 上行 从动
-		{
-			BYTE frame = src[13] & 0xf;   //帧序号
-			BYTE Fn = DT[1] * 8 + DT[0];
-			glog::GetInstance()->AddLine("参数查询 集中器响应帧:%d 确认 Fn:%d", frame, Fn);
+            //设置APN
+            if(DA[0] == 0 && DA[1] == 0 && DT[0] == 0x02 && DT[1] == 0x00)
+            {
+                if(!m_listmsg.empty())
+                {
+                    IOCP_IO_PTR lp_io1 = m_listmsg.back();
+                    m_listmsg.pop_back();
+                    string strret = "";
+                    BOOL bFullPack = FALSE;
+                    int lenread = wsDecodeFrame(lp_io1->buf, strret, lp_io1->ol.InternalHigh, bFullPack);
+                    Json::Value root;
+                    Json::Reader reader;
 
-			//设置APN
-			if(DA[0] == 0 && DA[1] == 0 && DT[0] == 0x02 && DT[1] == 0x00)
-			{
+                    if(reader.parse(strret.c_str(), root))
+                    {
+                        SHORT setnum = (SHORT) * (src + 18); //错误的装置号
+                        BYTE  errcode = (BYTE) * (src + 20);
+                        root["status"] = "success";
+                        root["frame"] = frame;
+                        string inmsg = root.toStyledString();
+                        char outmsg[1024] = {0};
+                        int lenret = 0;
+                        int len = wsEncodeFrame(inmsg, outmsg, WS_TEXT_FRAME, lenret);
 
-				if(!m_listmsg.empty())
-				{
-					IOCP_IO_PTR lp_io1 = m_listmsg.back();
-					m_listmsg.pop_back();
-					string strret = "";
-					BOOL bFullPack = FALSE;
-					int lenread = wsDecodeFrame(lp_io1->buf, strret, lp_io1->ol.InternalHigh, bFullPack);
-					Json::Value root;
-					Json::Reader reader;
-					if(reader.parse(strret.c_str(), root))
-					{
-						SHORT setnum = (SHORT) * (src + 18); //错误的装置号
-						BYTE  errcode = (BYTE) * (src + 20);
-						root["status"] = "success";
-						root["frame"] = frame;
-						string inmsg = root.toStyledString();
-						char outmsg[1024] = {0};
-						int lenret = 0;
-						int len = wsEncodeFrame(inmsg, outmsg, WS_TEXT_FRAME, lenret);
+                        if(len != WS_ERROR_FRAME)
+                        {
+                            glog::trace("\noutmsg:%s lenret:%d", outmsg, lenret);
+                            memcpy(lp_io1->buf, outmsg, lenret);
+                            lp_io1->wsaBuf.buf = lp_io1->buf;
+                            lp_io1->wsaBuf.len = lenret;
+                            lp_io1->operation = IOCP_WRITE;
+                            DataAction(lp_io1, lp_io1->lp_key);
+                        }
+                    }
+                }
+            }
 
-						if(len != WS_ERROR_FRAME)
-						{
-							glog::trace("\noutmsg:%s lenret:%d", outmsg, lenret);
-							memcpy(lp_io1->buf, outmsg, lenret);
-							lp_io1->wsaBuf.buf = lp_io1->buf;
-							lp_io1->wsaBuf.len = lenret;
-							lp_io1->operation = IOCP_WRITE;
-							DataAction(lp_io1, lp_io1->lp_key);
-						}
-					}
-				}
-			}
+            //查询主站信息
+            if(DA[0] == 0 && DA[1] == 0 && DT[0] == 0x01 && DT[1] == 0x00)
+            {
+                if(!m_listmsg.empty())
+                {
+                    IOCP_IO_PTR lp_io1 = m_listmsg.back();
+                    m_listmsg.pop_back();
+                    string strret = "";
+                    BOOL bFullPack = FALSE;
+                    int lenread = wsDecodeFrame(lp_io1->buf, strret, lp_io1->ol.InternalHigh, bFullPack);
+                    Json::Value root;
+                    Json::Reader reader;
 
-			//查询主站信息
-			if(DA[0] == 0 && DA[1] == 0 && DT[0] == 0x01 && DT[1] == 0x00)
-			{
-				if(!m_listmsg.empty())
-				{	
-					IOCP_IO_PTR lp_io1 = m_listmsg.back();
-					m_listmsg.pop_back();
-					string strret = "";
-					BOOL bFullPack = FALSE;
-					int lenread = wsDecodeFrame(lp_io1->buf, strret, lp_io1->ol.InternalHigh, bFullPack);
-					Json::Value root;
-					Json::Reader reader;
+                    if(reader.parse(strret.c_str(), root))
+                    {
+                        SHORT setnum = (SHORT) * (src + 18); //错误的装置号
+                        BYTE  errcode = (BYTE) * (src + 20);
+                        root["status"] = "success";
+                        root["frame"] = frame;
+                        //                         root["data"] = gstring::char2hex((const char*)src, srclen);
+                        //                         root["length"] = srclen;
+                        string inmsg = root.toStyledString();
+                        char outmsg[1024] = {0};
+                        int lenret = 0;
+                        int len = wsEncodeFrame(inmsg, outmsg, WS_TEXT_FRAME, lenret);
 
-					if(reader.parse(strret.c_str(), root))
-					{
-						SHORT setnum = (SHORT) * (src + 18); //错误的装置号
-						BYTE  errcode = (BYTE) * (src + 20);
-						root["status"] = "success";
-						root["frame"] = frame;
-						//                         root["data"] = gstring::char2hex((const char*)src, srclen);
-						//                         root["length"] = srclen;
-						string inmsg = root.toStyledString();
-						char outmsg[1024] = {0};
-						int lenret = 0;
-						int len = wsEncodeFrame(inmsg, outmsg, WS_TEXT_FRAME, lenret);
-
-						if(len != WS_ERROR_FRAME)
-						{
-							glog::trace("\noutmsg:%s lenret:%d", outmsg, lenret);
-							memcpy(lp_io1->buf, outmsg, lenret);
-							lp_io1->wsaBuf.buf = lp_io1->buf;
-							lp_io1->wsaBuf.len = lenret;
-							lp_io1->operation = IOCP_WRITE;
-							DataAction(lp_io1, lp_io1->lp_key);
-						}
-					}
-				}
-			}
-		}
-	}
+                        if(len != WS_ERROR_FRAME)
+                        {
+                            glog::trace("\noutmsg:%s lenret:%d", outmsg, lenret);
+                            memcpy(lp_io1->buf, outmsg, lenret);
+                            lp_io1->wsaBuf.buf = lp_io1->buf;
+                            lp_io1->wsaBuf.len = lenret;
+                            lp_io1->operation = IOCP_WRITE;
+                            DataAction(lp_io1, lp_io1->lp_key);
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 void CIOCP::buildConCode(BYTE src[], BYTE res[], int& len, BYTE bcon)

@@ -797,6 +797,59 @@ BOOL CIOCP::Init()
 {
     CoInitialize(NULL);
 
+
+	CSmtp smtp(25, "smtp.126.com",
+		"z277402131@126.com", /*你的邮箱地址*/
+		"z277402131",/*邮箱密码*/
+		"277402131@qq.com",/*目的邮箱地址*/
+		"TEST",                   /*主题*/
+		"测试测试！收到请回复！"  /*邮件正文*/);
+	//添加附件时注意,\一定要写成\\，因为转义字符的缘故
+	//     string filePath("D:\\附件.txt");
+	//     smtp.AddAttachment(filePath);
+	/*还可以调用CSmtp::DeleteAttachment函数删除附件，还有一些函数，自己看头文件吧!*/
+	//单个发送
+	int err;
+	if((err = smtp.SendEmail_Ex()) != 0) {
+		if(err == 1)
+			cout << "错误1: 由于网络不畅通，发送失败!" << endl;
+
+		if(err == 2)
+			cout << "错误2: 用户名错误,请核对!" << endl;
+
+		if(err == 3)
+			cout << "错误3: 用户密码错误，请核对!" << endl;
+
+		if(err == 4)
+			cout << "错误4: 请检查附件目录是否正确，以及文件是否存在!" << endl;
+	}
+
+	//群发
+	//     string strTarEmail = "12345678@qq.com";
+	//     smtp.AddTargetEmail(strTarEmail);
+	// 
+	//     if((err = smtp.SendVecotrEmail()) != 0) {
+	//         if(err == -1)
+	//             cout << "错误-1: 没有目地邮箱地址!" << endl;
+	// 
+	//         if(err == 1)
+	//             cout << "错误1: 由于网络不畅通，发送失败!" << endl;
+	// 
+	//         if(err == 2)
+	//             cout << "错误2: 用户名错误,请核对!" << endl;
+	// 
+	//         if(err == 3)
+	//             cout << "错误3: 用户密码错误，请核对!" << endl;
+	// 
+	//         if(err == 4)
+	//             cout << "错误4: 请检查附件目录是否正确，以及文件是否存在!" << endl;
+	//     }
+
+
+
+
+
+
     while(!m_listmsg.empty())
     {
         m_listmsg.clear();

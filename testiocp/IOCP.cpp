@@ -797,58 +797,47 @@ BOOL CIOCP::Init()
 {
     CoInitialize(NULL);
 
+    //CSmtp smtp(25, "smtp.126.com","z277402131@126.com", /*你的邮箱地址*/"z277402131",/*邮箱密码*/"277402131@qq.com",/*目的邮箱地址*/"TEST",/*主题*/"测试测试！收到请回复！"  /*邮件正文*/);
+    //添加附件时注意,\一定要写成\\，因为转义字符的缘故
+    //     string filePath("D:\\附件.txt");
+    //     smtp.AddAttachment(filePath);
+    /*还可以调用CSmtp::DeleteAttachment函数删除附件，还有一些函数，自己看头文件吧!*/
+    //单个发送
+    //int err;
+    //if((err = smtp.SendEmail_Ex()) != 0) {
+    //  if(err == 1)
+    //      cout << "错误1: 由于网络不畅通，发送失败!" << endl;
 
-	CSmtp smtp(25, "smtp.126.com",
-		"z277402131@126.com", /*你的邮箱地址*/
-		"z277402131",/*邮箱密码*/
-		"277402131@qq.com",/*目的邮箱地址*/
-		"TEST",                   /*主题*/
-		"测试测试！收到请回复！"  /*邮件正文*/);
-	//添加附件时注意,\一定要写成\\，因为转义字符的缘故
-	//     string filePath("D:\\附件.txt");
-	//     smtp.AddAttachment(filePath);
-	/*还可以调用CSmtp::DeleteAttachment函数删除附件，还有一些函数，自己看头文件吧!*/
-	//单个发送
-	int err;
-	if((err = smtp.SendEmail_Ex()) != 0) {
-		if(err == 1)
-			cout << "错误1: 由于网络不畅通，发送失败!" << endl;
+    //  if(err == 2)
+    //      cout << "错误2: 用户名错误,请核对!" << endl;
 
-		if(err == 2)
-			cout << "错误2: 用户名错误,请核对!" << endl;
+    //  if(err == 3)
+    //      cout << "错误3: 用户密码错误，请核对!" << endl;
 
-		if(err == 3)
-			cout << "错误3: 用户密码错误，请核对!" << endl;
+    //  if(err == 4)
+    //      cout << "错误4: 请检查附件目录是否正确，以及文件是否存在!" << endl;
+    //}
 
-		if(err == 4)
-			cout << "错误4: 请检查附件目录是否正确，以及文件是否存在!" << endl;
-	}
-
-	//群发
-	//     string strTarEmail = "12345678@qq.com";
-	//     smtp.AddTargetEmail(strTarEmail);
-	// 
-	//     if((err = smtp.SendVecotrEmail()) != 0) {
-	//         if(err == -1)
-	//             cout << "错误-1: 没有目地邮箱地址!" << endl;
-	// 
-	//         if(err == 1)
-	//             cout << "错误1: 由于网络不畅通，发送失败!" << endl;
-	// 
-	//         if(err == 2)
-	//             cout << "错误2: 用户名错误,请核对!" << endl;
-	// 
-	//         if(err == 3)
-	//             cout << "错误3: 用户密码错误，请核对!" << endl;
-	// 
-	//         if(err == 4)
-	//             cout << "错误4: 请检查附件目录是否正确，以及文件是否存在!" << endl;
-	//     }
-
-
-
-
-
+    //群发
+    //     string strTarEmail = "12345678@qq.com";
+    //     smtp.AddTargetEmail(strTarEmail);
+    //
+    //     if((err = smtp.SendVecotrEmail()) != 0) {
+    //         if(err == -1)
+    //             cout << "错误-1: 没有目地邮箱地址!" << endl;
+    //
+    //         if(err == 1)
+    //             cout << "错误1: 由于网络不畅通，发送失败!" << endl;
+    //
+    //         if(err == 2)
+    //             cout << "错误2: 用户名错误,请核对!" << endl;
+    //
+    //         if(err == 3)
+    //             cout << "错误3: 用户密码错误，请核对!" << endl;
+    //
+    //         if(err == 4)
+    //             cout << "错误4: 请检查附件目录是否正确，以及文件是否存在!" << endl;
+    //     }
 
     while(!m_listmsg.empty())
     {
@@ -2149,6 +2138,10 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
     //链路检测 登陆  控制域 c4: 1100 0100  功能码：0x02 src[13] da1 src[14] da2 src[15] dt0    p0  f1  登陆   6控制域  13帧序列 12
     //&&src[14]==0x0&&src[15]==0x0&&src[16]==0x01&&src[17]==1   1100 0000 1100 0000   1 dir  1 yn PRM  6控制域  帧是是否要回复 src[13]
     BYTE AFN = src[12];
+    char addr1[4] = {0};
+    memcpy(addr1, &src[7], 4); //地址
+    char addrarea[20] = {0};
+    sprintf(addrarea, "%02x%02x%02x%02x", addr1[1], addr1[0], addr1[3], addr1[2]); //网关地址
 
     if(AFN == 0x2)      //链路检测
     {
@@ -2375,9 +2368,7 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
         BYTE   FC = src[6] & 0xF; //控制域名的功能码
         BYTE DA[2] = {0};
         BYTE DT[2] = {0};
-        char addr1[10] = {0};
-        memcpy(addr1, &src[7], 4);
-        string addrarea = gstring::char2hex(addr1, 4);
+        //string addrarea = gstring::char2hex(addr1, 4);
         memcpy(DA, &src[14], 2);    //PN P0
         memcpy(DT, &src[16], 2);   //F35  三相电压   00 00 04 04 昨天三相电压
         time_t tmtamp;

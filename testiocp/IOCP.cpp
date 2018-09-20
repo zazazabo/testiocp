@@ -1086,11 +1086,13 @@ DWORD CIOCP::CompletionRoutine(LPVOID lp_param)
         {
             glog::trace("\nlp_io:%p ThreadId:%d  fromtype:%d  state:%d", lp_io, GetCurrentThreadId(), lp_io->fromtype, lp_io->state);
             glog::traceErrorInfo("\nGetQueuedCompletionStatus", GetLastError());
-			if (WSAGetLastError()==64)
-			{
-				lp_this->m_io_group.RemoveAt(lp_io);
-				lp_this->m_key_group.RemoveAt(lp_key);
-			}
+
+            if(WSAGetLastError() == 64)
+            {
+                lp_this->m_io_group.RemoveAt(lp_io);
+                lp_this->m_key_group.RemoveAt(lp_key);
+            }
+
             continue;
             //归还IO句柄；continue;
         }
@@ -2212,38 +2214,37 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
                 //全部否认
                 if(!m_listmsg.empty())
                 {
+                    IOCP_IO_PTR lp_io1 = m_listmsg.back();
+                    m_listmsg.pop_back();
+                    string strret = "";
+                    BOOL bFullPack = FALSE;
+                    int lenread = wsDecodeFrame(lp_io1->buf, strret, lp_io1->ol.InternalHigh, bFullPack);
+                    Json::Value root;
+                    Json::Reader reader;
 
-					IOCP_IO_PTR lp_io1 = m_listmsg.back();
-					m_listmsg.pop_back();
-					string strret = "";
-					BOOL bFullPack = FALSE;
-					int lenread = wsDecodeFrame(lp_io1->buf, strret, lp_io1->ol.InternalHigh, bFullPack);
-					Json::Value root;
-					Json::Reader reader;
-					if(reader.parse(strret.c_str(), root))
-					{
-						SHORT setnum = (SHORT) * (src + 18); //错误的装置号
-						BYTE  errcode = (BYTE) * (src + 20);
-						root["status"] = "fail";
-						root["frame"] = frame;
-						root["errcode"] = errcode;
-						root["data"] = gstring::char2hex((const char*)src, srclen);
-						root["length"] = srclen;
-						string inmsg = root.toStyledString();
-						char outmsg[1048] = {0};
-						int lenret = 0;
-						int len = wsEncodeFrame(inmsg, outmsg, WS_TEXT_FRAME, lenret);
+                    if(reader.parse(strret.c_str(), root))
+                    {
+                        SHORT setnum = (SHORT) * (src + 18); //错误的装置号
+                        BYTE  errcode = (BYTE) * (src + 20);
+                        root["status"] = "fail";
+                        root["frame"] = frame;
+                        root["errcode"] = errcode;
+                        root["data"] = gstring::char2hex((const char*)src, srclen);
+                        root["length"] = srclen;
+                        string inmsg = root.toStyledString();
+                        char outmsg[1048] = {0};
+                        int lenret = 0;
+                        int len = wsEncodeFrame(inmsg, outmsg, WS_TEXT_FRAME, lenret);
 
-						if(len != WS_ERROR_FRAME)
-						{
-							memcpy(lp_io1->buf, outmsg, lenret);
-							lp_io1->wsaBuf.buf = lp_io1->buf;
-							lp_io1->wsaBuf.len = lenret;
-							lp_io1->operation = IOCP_WRITE;
-							DataAction(lp_io1, lp_io1->lp_key);
-						}
-					}
-
+                        if(len != WS_ERROR_FRAME)
+                        {
+                            memcpy(lp_io1->buf, outmsg, lenret);
+                            lp_io1->wsaBuf.buf = lp_io1->buf;
+                            lp_io1->wsaBuf.len = lenret;
+                            lp_io1->operation = IOCP_WRITE;
+                            DataAction(lp_io1, lp_io1->lp_key);
+                        }
+                    }
 
                     //IOCP_IO_PTR lp_io1 = m_listmsg.back();
                     //m_listmsg.pop_back();
@@ -2258,7 +2259,6 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
                     //char outmsg[1048] = {0};
                     //int lenret = 0;
                     //int len = wsEncodeFrame(inmsg, outmsg, WS_TEXT_FRAME, lenret);
-
                     //if(len != WS_ERROR_FRAME)
                     //{
                     //    memcpy(lp_io1->buf, outmsg, lenret);
@@ -2998,6 +2998,7 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
                             lp_io1->wsaBuf.len = lenret;
                             lp_io1->operation = IOCP_WRITE;
                             DataAction(lp_io1, lp_io1->lp_key);
+                            return;
                         }
                     }
                 }
@@ -3089,16 +3090,43 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
                             lp_io1->wsaBuf.len = lenret;
                             lp_io1->operation = IOCP_WRITE;
                             DataAction(lp_io1, lp_io1->lp_key);
+                            return;
                         }
                     }
                 }
             }
-        
 
+            if(!m_listmsg.empty())
+            {
+                IOCP_IO_PTR lp_io1 = m_listmsg.back();
+                m_listmsg.pop_back();
+                string strret = "";
+                BOOL bFullPack = FALSE;
+                int lenread = wsDecodeFrame(lp_io1->buf, strret, lp_io1->ol.InternalHigh, bFullPack);
+                Json::Value root;
+                Json::Reader reader;
 
+                if(reader.parse(strret.c_str(), root))
+                {
+                    root["status"] = "success";
+                    root["data"] = gstring::char2hex((const char*)src, srclen);
+                    root["length"] = srclen;
+                    string inmsg = root.toStyledString();
+                    char outmsg[1048] = {0};
+                    int lenret = 0;
+                    int len = wsEncodeFrame(inmsg, outmsg, WS_TEXT_FRAME, lenret);
 
-
-			}
+                    if(len != WS_ERROR_FRAME)
+                    {
+                        memcpy(lp_io1->buf, outmsg, lenret);
+                        lp_io1->wsaBuf.buf = lp_io1->buf;
+                        lp_io1->wsaBuf.len = lenret;
+                        lp_io1->operation = IOCP_WRITE;
+                        DataAction(lp_io1, lp_io1->lp_key);
+                    }
+                }
+            }
+        }
     }
     else if(AFN == 0x0E)             //报警和故障事件
     {

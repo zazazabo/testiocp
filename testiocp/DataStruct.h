@@ -81,6 +81,7 @@ typedef struct
 	IOCP_FROM_CLIEND            fromtype;
 	IOCP_LOGIN_STATUS           loginstatus;
 	IOCP_KEY_PTR                lp_key;
+	char						day[20];
 	int							timelen;
 	volatile int				state;
 }IOCP_IO,*IOCP_IO_PTR;
@@ -91,6 +92,14 @@ typedef struct _BREAK_PACK
 	BYTE*   b;
 	int		len;
 }BREAK_PACK,*pBREAKPCK;
+
+
+typedef struct _COMADDRVISITE
+{
+	char comaddr[20];
+	BOOL bcollect;
+}ComaddrViste,*pComaddrViste;
+
 
 typedef CDoubleList<IOCP_IO,10>	IO_GROUP;
 typedef CDoubleList<IOCP_KEY,0>	KEY_GROUP;

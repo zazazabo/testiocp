@@ -1,4 +1,3 @@
-
 #include "IOCP.h"
 #include "SHA1.h"
 #pragma comment(lib, "ws2_32.lib")
@@ -37,8 +36,7 @@ void CIOCP::Close()
     //      closesocket( lp_io->socket );
     //  }
 
-    for(i = 0; i < m_n_thread_count; i++)
-    {
+    for(i = 0; i < m_n_thread_count; i++) {
         CloseHandle(m_h_thread[i]);
         m_h_thread[i] = NULL;
     }
@@ -66,8 +64,7 @@ BOOL CIOCP::InitSocket()
 {
     m_listen_socket = WSASocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, 0, WSA_FLAG_OVERLAPPED);
 
-    if(INVALID_SOCKET == m_listen_socket)
-    {
+    if(INVALID_SOCKET == m_listen_socket) {
         glog::traceErrorInfo("call WSASocket", WSAGetLastError());
         return FALSE;
     }
@@ -76,8 +73,7 @@ BOOL CIOCP::InitSocket()
     lp_key->socket = m_listen_socket;
     HANDLE hRet = CreateIoCompletionPort((HANDLE)m_listen_socket, m_h_iocp, (DWORD)lp_key, 0);
 
-    if(hRet == NULL)
-    {
+    if(hRet == NULL) {
         closesocket(m_listen_socket);
         m_key_group.RemoveAt(lp_key);
         return FALSE;
@@ -93,13 +89,11 @@ BOOL CIOCP::InitSocket()
 -------------------------------------------------------------------------------------------*/
 void CIOCP::CloseThreadHandle(int count)
 {
-    if(count <= 0)
-    {
+    if(count <= 0) {
         return;
     }
 
-    for(int i = 0; i < count; i++)
-    {
+    for(int i = 0; i < count; i++) {
         CloseHandle(m_h_thread[i]);
         m_h_thread[i] = INVALID_HANDLE_VALUE;
     }
@@ -120,16 +114,14 @@ BOOL CIOCP::BindAndListenSocket()
     int nRet;
     nRet = bind(m_listen_socket, (SOCKADDR*)&addr, sizeof(SOCKADDR));
 
-    if(SOCKET_ERROR == nRet)
-    {
+    if(SOCKET_ERROR == nRet) {
         glog::traceErrorInfo("call bind()", WSAGetLastError());
         return FALSE;
     }
 
     nRet = listen(m_listen_socket, 20);
 
-    if(SOCKET_ERROR == nRet)
-    {
+    if(SOCKET_ERROR == nRet) {
         cout << "listen fail!" << endl;
         return FALSE;
     }
@@ -151,14 +143,12 @@ BOOL CIOCP::StartThread()
     m_n_thread_count = sys_info.dwNumberOfProcessors > MAXTHREAD_COUNT ? MAXTHREAD_COUNT : sys_info.dwNumberOfProcessors;
     //m_n_thread_count = 1;
 
-    for(i = 0; i < m_n_thread_count; i++)
-    {
+    for(i = 0; i < m_n_thread_count; i++) {
         DWORD tid = 0;
         m_h_thread[i] = CreateThread(NULL, 0, CompletionRoutine, (LPVOID)this, 0, &tid);
         glog::GetInstance()->AddLine("i:%d ThreadId:%d", i, tid);
 
-        if(NULL == m_h_thread[i])
-        {
+        if(NULL == m_h_thread[i]) {
             CloseThreadHandle(i);
             CloseHandle(m_h_iocp);
             return FALSE;
@@ -182,12 +172,10 @@ BOOL CIOCP::PostAcceptEx()
     DWORD   dwBytes;
     BOOL    bRet;
 
-    for(int i = 0; i < count; i++)
-    {
+    for(int i = 0; i < count; i++) {
         SOCKET socket = WSASocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, 0, WSA_FLAG_OVERLAPPED);
 
-        if(INVALID_SOCKET == socket)
-        {
+        if(INVALID_SOCKET == socket) {
             glog::traceErrorInfo("WSASocket", WSAGetLastError());
             continue;
         }
@@ -201,6 +189,7 @@ BOOL CIOCP::PostAcceptEx()
         lp_io->loginstatus = SOCKET_STATUS_UNKNOW;
         lp_io->lp_key = NULL;
         lp_io->timelen = 0;
+        memset(lp_io->day, 0, 20);
         //glog::GetInstance()->AddLine("post accecptex socket:%d IOCP_IO_PTR:%p", socket, lp_io);
         /////////////////////////////////////////////////
         bRet = lpAcceptEx(m_listen_socket, lp_io->socket, lp_io->buf,
@@ -210,8 +199,7 @@ BOOL CIOCP::PostAcceptEx()
                           sizeof(SOCKADDR_IN) + 16,
                           &dwBytes, &lp_io->ol);
 
-        if((bRet == FALSE) && (WSA_IO_PENDING != WSAGetLastError()))
-        {
+        if((bRet == FALSE) && (WSA_IO_PENDING != WSAGetLastError())) {
             closesocket(socket);
             m_io_group.RemoveAt(lp_io);
             // cout << "post acceptex fail:" << WSAGetLastError() << endl;
@@ -230,10 +218,8 @@ BOOL CIOCP::PostAcceptEx()
 -------------------------------------------------------------------------------------------*/
 BOOL CIOCP::HandleData(IOCP_IO_PTR lp_io, int nFlags, IOCP_KEY_PTR lp_key)
 {
-    switch(nFlags)
-    {
-        case IOCP_COMPLETE_ACCEPT:
-            {
+    switch(nFlags) {
+        case IOCP_COMPLETE_ACCEPT: {
                 glog::trace("\nAccept a link!");
                 char szPeerAddress[50];
                 SOCKADDR_IN *addrClient = NULL, *addrLocal = NULL;
@@ -258,8 +244,7 @@ BOOL CIOCP::HandleData(IOCP_IO_PTR lp_io, int nFlags, IOCP_KEY_PTR lp_key)
             }
             break;
 
-        case IOCP_COMPLETE_ACCEPT_READ:
-            {
+        case IOCP_COMPLETE_ACCEPT_READ: {
                 lp_io->operation    = IOCP_WRITE;
                 GetAddrAndPort(lp_io->wsaBuf.buf, szAddress, uPort);
                 MSG(lp_io->wsaBuf.len);
@@ -267,8 +252,7 @@ BOOL CIOCP::HandleData(IOCP_IO_PTR lp_io, int nFlags, IOCP_KEY_PTR lp_key)
             }
             break;
 
-        case IOCP_COMPLETE_READ:
-            {
+        case IOCP_COMPLETE_READ: {
                 ////cout<<"read a data!"<<lp_io->buf<<endl;
                 //printf("read a data! socket:%d \n", lp_io->socket);
                 //// lp_io->operation    = IOCP_WRITE;
@@ -276,16 +260,14 @@ BOOL CIOCP::HandleData(IOCP_IO_PTR lp_io, int nFlags, IOCP_KEY_PTR lp_key)
             }
             break;
 
-        case IOCP_COMPLETE_WRITE:
-            {
+        case IOCP_COMPLETE_WRITE: {
                 glog::trace("\nwrite a data!");
                 lp_io->operation    = IOCP_READ;
                 InitIoContext(lp_io);
             }
             break;
 
-        default:
-            {
+        default: {
                 glog::trace("handleData do nothing!");
                 return FALSE;
             }
@@ -306,14 +288,11 @@ BOOL CIOCP::DataAction(IOCP_IO_PTR lp_io, IOCP_KEY_PTR lp_key)
     int     nRet;
     DWORD   dwFlags;
 
-    switch(lp_io->operation)
-    {
-        case IOCP_WRITE:
-            {
+    switch(lp_io->operation) {
+        case IOCP_WRITE: {
                 nRet = WSASend(lp_io->socket, &lp_io->wsaBuf, 1, &dwBytes, 0, &lp_io->ol, NULL);
 
-                if((nRet == SOCKET_ERROR) && (WSAGetLastError() != WSA_IO_PENDING))
-                {
+                if((nRet == SOCKET_ERROR) && (WSAGetLastError() != WSA_IO_PENDING)) {
                     closesocket(lp_io->socket);
                     m_io_group.RemoveAt(lp_io);
                     m_key_group.RemoveAt(lp_key);
@@ -322,15 +301,13 @@ BOOL CIOCP::DataAction(IOCP_IO_PTR lp_io, IOCP_KEY_PTR lp_key)
             }
             break;
 
-        case IOCP_READ:
-            {
+        case IOCP_READ: {
                 dwFlags = 0;
                 nRet = WSARecv(lp_io->socket, &lp_io->wsaBuf, 1, &dwBytes, &dwFlags, &lp_io->ol, NULL);
 
                 // Sleep(1000);
 
-                if((nRet == SOCKET_ERROR) && (WSAGetLastError() != WSA_IO_PENDING))
-                {
+                if((nRet == SOCKET_ERROR) && (WSAGetLastError() != WSA_IO_PENDING)) {
                     closesocket(lp_io->socket);
                     m_io_group.RemoveAt(lp_io);
                     m_key_group.RemoveAt(lp_key);
@@ -339,8 +316,7 @@ BOOL CIOCP::DataAction(IOCP_IO_PTR lp_io, IOCP_KEY_PTR lp_key)
             }
             break;
 
-        case IOCP_END:
-            {
+        case IOCP_END: {
                 glog::trace("\n DataAction->IOCP_END  关闭socket:%p   ", lp_io);
                 closesocket(lp_io->socket);
                 m_io_group.RemoveAt(lp_io);
@@ -351,8 +327,7 @@ BOOL CIOCP::DataAction(IOCP_IO_PTR lp_io, IOCP_KEY_PTR lp_key)
             }
             break;
 
-        default:
-            {
+        default: {
                 cout << "DataAction do nothing!------------------------------------------" << endl;
                 return FALSE;
             }
@@ -376,8 +351,7 @@ BOOL CIOCP::GetFunPointer()
                     sizeof(lpAcceptEx),
                     &dwRet, NULL, NULL);
 
-    if(SOCKET_ERROR == nRet)
-    {
+    if(SOCKET_ERROR == nRet) {
         closesocket(m_listen_socket);
         cout << "get acceptex fail!" << WSAGetLastError() << endl;
         return FALSE;
@@ -392,8 +366,7 @@ BOOL CIOCP::GetFunPointer()
                sizeof(lpTransmitFile),
                &dwRet, NULL, NULL);
 
-    if(nRet == SOCKET_ERROR)
-    {
+    if(nRet == SOCKET_ERROR) {
         closesocket(m_listen_socket);
         cout << "get transmitfile fail!" << WSAGetLastError() << endl;
         return FALSE;
@@ -406,8 +379,7 @@ BOOL CIOCP::GetFunPointer()
                     sizeof(lpGetAcceptExSockaddrs),
                     &dwRet, NULL, NULL);
 
-    if(nRet == SOCKET_ERROR)
-    {
+    if(nRet == SOCKET_ERROR) {
         closesocket(m_listen_socket);
         cout << "get lpGetAcceptExSockaddrs fail!" << WSAGetLastError() << endl;
         return FALSE;
@@ -427,15 +399,13 @@ BOOL CIOCP::RegAcceptEvent()
     int     nRet;
     m_h_accept_event = CreateEvent(NULL, FALSE, FALSE, NULL);
 
-    if(NULL == m_h_accept_event)
-    {
+    if(NULL == m_h_accept_event) {
         return FALSE;
     }
 
     nRet = WSAEventSelect(m_listen_socket, m_h_accept_event, FD_ACCEPT);
 
-    if(nRet != 0)
-    {
+    if(nRet != 0) {
         CloseHandle(m_h_accept_event);
         return FALSE;
     }
@@ -464,25 +434,21 @@ BOOL CIOCP::GetAddrAndPort(char*buf, char ip[], UINT & port)
 
 BOOL CIOCP::IsBreakPack(BYTE src[], int len)
 {
-    if(len < 6)
-    {
+    if(len < 6) {
         return FALSE;
     }
 
-    if(src[0] == 0x68)
-    {
+    if(src[0] == 0x68) {
         int aa = 44;
     }
 
     SHORT len1 = *(SHORT*)&src[1];
     SHORT len2 = *(SHORT*)&src[3];
 
-    if(src[0] == 0x68 && len1 == len2 && src[5] == 0x68)
-    {
+    if(src[0] == 0x68 && len1 == len2 && src[5] == 0x68) {
         BOOL bAllpack =  checkFlag(src, len);
 
-        if(bAllpack == FALSE)
-        {
+        if(bAllpack == FALSE) {
             return TRUE;
         }
     }
@@ -499,8 +465,7 @@ BOOL CIOCP::IsTailPackWeb(BYTE src[], int len, pBREAKPCK pack, IOCP_IO_PTR& lp_i
     memcpy(allbyte, pack->b, pack->len);
     memcpy(allbyte +  pack->len, src, len);
 
-    if(lenall <= 1024)
-    {
+    if(lenall <= 1024) {
         memset(lp_io->wsaBuf.buf, 0, 1024);
         memcpy(lp_io->wsaBuf.buf, allbyte, lenall);
         lp_io->wsaBuf.len = lenall;
@@ -536,13 +501,11 @@ BOOL CIOCP::IsTailPackWeb(BYTE src[], int len, pBREAKPCK pack, IOCP_IO_PTR& lp_i
 
 BOOL CIOCP::IsTailPack(BYTE src[], int len, pBREAKPCK pack, IOCP_IO_PTR& lp_io)
 {
-    if(len == 0)
-    {
+    if(len == 0) {
         return FALSE;
     }
 
-    if(src[len - 1] == 0x16)
-    {
+    if(src[len - 1] == 0x16) {
         int lenall = len + pack->len;
         BYTE* allbyte = new BYTE[lenall];
         memset(allbyte, 0, lenall);
@@ -550,8 +513,7 @@ BOOL CIOCP::IsTailPack(BYTE src[], int len, pBREAKPCK pack, IOCP_IO_PTR& lp_io)
         memcpy(allbyte +  pack->len, src, len);
         BOOL  bcontro = checkFlag(allbyte, lenall);
 
-        if(bcontro)
-        {
+        if(bcontro) {
             BYTE bdest[1024] = {0};
             int lenret = 0;
             BOOL  bisres = FALSE;
@@ -591,8 +553,7 @@ DWORD CIOCP::TimeThread(LPVOID lp_param)
 //  string strtime=m_configTime;
 //  gstring::split(v_str,m_configTime,":");
 
-    while(TRUE)
-    {
+    while(TRUE) {
         time_t tmtamp;
         struct tm *tm1 = NULL;
         time(&tmtamp) ;
@@ -603,180 +564,133 @@ DWORD CIOCP::TimeThread(LPVOID lp_param)
         mktime(tm1);
         char myday[30] = {0};
         strftime(myday, sizeof(myday), "%Y-%m-%d", tm1);
-        map<string, BOOL>::iterator ite = lp_this->m_day.find(myday);
+        map<string, IOCP_IO_PTR>::iterator  it1 = lp_this->m_mcontralcenter.begin();
 
-        if(ite == lp_this->m_day.end())
-        {
-            lp_this->m_day.insert(pair<string, BOOL>(myday, FALSE));
-        }
-        else
-        {
-            //当天还没采集到数据执行
-            if(ite->second == FALSE)
-            {
-                BOOL  b5[5] = {FALSE};
-                //集中器客户端去端
-                map<string, IOCP_IO_PTR>::iterator  it1 = lp_this->m_mcontralcenter.begin();
+        if(it1 != lp_this->m_mcontralcenter.end()) {
+            glog::trace("\n%s", it1->first.c_str());
+            IOCP_IO_PTR lo = it1->second;
 
-                if(it1 != lp_this->m_mcontralcenter.end())
-                {
-                    IOCP_IO_PTR lo = it1->second;
-                    string sql = "select * from t_records where 1=1 and CONVERT(Nvarchar, day, 23)=\'";
-                    sql.append(myday);
-                    sql.append("\' and comaddr='");
-                    sql.append(it1->first);
-                    sql.append("'");
-                    _RecordsetPtr rs = lp_this->dbopen.ExecuteWithResSQL(sql.c_str());
-
-                    if(rs && lp_this->dbopen.GetNum(rs) == 1)
-                    {
-                        _variant_t  vvoltage =  rs->GetCollect(_variant_t("voltage"));
-                        _variant_t  velectric =  rs->GetCollect(_variant_t("electric"));
-                        _variant_t  vpower =  rs->GetCollect(_variant_t("power"));
-                        _variant_t  vactivepower =  rs->GetCollect(_variant_t("activepower"));
-                        _variant_t  vpowerfactor =  rs->GetCollect(_variant_t("powerfactor"));
-
-                        if(vvoltage.vt == VT_NULL || vvoltage.vt == VT_EMPTY)
-                        {
-                            unsigned char vol[24] = {0x68, 0x42, 0x00, 0x42, 0x00, 0x68, 0x04, 0x02, 0x17, 0x01, 0x01, 0x02, 0xAC, 0x7A, 0x00, 0x00, 0x04, 0x04, 0x00, 0x00, 0x01, 0x05, 0x55, 0x16};
-                            lp_this->InitIoContext(lo);
-                            memcpy(lo->buf, vol, sizeof(vol));
-                            lo->wsaBuf.len = sizeof(vol);
-                            lo->wsaBuf.buf = lo->buf;
-                            lo->operation = IOCP_WRITE;
-                            lp_this->DataAction(lo, lo->lp_key);
-                        }
-                        else
-                        {
-                            b5[0] = TRUE;
-                        }
-
-                        if(velectric.vt == VT_NULL || velectric.vt == VT_EMPTY)
-                        {
-                            glog::trace("\n请求昨天三相电流数据");
-                            unsigned char electric[20] = {0x68, 0x32, 0x00, 0x32, 0x00, 0x68, 0x04, 0x02, 0x17, 0x01, 0x01, 0x02, 0xAC, 0x75, 0x00, 0x00, 0x20, 0x04, 0x66, 0x16 };
-                            lp_this->InitIoContext(lo);
-                            memcpy(lo->buf, electric, sizeof(electric));
-                            lo->wsaBuf.len = sizeof(electric);
-                            lo->wsaBuf.buf = lo->buf;
-                            lo->operation = IOCP_WRITE;
-                            lp_this->DataAction(lo, lo->lp_key);
-                        }
-                        else
-                        {
-                            b5[1] = TRUE;
-                        }
-
-                        if(vpower.vt == VT_NULL || vpower.vt == VT_EMPTY)
-                        {
-                            glog::trace("\n请求昨天正向功能量");
-                            unsigned char power[20] = {0x68, 0x32, 0x00, 0x32, 0x00, 0x68, 0x04, 0x02, 0x17, 0x01, 0x01, 0x02, 0xAC, 0x7B, 0x00, 0x00, 0x01, 0x05, 0x4E, 0x16 };
-                            lp_this->InitIoContext(lo);
-                            memcpy(lo->buf, power, sizeof(power));
-                            lo->wsaBuf.len = sizeof(power);
-                            lo->wsaBuf.buf = lo->buf;
-                            lo->operation = IOCP_WRITE;
-                            lp_this->DataAction(lo, lo->lp_key);
-                        }
-                        else
-                        {
-                            b5[2] = TRUE;
-                        }
-
-                        if(vactivepower.vt == VT_NULL || vactivepower.vt == VT_EMPTY)
-                        {
-                            glog::trace("\n请求昨天三相有功功率数据");
-                            unsigned char activepower[24] = {0x68, 0x42, 0x00, 0x42, 0x00, 0x68, 0x04, 0x02, 0x17, 0x01, 0x01, 0x02, 0xAC, 0x76, 0x00, 0x00, 0x01, 0x03, 0x00, 0x00, 0x20, 0x04, 0x6B, 0x16 };
-                            lp_this->InitIoContext(lo);
-                            memcpy(lo->buf, activepower, sizeof(activepower));
-                            lo->wsaBuf.len = sizeof(activepower);
-                            lo->wsaBuf.buf = lo->buf;
-                            lo->operation = IOCP_WRITE;
-                            lp_this->DataAction(lo, lo->lp_key);
-                        }
-                        else
-                        {
-                            b5[3] = TRUE;
-                        }
-
-                        if(vpowerfactor.vt == VT_NULL || vpowerfactor.vt == VT_EMPTY)
-                        {
-                            glog::trace("\n请求昨天功率因数");
-                            unsigned char powerfactor[24] = {0x68, 0x42, 0x00, 0x42, 0x00, 0x68, 0x04, 0x02, 0x17, 0x01, 0x01, 0x02, 0xAC, 0x78, 0x00, 0x00, 0x40, 0x03, 0x00, 0x00, 0x20, 0x04, 0xAC, 0x16 };
-                            lp_this->InitIoContext(lo);
-                            memcpy(lo->buf, powerfactor, sizeof(powerfactor));
-                            lo->wsaBuf.len = sizeof(powerfactor);
-                            lo->wsaBuf.buf = lo->buf;
-                            lo->operation = IOCP_WRITE;
-                            lp_this->DataAction(lo, lo->lp_key);
-                        }
-                        else
-                        {
-                            b5[4] = TRUE;
-                        }
-
-                        if(b5[0] == TRUE && b5[1] == TRUE && b5[2] == TRUE && b5[3] == TRUE && b5[4] == TRUE)
-                        {
-                            ite->second = TRUE;
-                        }
-                    }
-                    else if(rs && lp_this->dbopen.GetNum(rs) == 0)
-                    {
-                        //所有执行
-                        //昨天三相电压
-                        glog::trace("\n请求昨天三相电压数据");
-                        unsigned char vol[24] = {0x68, 0x42, 0x00, 0x42, 0x00, 0x68, 0x04, 0x02, 0x17, 0x01, 0x01, 0x02, 0xAC, 0x7A, 0x00, 0x00, 0x04, 0x04, 0x00, 0x00, 0x01, 0x05, 0x55, 0x16};
-                        lp_this->InitIoContext(lo);
-                        memcpy(lo->buf, vol, sizeof(vol));
-                        lo->wsaBuf.len = sizeof(vol);
-                        lo->wsaBuf.buf = lo->buf;
-                        lo->operation = IOCP_WRITE;
-                        lp_this->DataAction(lo, lo->lp_key);
-                        //昨天三相电流
-                        Sleep(10000);
-                        glog::trace("\n请求昨天三相电流数据");
-                        unsigned char electric[20] = {0x68, 0x32, 0x00, 0x32, 0x00, 0x68, 0x04, 0x02, 0x17, 0x01, 0x01, 0x02, 0xAC, 0x75, 0x00, 0x00, 0x20, 0x04, 0x66, 0x16 };
-                        lp_this->InitIoContext(lo);
-                        memcpy(lo->buf, electric, sizeof(electric));
-                        lo->wsaBuf.len = sizeof(electric);
-                        lo->wsaBuf.buf = lo->buf;
-                        lo->operation = IOCP_WRITE;
-                        lp_this->DataAction(lo, lo->lp_key);
-                        //昨天三相有功功率
-                        Sleep(10000);
-                        glog::trace("\n请求昨天三相有功功率数据");
-                        unsigned char activepower[24] = {0x68, 0x42, 0x00, 0x42, 0x00, 0x68, 0x04, 0x02, 0x17, 0x01, 0x01, 0x02, 0xAC, 0x76, 0x00, 0x00, 0x01, 0x03, 0x00, 0x00, 0x20, 0x04, 0x6B, 0x16 };
-                        lp_this->InitIoContext(lo);
-                        memcpy(lo->buf, activepower, sizeof(activepower));
-                        lo->wsaBuf.len = sizeof(activepower);
-                        lo->wsaBuf.buf = lo->buf;
-                        lo->operation = IOCP_WRITE;
-                        lp_this->DataAction(lo, lo->lp_key);
-                        //昨天总功率因数
-                        Sleep(10000);
-                        glog::trace("\n请求昨天功率因数");
-                        unsigned char powerfactor[24] = {0x68, 0x42, 0x00, 0x42, 0x00, 0x68, 0x04, 0x02, 0x17, 0x01, 0x01, 0x02, 0xAC, 0x78, 0x00, 0x00, 0x40, 0x03, 0x00, 0x00, 0x20, 0x04, 0xAC, 0x16 };
-                        lp_this->InitIoContext(lo);
-                        memcpy(lo->buf, powerfactor, sizeof(powerfactor));
-                        lo->wsaBuf.len = sizeof(powerfactor);
-                        lo->wsaBuf.buf = lo->buf;
-                        lo->operation = IOCP_WRITE;
-                        lp_this->DataAction(lo, lo->lp_key);
-                        //正向功能量
-                        Sleep(10000);
-                        glog::trace("\n请求昨天正向功能量");
-                        unsigned char power[20] = {0x68, 0x32, 0x00, 0x32, 0x00, 0x68, 0x04, 0x02, 0x17, 0x01, 0x01, 0x02, 0xAC, 0x7B, 0x00, 0x00, 0x01, 0x05, 0x4E, 0x16 };
-                        lp_this->InitIoContext(lo);
-                        memcpy(lo->buf, power, sizeof(power));
-                        lo->wsaBuf.len = sizeof(power);
-                        lo->wsaBuf.buf = lo->buf;
-                        lo->operation = IOCP_WRITE;
-                        lp_this->DataAction(lo, lo->lp_key);
-                    }
-                }
+            if(_stricmp(lo->day, myday) != 0) {
+                //昨天三相电压
+                glog::trace("\n请求昨天三相电压数据");
+                unsigned char vol[24] = {0x68, 0x42, 0x00, 0x42, 0x00, 0x68, 0x04, 0x02, 0x17, 0x01, 0x01, 0x02, 0xAC, 0x7A, 0x00, 0x00, 0x04, 0x04, 0x00, 0x00, 0x01, 0x05, 0x55, 0x16};
+                lp_this->InitIoContext(lo);
+                memcpy(lo->buf, vol, sizeof(vol));
+                lo->wsaBuf.len = sizeof(vol);
+                lo->wsaBuf.buf = lo->buf;
+                lo->operation = IOCP_WRITE;
+                lp_this->DataAction(lo, lo->lp_key);
+                //昨天三相电流
+                Sleep(10000);
+                glog::trace("\n请求昨天三相电流数据");
+                unsigned char electric[20] = {0x68, 0x32, 0x00, 0x32, 0x00, 0x68, 0x04, 0x02, 0x17, 0x01, 0x01, 0x02, 0xAC, 0x75, 0x00, 0x00, 0x20, 0x04, 0x66, 0x16 };
+                lp_this->InitIoContext(lo);
+                memcpy(lo->buf, electric, sizeof(electric));
+                lo->wsaBuf.len = sizeof(electric);
+                lo->wsaBuf.buf = lo->buf;
+                lo->operation = IOCP_WRITE;
+                lp_this->DataAction(lo, lo->lp_key);
+                //昨天三相有功功率
+                Sleep(10000);
+                glog::trace("\n请求昨天三相有功功率数据");
+                unsigned char activepower[24] = {0x68, 0x42, 0x00, 0x42, 0x00, 0x68, 0x04, 0x02, 0x17, 0x01, 0x01, 0x02, 0xAC, 0x76, 0x00, 0x00, 0x01, 0x03, 0x00, 0x00, 0x20, 0x04, 0x6B, 0x16 };
+                lp_this->InitIoContext(lo);
+                memcpy(lo->buf, activepower, sizeof(activepower));
+                lo->wsaBuf.len = sizeof(activepower);
+                lo->wsaBuf.buf = lo->buf;
+                lo->operation = IOCP_WRITE;
+                lp_this->DataAction(lo, lo->lp_key);
+                //昨天总功率因数
+                Sleep(10000);
+                glog::trace("\n请求昨天功率因数");
+                unsigned char powerfactor[24] = {0x68, 0x42, 0x00, 0x42, 0x00, 0x68, 0x04, 0x02, 0x17, 0x01, 0x01, 0x02, 0xAC, 0x78, 0x00, 0x00, 0x40, 0x03, 0x00, 0x00, 0x20, 0x04, 0xAC, 0x16 };
+                lp_this->InitIoContext(lo);
+                memcpy(lo->buf, powerfactor, sizeof(powerfactor));
+                lo->wsaBuf.len = sizeof(powerfactor);
+                lo->wsaBuf.buf = lo->buf;
+                lo->operation = IOCP_WRITE;
+                lp_this->DataAction(lo, lo->lp_key);
+                //正向功能量
+                Sleep(10000);
+                glog::trace("\n请求昨天正向功能量");
+                unsigned char power[20] = {0x68, 0x32, 0x00, 0x32, 0x00, 0x68, 0x04, 0x02, 0x17, 0x01, 0x01, 0x02, 0xAC, 0x7B, 0x00, 0x00, 0x01, 0x05, 0x4E, 0x16 };
+                lp_this->InitIoContext(lo);
+                memcpy(lo->buf, power, sizeof(power));
+                lo->wsaBuf.len = sizeof(power);
+                lo->wsaBuf.buf = lo->buf;
+                lo->operation = IOCP_WRITE;
+                lp_this->DataAction(lo, lo->lp_key);
+                strcpy(lo->day, myday);
             }
+
+            it1++;
         }
 
+        //ComaddrViste a={0};
+        //      map<string, _COMADDRVISITE>::iterator ite = lp_this->m_day.find(myday);
+        //if(ite == lp_this->m_day.end()) {
+        //    lp_this->m_day.insert(pair<string, BOOL>(myday, FALSE));
+        //} else {
+        //    //当天还没采集到数据执行
+        //    if(ite->second == FALSE) {
+        //        //集中器客户端去端
+        //        map<string, IOCP_IO_PTR>::iterator  it1 = lp_this->m_mcontralcenter.begin();
+        //        if(it1 != lp_this->m_mcontralcenter.end()) {
+        //            IOCP_IO_PTR lo = it1->second;
+        //            //所有执行
+        //            //昨天三相电压
+        //            glog::trace("\n请求昨天三相电压数据");
+        //            unsigned char vol[24] = {0x68, 0x42, 0x00, 0x42, 0x00, 0x68, 0x04, 0x02, 0x17, 0x01, 0x01, 0x02, 0xAC, 0x7A, 0x00, 0x00, 0x04, 0x04, 0x00, 0x00, 0x01, 0x05, 0x55, 0x16};
+        //            lp_this->InitIoContext(lo);
+        //            memcpy(lo->buf, vol, sizeof(vol));
+        //            lo->wsaBuf.len = sizeof(vol);
+        //            lo->wsaBuf.buf = lo->buf;
+        //            lo->operation = IOCP_WRITE;
+        //            lp_this->DataAction(lo, lo->lp_key);
+        //            //昨天三相电流
+        //            Sleep(10000);
+        //            glog::trace("\n请求昨天三相电流数据");
+        //            unsigned char electric[20] = {0x68, 0x32, 0x00, 0x32, 0x00, 0x68, 0x04, 0x02, 0x17, 0x01, 0x01, 0x02, 0xAC, 0x75, 0x00, 0x00, 0x20, 0x04, 0x66, 0x16 };
+        //            lp_this->InitIoContext(lo);
+        //            memcpy(lo->buf, electric, sizeof(electric));
+        //            lo->wsaBuf.len = sizeof(electric);
+        //            lo->wsaBuf.buf = lo->buf;
+        //            lo->operation = IOCP_WRITE;
+        //            lp_this->DataAction(lo, lo->lp_key);
+        //            //昨天三相有功功率
+        //            Sleep(10000);
+        //            glog::trace("\n请求昨天三相有功功率数据");
+        //            unsigned char activepower[24] = {0x68, 0x42, 0x00, 0x42, 0x00, 0x68, 0x04, 0x02, 0x17, 0x01, 0x01, 0x02, 0xAC, 0x76, 0x00, 0x00, 0x01, 0x03, 0x00, 0x00, 0x20, 0x04, 0x6B, 0x16 };
+        //            lp_this->InitIoContext(lo);
+        //            memcpy(lo->buf, activepower, sizeof(activepower));
+        //            lo->wsaBuf.len = sizeof(activepower);
+        //            lo->wsaBuf.buf = lo->buf;
+        //            lo->operation = IOCP_WRITE;
+        //            lp_this->DataAction(lo, lo->lp_key);
+        //            //昨天总功率因数
+        //            Sleep(10000);
+        //            glog::trace("\n请求昨天功率因数");
+        //            unsigned char powerfactor[24] = {0x68, 0x42, 0x00, 0x42, 0x00, 0x68, 0x04, 0x02, 0x17, 0x01, 0x01, 0x02, 0xAC, 0x78, 0x00, 0x00, 0x40, 0x03, 0x00, 0x00, 0x20, 0x04, 0xAC, 0x16 };
+        //            lp_this->InitIoContext(lo);
+        //            memcpy(lo->buf, powerfactor, sizeof(powerfactor));
+        //            lo->wsaBuf.len = sizeof(powerfactor);
+        //            lo->wsaBuf.buf = lo->buf;
+        //            lo->operation = IOCP_WRITE;
+        //            lp_this->DataAction(lo, lo->lp_key);
+        //            //正向功能量
+        //            Sleep(10000);
+        //            glog::trace("\n请求昨天正向功能量");
+        //            unsigned char power[20] = {0x68, 0x32, 0x00, 0x32, 0x00, 0x68, 0x04, 0x02, 0x17, 0x01, 0x01, 0x02, 0xAC, 0x7B, 0x00, 0x00, 0x01, 0x05, 0x4E, 0x16 };
+        //            lp_this->InitIoContext(lo);
+        //            memcpy(lo->buf, power, sizeof(power));
+        //            lo->wsaBuf.len = sizeof(power);
+        //            lo->wsaBuf.buf = lo->buf;
+        //            lo->operation = IOCP_WRITE;
+        //            lp_this->DataAction(lo, lo->lp_key);
+        //            it1++;
+        //        }
+        //    }
+        //}
         Sleep(10000);
     }
 
@@ -839,8 +753,7 @@ BOOL CIOCP::Init()
     //             cout << "错误4: 请检查附件目录是否正确，以及文件是否存在!" << endl;
     //     }
 
-    while(!m_listmsg.empty())
-    {
+    while(!m_listmsg.empty()) {
         m_listmsg.clear();
     }
 
@@ -858,22 +771,19 @@ BOOL CIOCP::Init()
     _RecordsetPtr rs =    dbopen.ExecuteWithResSQL("select * from t_lamp");
     WSAData data;
 
-    if(WSAStartup(MAKEWORD(2, 2), &data) != 0)
-    {
+    if(WSAStartup(MAKEWORD(2, 2), &data) != 0) {
         cout << "WSAStartup fail!" << WSAGetLastError() << endl;
         return FALSE;
     }
 
     m_h_iocp = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, NULL, 0);
 
-    if(NULL == m_h_iocp)
-    {
+    if(NULL == m_h_iocp) {
         cout << "CreateIoCompletionPort() failed: " << GetLastError() << endl;
         return FALSE;
     }
 
-    if(!StartThread())
-    {
+    if(!StartThread()) {
         cout << "start thread fail!" << endl;
         PostQueuedCompletionStatus(m_h_iocp, 0, NULL, NULL);
         CloseHandle(m_h_iocp);
@@ -884,16 +794,14 @@ BOOL CIOCP::Init()
     DWORD tid = 0;
     HANDLE hTreadTime = CreateThread(NULL, NULL, TimeThread, (LPVOID)this, NULL, &tid);
 
-    if(!InitSocket())
-    {
+    if(!InitSocket()) {
         PostQueuedCompletionStatus(m_h_iocp, 0, NULL, NULL);
         cout << "Init sociket fail!" << endl;
         CloseHandle(m_h_iocp);
         return FALSE;
     }
 
-    if(!BindAndListenSocket())
-    {
+    if(!BindAndListenSocket()) {
         PostQueuedCompletionStatus(m_h_iocp, 0, NULL, NULL);
         cout << "Init sociket fail!" << endl;
         CloseHandle(m_h_iocp);
@@ -901,8 +809,7 @@ BOOL CIOCP::Init()
         return FALSE;
     }
 
-    if(!GetFunPointer())
-    {
+    if(!GetFunPointer()) {
         cout << "GetFunPointer fail!" << endl;
         PostQueuedCompletionStatus(m_h_iocp, 0, NULL, NULL);
         CloseHandle(m_h_iocp);
@@ -910,8 +817,7 @@ BOOL CIOCP::Init()
         return FALSE;
     }
 
-    if(!PostAcceptEx())
-    {
+    if(!PostAcceptEx()) {
         PostQueuedCompletionStatus(m_h_iocp, 0, NULL, NULL);
         cout << "PostAcceptEx fail!" << endl;
         CloseHandle(m_h_iocp);
@@ -919,8 +825,7 @@ BOOL CIOCP::Init()
         return FALSE;
     }
 
-    if(!RegAcceptEvent())
-    {
+    if(!RegAcceptEvent()) {
         PostQueuedCompletionStatus(m_h_iocp, 0, NULL, NULL);
         cout << "RegAcceptEvent fail!" << endl;
         CloseHandle(m_h_iocp);
@@ -942,31 +847,25 @@ BOOL CIOCP::MainLoop()
     cout << "Server is running.........." << nCount++ << " times" << endl;
     int ii = 0;
 
-    while(TRUE)
-    {
+    while(TRUE) {
         dwRet = WaitForSingleObject(m_h_accept_event, 10000);
 
-        switch(dwRet)
-        {
-            case WAIT_FAILED:
-                {
+        switch(dwRet) {
+            case WAIT_FAILED: {
                     PostQueuedCompletionStatus(m_h_iocp, 0, 0, NULL);
                     return FALSE;
                 }
                 break;
 
-            case WAIT_TIMEOUT:
-                {
+            case WAIT_TIMEOUT: {
                     //检测集中器超时处理
                     //cout << "Server is running.........." << nCount++ << " times" << endl;
                     CheckForInvalidConnection();
                 }
                 break;
 
-            case WAIT_OBJECT_0:   //接收到了所有发出的连接都用光了的消息，再次发出连接
-                {
-                    if(!PostAcceptEx())
-                    {
+            case WAIT_OBJECT_0: { //接收到了所有发出的连接都用光了的消息，再次发出连接
+                    if(!PostAcceptEx()) {
                         PostQueuedCompletionStatus(m_h_iocp, 0, 0, NULL);
                         return FALSE;
                     }
@@ -997,26 +896,21 @@ void CIOCP::CheckForInvalidConnection()
     map<IOCP_IO_PTR, DWORD>m_io;
     m_io.clear();
 
-    while(lp_start != NULL)
-    {
-        if(lp_start->fromtype == SOCKET_FROM_Concentrator)
-        {
+    while(lp_start != NULL) {
+        if(lp_start->fromtype == SOCKET_FROM_Concentrator) {
             op_len = sizeof(op);
             nRet = getsockopt(lp_start->socket, SOL_SOCKET, SO_CONNECT_TIME, (char*)&op, &op_len);
 
-            if(SOCKET_ERROR == nRet)
-            {
+            if(SOCKET_ERROR == nRet) {
                 glog::traceErrorInfo("getsockopt", WSAGetLastError());
                 lp_start = m_io_group.GetNext(pos);
                 continue;
             }
 
-            if(op != 0xffffffff)
-            {
+            if(op != 0xffffffff) {
                 int len = op - lp_start->timelen;
 
-                if(len / 60 > 1)
-                {
+                if(len / 60 > 1) {
 //                     if(m_io.find(lp_start) == m_io.end())
 //                     {
 //                         m_io.insert(make_pair(lp_start, len));
@@ -1035,8 +929,7 @@ void CIOCP::CheckForInvalidConnection()
 
     map<IOCP_IO_PTR, DWORD>::iterator ite = m_io.begin();
 
-    while(ite != m_io.end())
-    {
+    while(ite != m_io.end()) {
         glog::trace("\nlpio:%p time:%d", ite->first, ite->second);
         closesocket(ite->first->socket);
         m_io.erase(ite++);
@@ -1107,14 +1000,12 @@ DWORD CIOCP::CompletionRoutine(LPVOID lp_param)
     LPWSAOVERLAPPED lp_ov           = NULL;
     IOCP_KEY_PTR    lp_new_key      = NULL;
 
-    while(TRUE)
-    {
+    while(TRUE) {
         bRet = GetQueuedCompletionStatus(lp_this->m_h_iocp, &dwBytes, (LPDWORD)&lp_key, &lp_ov, INFINITE);  //
         lp_io   = (IOCP_IO_PTR)lp_ov;
 
         //*lpOverlapped为空并且函数没有从完成端口取出完成包，返回值则为0。函数则不会在lpNumberOfBytes and lpCompletionKey所指向的参数中存储信息。
-        if(lp_io == NULL)
-        {
+        if(lp_io == NULL) {
             glog::trace("\nlp_io:%p bRet:%d ThreadId:%d", lp_io, bRet, GetCurrentThreadId());
             glog::traceErrorInfo("\n lp_io is NULL  GetQueuedCompletionStatus", GetLastError());
             lp_this->m_io_group.RemoveAt(lp_io);
@@ -1124,13 +1015,11 @@ DWORD CIOCP::CompletionRoutine(LPVOID lp_param)
 
         //针对: 如果 *lpOverlapped不为空并且函数从完成端口出列一个失败I/O操作的完成包，
         //返回值为0。函数在指向lpNumberOfBytesTransferred, lpCompletionKey, and lpOverlapped的参数指针中存储相关信息。调用GetLastError可以得到扩展错误信息
-        if(FALSE == bRet && GetLastError() != 0)
-        {
+        if(FALSE == bRet && GetLastError() != 0) {
             glog::trace("\nlp_io:%p ThreadId:%d  fromtype:%d  state:%d", lp_io, GetCurrentThreadId(), lp_io->fromtype, lp_io->state);
             glog::traceErrorInfo("\nGetQueuedCompletionStatus", GetLastError());
 
-            if(WSAGetLastError() == 64)
-            {
+            if(WSAGetLastError() == 64) {
                 lp_this->m_io_group.RemoveAt(lp_io);
                 lp_this->m_key_group.RemoveAt(lp_key);
             }
@@ -1140,10 +1029,8 @@ DWORD CIOCP::CompletionRoutine(LPVOID lp_param)
         }
 
         //退出处理
-        if((IOCP_ACCEPT != lp_io->operation) && (0 == dwBytes))
-        {
-            if(lp_io->fromtype == SOCKET_FROM_Concentrator)
-            {
+        if((IOCP_ACCEPT != lp_io->operation) && (0 == dwBytes)) {
+            if(lp_io->fromtype == SOCKET_FROM_Concentrator) {
                 glog::GetInstance()->AddLine("一个集中器客户端下线");
             }
 
@@ -1153,33 +1040,26 @@ DWORD CIOCP::CompletionRoutine(LPVOID lp_param)
             EnterCriticalSection(&lp_this->crtc_sec);
 
             //移除集中器
-            if(lp_io->fromtype == SOCKET_FROM_Concentrator)
-            {
+            if(lp_io->fromtype == SOCKET_FROM_Concentrator) {
                 //集中器客户端去端
                 map<string, IOCP_IO_PTR>::iterator  it;
 
-                for(it = lp_this->m_mcontralcenter.begin(); it != lp_this->m_mcontralcenter.end();)
-                {
-                    if(it->second == lp_io)
-                    {
+                for(it = lp_this->m_mcontralcenter.begin(); it != lp_this->m_mcontralcenter.end();) {
+                    if(it->second == lp_io) {
                         lp_this->m_mcontralcenter.erase(it++);   //erase 删除后指向下一个迭代器
-                    }
-                    else
-                    {
+                    } else {
                         it++;
                     }
                 }
             }
 
             //删除界面条项
-            for(int i = 0; i < n1; i++)
-            {
+            for(int i = 0; i < n1; i++) {
                 string vv = lp_this->m_listctr->getCellText(i, 1);
                 char pp[50] = {0};
                 sprintf(pp, "%p", lp_io);
 
-                if(_stricmp(pp, vv.c_str()) == 0)
-                {
+                if(_stricmp(pp, vv.c_str()) == 0) {
                     lp_this->m_listctr->deleteIndex(i);
                     break;
                 }
@@ -1188,16 +1068,12 @@ DWORD CIOCP::CompletionRoutine(LPVOID lp_param)
             //消息队列删除   消息队列存的是网页客户端
             list<IOCP_IO*>::iterator it;
 
-            for(it = lp_this->m_listmsg.begin(); it != lp_this->m_listmsg.end();)
-            {
+            for(it = lp_this->m_listmsg.begin(); it != lp_this->m_listmsg.end();) {
                 IOCP_IO_PTR tem = *it;
 
-                if(tem == lp_io)
-                {
+                if(tem == lp_io) {
                     it = lp_this->m_listmsg.erase(it);
-                }
-                else
-                {
+                } else {
                     it++;
                 }
             }
@@ -1220,34 +1096,28 @@ DWORD CIOCP::CompletionRoutine(LPVOID lp_param)
         op_len = sizeof(op);
         nRet = getsockopt(lp_io->socket, SOL_SOCKET, SO_CONNECT_TIME, (char*)&op, &op_len);
 
-        if(SOCKET_ERROR == nRet)
-        {
+        if(SOCKET_ERROR == nRet) {
             glog::traceErrorInfo("getsockopt", WSAGetLastError());
             closesocket(lp_io->socket);
             //continue;
         }
 
-        if(op != 0xffffffff)
-        {
+        if(op != 0xffffffff) {
             lp_io->timelen = op;
             //glog::trace("\nlp_io:%p timelen:%d",lp_io,lp_io->timelen);
         }
 
-        switch(lp_io->operation)
-        {
-            case IOCP_ACCEPT:
-                {
+        switch(lp_io->operation) {
+            case IOCP_ACCEPT: {
                     lp_io->state = SOCKET_STATE_CONNECT;
 
-                    if(dwBytes > 0)
-                    {
+                    if(dwBytes > 0) {
                         lp_io->state = SOCKET_STATE_CONNECT_AND_READ;
                     }
 
                     nRet = setsockopt(lp_io->socket, SOL_SOCKET, SO_UPDATE_ACCEPT_CONTEXT, (char*)&lp_this->m_listen_socket, sizeof(lp_this->m_listen_socket));
 
-                    if(SOCKET_ERROR == nRet)
-                    {
+                    if(SOCKET_ERROR == nRet) {
                         closesocket(lp_io->socket);
                         lp_this->m_io_group.RemoveAt(lp_io);
                         glog::traceErrorInfo("setsockopt", WSAGetLastError());
@@ -1256,8 +1126,7 @@ DWORD CIOCP::CompletionRoutine(LPVOID lp_param)
 
                     lp_new_key = lp_this->m_key_group.GetBlank();
 
-                    if(lp_new_key == NULL)
-                    {
+                    if(lp_new_key == NULL) {
                         glog::traceErrorInfo("GetBlank：", WSAGetLastError());
                         closesocket(lp_io->socket);
                         lp_this->m_io_group.RemoveAt(lp_io);
@@ -1269,8 +1138,7 @@ DWORD CIOCP::CompletionRoutine(LPVOID lp_param)
                     //将新建立的SOCKET同完成端口关联起来。
                     hRet = CreateIoCompletionPort((HANDLE)lp_io->socket, lp_this->m_h_iocp, (DWORD)lp_new_key, 0);
 
-                    if(NULL == hRet)
-                    {
+                    if(NULL == hRet) {
                         glog::traceErrorInfo("CreateIoCompletionPort", WSAGetLastError());
                         closesocket(lp_io->socket);
                         lp_this->m_key_group.RemoveAt(lp_new_key);
@@ -1279,34 +1147,27 @@ DWORD CIOCP::CompletionRoutine(LPVOID lp_param)
                     }
 
                     //处理读取到的数据
-                    if(dwBytes > 0)
-                    {
+                    if(dwBytes > 0) {
                         lp_io->wsaBuf.len = dwBytes;
                         lp_this->HandleData(lp_io, IOCP_COMPLETE_ACCEPT_READ, lp_new_key);
                         bRet = lp_this->DataAction(lp_io, lp_new_key);
 
-                        if(FALSE == bRet)
-                        {
+                        if(FALSE == bRet) {
                             continue;
                         }
-                    }
-                    else
-                    {
+                    } else {
                         lp_this->HandleData(lp_io, IOCP_COMPLETE_ACCEPT, lp_new_key);
                         bRet = lp_this->DataAction(lp_io, lp_new_key);
 
-                        if(FALSE == bRet)
-                        {
+                        if(FALSE == bRet) {
                             continue;
                         }
                     }
                 }
                 break;
 
-            case IOCP_READ:
-                {
-                    if(SOCKET_STATE_CONNECT_AND_READ != lp_io->state)
-                    {
+            case IOCP_READ: {
+                    if(SOCKET_STATE_CONNECT_AND_READ != lp_io->state) {
                         lp_io->state = SOCKET_STATE_CONNECT_AND_READ;
                     }
 
@@ -1315,14 +1176,12 @@ DWORD CIOCP::CompletionRoutine(LPVOID lp_param)
                     int nrow = -1;
                     string towrite = "";
 
-                    for(int i = 0; i < n1; i++)
-                    {
+                    for(int i = 0; i < n1; i++) {
                         string vv = lp_this->m_listctr->getCellText(i, 1);
                         char pp[50] = {0};
                         sprintf(pp, "%p", lp_io);
 
-                        if(_stricmp(pp, vv.c_str()) == 0)
-                        {
+                        if(_stricmp(pp, vv.c_str()) == 0) {
                             string data = gstring::char2hex(lp_io->buf, lp_io->ol.InternalHigh);
                             lp_this->m_listctr->setItemText(data.c_str(), i, 4);
                             char buff[1024] = {0};
@@ -1335,12 +1194,9 @@ DWORD CIOCP::CompletionRoutine(LPVOID lp_param)
 
 #ifdef _DEBUG
 
-                    if(lp_io->fromtype == SOCKET_FROM_Concentrator)
-                    {
+                    if(lp_io->fromtype == SOCKET_FROM_Concentrator) {
                         glog::GetInstance()->AddLine("集中器 数据包 长度:%d:数据:%s", lp_io->ol.InternalHigh, towrite.c_str());
-                    }
-                    else
-                    {
+                    } else {
                         glog::GetInstance()->AddLine("其它数据包 数据包 长度:%d:数据:%s", lp_io->ol.InternalHigh, towrite.c_str());
                     }
 
@@ -1348,18 +1204,15 @@ DWORD CIOCP::CompletionRoutine(LPVOID lp_param)
                     //不是集中器   判断是不是断包
                     int lenghth = lp_io->ol.InternalHigh;
 
-                    if(lp_this->checkFlag((BYTE*)lp_io->buf, lp_io->ol.InternalHigh) == FALSE)
-                    {
+                    if(lp_this->checkFlag((BYTE*)lp_io->buf, lp_io->ol.InternalHigh) == FALSE) {
                         //集中器断包处理
                         map<IOCP_IO_PTR, pBREAKPCK>::iterator itepack =  lp_this->m_pack.find(lp_io);
 
-                        if(itepack == lp_this->m_pack.end())
-                        {
+                        if(itepack == lp_this->m_pack.end()) {
                             //集中器断包包头
                             BOOL bBreakPack =    lp_this->IsBreakPack((BYTE*)lp_io->buf, lp_io->ol.InternalHigh);
 
-                            if(bBreakPack)
-                            {
+                            if(bBreakPack) {
                                 pBREAKPCK b = new BREAK_PACK;
                                 BYTE *b1 = new BYTE[lp_io->ol.InternalHigh];
                                 memset(b1, 0, lp_io->ol.InternalHigh);
@@ -1372,19 +1225,16 @@ DWORD CIOCP::CompletionRoutine(LPVOID lp_param)
 #endif
                             }
 
-                            if(lp_io->fromtype == SOCKET_FROM_WEBSOCKET)
-                            {
+                            if(lp_io->fromtype == SOCKET_FROM_WEBSOCKET) {
                                 string  strret = "";
                                 BOOL bFullPack = TRUE;
                                 int lenread = lp_this->wsDecodeFrame(lp_io->buf, strret, lp_io->ol.InternalHigh, bFullPack);
 
-                                if(bFullPack == FALSE)
-                                {
+                                if(bFullPack == FALSE) {
                                     //websocket断包处理
                                     map<IOCP_IO_PTR, pBREAKPCK>::iterator itepack =  lp_this->m_pack.find(lp_io);
 
-                                    if(itepack == lp_this->m_pack.end())
-                                    {
+                                    if(itepack == lp_this->m_pack.end()) {
                                         pBREAKPCK b = new BREAK_PACK;
                                         BYTE *b1 = new BYTE[lp_io->ol.InternalHigh];
                                         memset(b1, 0, lp_io->ol.InternalHigh);
@@ -1398,16 +1248,12 @@ DWORD CIOCP::CompletionRoutine(LPVOID lp_param)
                                     }
                                 }
                             }
-                        }
-                        else
-                        {
-                            if(lp_io->fromtype == SOCKET_FROM_WEBSOCKET)
-                            {
+                        } else {
+                            if(lp_io->fromtype == SOCKET_FROM_WEBSOCKET) {
                                 glog::trace("\nweb socket断包包尾:lp_io:%p", lp_io);
                             }
 
-                            if(lp_io->fromtype == SOCKET_FROM_Concentrator)
-                            {
+                            if(lp_io->fromtype == SOCKET_FROM_Concentrator) {
                                 glog::trace("\n断包包尾:lp_io:%p", lp_io);
                             }
 
@@ -1419,8 +1265,7 @@ DWORD CIOCP::CompletionRoutine(LPVOID lp_param)
                         }
                     }
 
-                    if(lp_this->checkFlag((BYTE*)lp_io->buf, lenghth))
-                    {
+                    if(lp_this->checkFlag((BYTE*)lp_io->buf, lenghth)) {
                         lp_io->fromtype = SOCKET_FROM_Concentrator;
                         BYTE tosend[216] = {0};
                         int  deslen = 0;
@@ -1428,18 +1273,15 @@ DWORD CIOCP::CompletionRoutine(LPVOID lp_param)
                         // glog::GetInstance()->AddLine("接收集中器的包 长度:%d:数据:%s", lp_io->ol.InternalHigh, towrite.c_str());
                         lp_this->buildcode((BYTE*)lp_io->buf, lenghth, tosend, deslen, bresponse, lp_io);
 
-                        if(nrow >= 0 && lp_io->fromtype == SOCKET_FROM_Concentrator)
-                        {
+                        if(nrow >= 0 && lp_io->fromtype == SOCKET_FROM_Concentrator) {
                             lp_this->m_listctr->setItemText("来自集中器", nrow, 6);
                         }
 
-                        if(nrow >= 0 && lp_io->loginstatus == SOCKET_STATUS_LOGIN)
-                        {
+                        if(nrow >= 0 && lp_io->loginstatus == SOCKET_STATUS_LOGIN) {
                             lp_this->m_listctr->setItemText("集中器已经连在线", nrow, 7);
                         }
 
-                        if(bresponse && deslen > 0)
-                        {
+                        if(bresponse && deslen > 0) {
                             lp_this->InitIoContext(lp_io);
                             string hex = gstring::char2hex((char*)tosend, deslen);
                             glog::GetInstance()->AddLine("响应集中器的包:%s", hex.c_str());
@@ -1447,15 +1289,12 @@ DWORD CIOCP::CompletionRoutine(LPVOID lp_param)
                             lp_io->wsaBuf.len = deslen;
                             lp_io->operation = IOCP_WRITE;
                         }
-                    }
-                    else
-                    {
+                    } else {
                         string strdata = lp_io->buf;
                         string strret;
                         int wsconn = lp_this->wsHandshake(strdata, strret);
 
-                        if(wsconn == WS_STATUS_CONNECT)
-                        {
+                        if(wsconn == WS_STATUS_CONNECT) {
                             lp_this->InitIoContext(lp_io);
                             lp_io->operation = IOCP_WRITE;
                             lp_io->fromtype = SOCKET_FROM_WEBSOCKET;
@@ -1466,15 +1305,13 @@ DWORD CIOCP::CompletionRoutine(LPVOID lp_param)
                             goto TOHear;
                         }
 
-                        if(lp_io->fromtype == SOCKET_FROM_WEBSOCKET)
-                        {
+                        if(lp_io->fromtype == SOCKET_FROM_WEBSOCKET) {
                             strret = "";
                             BOOL bFullPack = TRUE;
                             int lenread = lp_this->wsDecodeFrame(lp_io->buf, strret, lenghth, bFullPack);
                             glog::trace("\n%s", strret.c_str());
 
-                            if(lenread == WS_CLOSING_FRAME)
-                            {
+                            if(lenread == WS_CLOSING_FRAME) {
                                 int n1 = lp_this-> m_listctr->getRowCount();
                                 int nrow = -1;
                                 string towrite = "";
@@ -1482,28 +1319,22 @@ DWORD CIOCP::CompletionRoutine(LPVOID lp_param)
                                 //删除消息队列
                                 list<IOCP_IO*>::iterator it;
 
-                                for(it = lp_this->m_listmsg.begin(); it != lp_this->m_listmsg.end();)
-                                {
+                                for(it = lp_this->m_listmsg.begin(); it != lp_this->m_listmsg.end();) {
                                     IOCP_IO_PTR tem = *it;
 
-                                    if(tem == lp_io)
-                                    {
+                                    if(tem == lp_io) {
                                         it = lp_this->m_listmsg.erase(it);
-                                    }
-                                    else
-                                    {
+                                    } else {
                                         it++;
                                     }
                                 }
 
-                                for(int i = 0; i < n1; i++)
-                                {
+                                for(int i = 0; i < n1; i++) {
                                     string vv = lp_this->m_listctr->getCellText(i, 1);
                                     char pp[50] = {0};
                                     sprintf(pp, "%p", lp_io);
 
-                                    if(_stricmp(pp, vv.c_str()) == 0)
-                                    {
+                                    if(_stricmp(pp, vv.c_str()) == 0) {
                                         lp_this->m_listctr->deleteIndex(i);
                                         break;
                                     }
@@ -1511,9 +1342,7 @@ DWORD CIOCP::CompletionRoutine(LPVOID lp_param)
 
                                 LeaveCriticalSection(&lp_this->crtc_sec);
                                 lp_io->operation = IOCP_END;
-                            }
-                            else if(lenread != WS_ERROR_FRAME)
-                            {
+                            } else if(lenread != WS_ERROR_FRAME) {
                                 lp_this->dealws(lp_io, strret);
                                 goto TOHear;
                             }
@@ -1523,27 +1352,23 @@ DWORD CIOCP::CompletionRoutine(LPVOID lp_param)
 TOHear:
                     bRet = lp_this->DataAction(lp_io, lp_new_key);
 
-                    if(FALSE == bRet)
-                    {
+                    if(FALSE == bRet) {
                         continue;
                     }
                 }
                 break;
 
-            case IOCP_WRITE:
-                {
+            case IOCP_WRITE: {
                     lp_this->HandleData(lp_io, IOCP_COMPLETE_WRITE, lp_new_key);
                     bRet = lp_this->DataAction(lp_io, lp_new_key);
 
-                    if(FALSE == bRet)
-                    {
+                    if(FALSE == bRet) {
                         continue;
                     }
                 }
                 break;
 
-            default:
-                {
+            default: {
                     continue;
                 }
                 break;
@@ -1563,8 +1388,7 @@ BOOL CIOCP::SendData(ULONG_PTR s, ULONG_PTR key)
     BYTE b2[1024] = {0};
     int i = 0;
 
-    while(*p1 != '\0')
-    {
+    while(*p1 != '\0') {
         char data[3] = {0};
         memcpy(data, p1, 2);
         b2[i] = strtol(data, NULL, 16);
@@ -1610,8 +1434,7 @@ int CIOCP::hex2str(string str, BYTE tosend[])
     //BYTE b2[1024] = {0};
     int i = 0;
 
-    while(*p1 != '\0')
-    {
+    while(*p1 != '\0') {
         char data[3] = {0};
         memcpy(data, p1, 2);
         tosend[i] = strtol(data, NULL, 16);
@@ -1630,8 +1453,7 @@ int CIOCP::wsHandshake(string & request, string & response)
     std::string reqType;
     std::getline(stream, reqType);
 
-    if(reqType.substr(0, 4) != "GET ")
-    {
+    if(reqType.substr(0, 4) != "GET ") {
         return ret;
     }
 
@@ -1639,18 +1461,15 @@ int CIOCP::wsHandshake(string & request, string & response)
     std::string::size_type pos = 0;
     std::string websocketKey;
 
-    while(std::getline(stream, header) && header != "\r")
-    {
+    while(std::getline(stream, header) && header != "\r") {
         header.erase(header.end() - 1);
         pos = header.find(": ", 0);
 
-        if(pos != std::string::npos)
-        {
+        if(pos != std::string::npos) {
             std::string key = header.substr(0, pos);
             std::string value = header.substr(pos + 2);
 
-            if(key == "Sec-WebSocket-Key")
-            {
+            if(key == "Sec-WebSocket-Key") {
                 ret = WS_STATUS_CONNECT;
                 websocketKey = value;
                 break;
@@ -1658,8 +1477,7 @@ int CIOCP::wsHandshake(string & request, string & response)
         }
     }
 
-    if(ret != WS_STATUS_CONNECT)
-    {
+    if(ret != WS_STATUS_CONNECT) {
         return ret;
     }
 
@@ -1687,28 +1505,24 @@ int CIOCP::wsDecodeFrame(char inFrame[], string & outMessage, int len, BOOL& ful
     const char *frameData = inFrame;
     const int frameLength = len;
 
-    if(frameLength < 2)
-    {
+    if(frameLength < 2) {
         ret = WS_ERROR_FRAME;
     }
 
     // 检查扩展位并忽略
-    if((frameData[0] & 0x70) != 0x0)
-    {
+    if((frameData[0] & 0x70) != 0x0) {
         ret = WS_ERROR_FRAME;
     }
 
     // fin位: 为1表示已接收完整报文, 为0表示继续监听后续报文
     ret = (frameData[0] & 0x80);  //1000 0000
 
-    if((frameData[0] & 0x80) != 0x80)
-    {
+    if((frameData[0] & 0x80) != 0x80) {
         ret = WS_ERROR_FRAME;
     }
 
     // mask位, 为1表示数据被加密
-    if((frameData[1] & 0x80) != 0x80)
-    {
+    if((frameData[1] & 0x80) != 0x80) {
         ret = WS_ERROR_FRAME;
     }
 
@@ -1717,66 +1531,50 @@ int CIOCP::wsDecodeFrame(char inFrame[], string & outMessage, int len, BOOL& ful
     uint8_t payloadFieldExtraBytes = 0;
     uint8_t opcode = static_cast<uint8_t >(frameData[0] & 0x0f);
 
-    if(opcode == WS_TEXT_FRAME)
-    {
+    if(opcode == WS_TEXT_FRAME) {
         // 处理utf-8编码的文本帧
         payloadLength = static_cast<uint16_t >(frameData[1] & 0x7f);
 
-        if(payloadLength == 0x7e)   //0111 1110     //126 7e  后面两字节是长度 :  127  7f 后面四字节是长度
-        {
+        if(payloadLength == 0x7e) { //0111 1110     //126 7e  后面两字节是长度 :  127  7f 后面四字节是长度
             uint16_t payloadLength16b = 0;
             payloadFieldExtraBytes = 2;
             memcpy(&payloadLength16b, &frameData[2], payloadFieldExtraBytes);
             payloadLength = ntohs(payloadLength16b);
-        }
-        else if(payloadLength == 0x7f)
-        {
+        } else if(payloadLength == 0x7f) {
             // 数据过长,暂不支持
             ret = WS_ERROR_FRAME;
         }
-    }
-    else if(opcode == WS_BINARY_FRAME || opcode == WS_PING_FRAME || opcode == WS_PONG_FRAME)
-    {
+    } else if(opcode == WS_BINARY_FRAME || opcode == WS_PING_FRAME || opcode == WS_PONG_FRAME) {
         // 二进制/ping/pong帧暂不处理
-    }
-    else if(opcode == WS_CLOSING_FRAME)
-    {
+    } else if(opcode == WS_CLOSING_FRAME) {
         ret = WS_CLOSING_FRAME;
-    }
-    else
-    {
+    } else {
         ret = WS_ERROR_FRAME;
     }
 
     // 数据解码
-    if((ret != WS_ERROR_FRAME) && (payloadLength > 0))
-    {
+    if((ret != WS_ERROR_FRAME) && (payloadLength > 0)) {
         // header: 2字节, masking key: 4字节
         const char *maskingKey = &frameData[2 + payloadFieldExtraBytes];
         char *payloadData = new char[payloadLength + 1];
         memset(payloadData, 0, payloadLength + 1);
         memcpy(payloadData, &frameData[2 + payloadFieldExtraBytes + 4], payloadLength);
 
-        for(int i = 0; i < payloadLength; i++)
-        {
+        for(int i = 0; i < payloadLength; i++) {
             payloadData[i] = payloadData[i] ^ maskingKey[i % 4];
         }
 
         string begin = "{\"begin\":\"6A\"";
         string end = "\"end\":\"6A\"}";
 
-        if(_strnicmp(begin.c_str(), payloadData, begin.size()) == 0)
-        {
+        if(_strnicmp(begin.c_str(), payloadData, begin.size()) == 0) {
             int n1 = payloadLength - end.size();
 
-            if(n1 >= 0 && _strnicmp(end.c_str(), &payloadData[n1], begin.size()) == 0)
-            {
+            if(n1 >= 0 && _strnicmp(end.c_str(), &payloadData[n1], begin.size()) == 0) {
                 //glog::trace("\nwebsocket is one pack");
                 outMessage = payloadData;
                 fullpack = TRUE;
-            }
-            else
-            {
+            } else {
                 //glog::trace("\nwebsocket is break pack");
                 fullpack = FALSE;
             }
@@ -1800,8 +1598,7 @@ int CIOCP::wsEncodeFrame(string inMessage, char outFrame[], enum WS_FrameType fr
     int ret = WS_EMPTY_FRAME;
     const uint32_t messageLength = inMessage.size();
 
-    if(messageLength > 32767)
-    {
+    if(messageLength > 32767) {
         // 暂不支持这么长的数据
         return WS_ERROR_FRAME;
     }
@@ -1815,18 +1612,13 @@ int CIOCP::wsEncodeFrame(string inMessage, char outFrame[], enum WS_FrameType fr
     frameHeader[0] = static_cast<uint8_t>(0x80 | frameType);
 
     // 填充数据长度
-    if(messageLength <= 0x7d)   //125->7d
-    {
+    if(messageLength <= 0x7d) { //125->7d
         frameHeader[1] = static_cast<uint8_t>(messageLength);
-    }
-    else if(messageLength < 65535)
-    {
+    } else if(messageLength < 65535) {
         frameHeader[1] = 0x7e;
         uint16_t len = htons(messageLength);
         memcpy(&frameHeader[2], &len, payloadFieldExtraBytes);
-    }
-    else
-    {
+    } else {
     }
 
     // 填充数据
@@ -1847,31 +1639,21 @@ void CIOCP::dealws(IOCP_IO_PTR & lp_io, string & jsondata)
     Json::Value root;
     Json::Reader reader;
 
-    if(reader.parse(jsondata.c_str(), root))
-    {
+    if(reader.parse(jsondata.c_str(), root)) {
         Json::Value vtemp = root["msg"];
 
-        if(vtemp.isNull())
-        {
+        if(vtemp.isNull()) {
             glog::trace("\nthis is null data pack\n");
-        }
-        else if(vtemp.isArray())
-        {
+        } else if(vtemp.isArray()) {
             glog::trace("\nthis is array data pack\n");
-        }
-        else if(vtemp.isObject())
-        {
+        } else if(vtemp.isObject()) {
             glog::trace("\nthis is object data pack\n");
-        }
-        else if(vtemp.isString())
-        {
-            if(vtemp == "getStatus")
-            {
+        } else if(vtemp.isString()) {
+            if(vtemp == "getStatus") {
                 string addrarea = root["addr"].asString();
                 map<string, IOCP_IO_PTR>::iterator ite = m_mcontralcenter.find(addrarea);
 
-                if(ite != m_mcontralcenter.end())
-                {
+                if(ite != m_mcontralcenter.end()) {
                     Json::Value row = root["row"];
                     root["data"] = TRUE;
                 }
@@ -1883,16 +1665,13 @@ void CIOCP::dealws(IOCP_IO_PTR & lp_io, string & jsondata)
                 int lenret = 0;
                 int len = wsEncodeFrame(inmsg, outmsg, WS_TEXT_FRAME, lenret);
 
-                if(len != WS_ERROR_FRAME)
-                {
+                if(len != WS_ERROR_FRAME) {
                     memcpy(lp_io->buf, outmsg, lenret);
                     lp_io->wsaBuf.buf = lp_io->buf;
                     lp_io->wsaBuf.len = lenret;
                     lp_io->operation = IOCP_WRITE;
                 }
-            }
-            else if(vtemp == "Online")
-            {
+            } else if(vtemp == "Online") {
                 root["count"] = m_mcontralcenter.size();
                 root["status"] = "success";
                 string inmsg = root.toStyledString();
@@ -1900,25 +1679,20 @@ void CIOCP::dealws(IOCP_IO_PTR & lp_io, string & jsondata)
                 int lenret = 0;
                 int len = wsEncodeFrame(inmsg, outmsg, WS_TEXT_FRAME, lenret);
 
-                if(len != WS_ERROR_FRAME)
-                {
+                if(len != WS_ERROR_FRAME) {
                     memcpy(lp_io->buf, outmsg, lenret);
                     lp_io->wsaBuf.buf = lp_io->buf;
                     lp_io->wsaBuf.len = lenret;
                     lp_io->operation = IOCP_WRITE;
                 }
-            }
-            else if(vtemp == "AA")          //参数查询
-            {
+            } else if(vtemp == "AA") {      //参数查询
                 Json::Value isres = root["res"];
 
-                if(isres.asString() == "1")   //发给集中器要求有响应
-                {
+                if(isres.asString() == "1") { //发给集中器要求有响应
                     string addrarea = root["addr"].asString();
                     map<string, IOCP_IO_PTR>::iterator ite = m_mcontralcenter.find(addrarea);
 
-                    if(ite != m_mcontralcenter.end())
-                    {
+                    if(ite != m_mcontralcenter.end()) {
                         m_listmsg.push_back(lp_io);
                         glog::GetInstance()->AddLine("总消息长度:%d 添加一个消息队列:%s 参赛设置命令", m_listmsg.size(), root["data"].asString().c_str());
                     }
@@ -1933,13 +1707,11 @@ void CIOCP::dealws(IOCP_IO_PTR & lp_io, string & jsondata)
                 BYTE bitSend[512] = {0};
                 int len = hex2str(data, bitSend);
 
-                if(len > 0)
-                {
+                if(len > 0) {
                     string addrarea = root["addr"].asString();
                     map<string, IOCP_IO_PTR>::iterator ite = m_mcontralcenter.find(addrarea);
 
-                    if(ite != m_mcontralcenter.end())
-                    {
+                    if(ite != m_mcontralcenter.end()) {
                         IOCP_IO_PTR lp_io1 = ite->second;
                         memcpy(lp_io1->buf, bitSend, len);
                         lp_io1->wsaBuf.buf = lp_io1->buf;
@@ -1948,18 +1720,14 @@ void CIOCP::dealws(IOCP_IO_PTR & lp_io, string & jsondata)
                         DataAction(lp_io1, lp_io1->lp_key);
                     }
                 }
-            }
-            else if(vtemp == "A4")          //设置命令
-            {
+            } else if(vtemp == "A4") {      //设置命令
                 Json::Value isres = root["res"];
 
-                if(isres.asString() == "1")   //发给集中器要求有响应
-                {
+                if(isres.asString() == "1") { //发给集中器要求有响应
                     string addrarea = root["addr"].asString();
                     map<string, IOCP_IO_PTR>::iterator ite = m_mcontralcenter.find(addrarea);
 
-                    if(ite != m_mcontralcenter.end())
-                    {
+                    if(ite != m_mcontralcenter.end()) {
                         m_listmsg.push_back(lp_io);
                         glog::GetInstance()->AddLine("总消息长度:%d 添加一个消息队列:%s 参赛设置命令", m_listmsg.size(), root["data"].asString().c_str());
                     }
@@ -1974,13 +1742,11 @@ void CIOCP::dealws(IOCP_IO_PTR & lp_io, string & jsondata)
                 BYTE bitSend[512] = {0};
                 int len = hex2str(data, bitSend);
 
-                if(len > 0)
-                {
+                if(len > 0) {
                     string addrarea = root["addr"].asString();
                     map<string, IOCP_IO_PTR>::iterator ite = m_mcontralcenter.find(addrarea);
 
-                    if(ite != m_mcontralcenter.end())
-                    {
+                    if(ite != m_mcontralcenter.end()) {
                         IOCP_IO_PTR lp_io1 = ite->second;
                         memcpy(lp_io1->buf, bitSend, len);
                         lp_io1->wsaBuf.buf = lp_io1->buf;
@@ -1989,26 +1755,19 @@ void CIOCP::dealws(IOCP_IO_PTR & lp_io, string & jsondata)
                         DataAction(lp_io1, lp_io1->lp_key);
                     }
                 }
-            }
-            else if(vtemp == "A5")                  //控制命令
-            {
+            } else if(vtemp == "A5") {              //控制命令
                 Json::Value isres = root["res"];
 
-                if(isres.asString() == "1")   //发给集中器要求有响应
-                {
+                if(isres.asString() == "1") { //发给集中器要求有响应
                     string addrarea = root["addr"].asString();
                     map<string, IOCP_IO_PTR>::iterator ite = m_mcontralcenter.find(addrarea);
 
-                    if(ite != m_mcontralcenter.end())
-                    {
+                    if(ite != m_mcontralcenter.end()) {
                         IOCP_IO_PTR  lp = ite->second;
 
-                        if(lp->operation == IOCP_END)
-                        {
+                        if(lp->operation == IOCP_END) {
                             m_mcontralcenter.erase(ite);
-                        }
-                        else
-                        {
+                        } else {
                             m_listmsg.push_back(lp_io);
                             glog::GetInstance()->AddLine("总消息长度:%d 添加一个消息队列:%s 控制命令", m_listmsg.size(), root["data"].asString().c_str());
                         }
@@ -2024,13 +1783,11 @@ void CIOCP::dealws(IOCP_IO_PTR & lp_io, string & jsondata)
                 BYTE bitSend[512] = {0};
                 int len = hex2str(data, bitSend);
 
-                if(len > 0)
-                {
+                if(len > 0) {
                     string addrarea = root["addr"].asString();
                     map<string, IOCP_IO_PTR>::iterator ite2 = m_mcontralcenter.find(addrarea);
 
-                    if(ite2 != m_mcontralcenter.end())
-                    {
+                    if(ite2 != m_mcontralcenter.end()) {
                         IOCP_IO_PTR lp_io1 = ite2->second;
                         memcpy(lp_io1->buf, bitSend, len);
                         lp_io1->wsaBuf.buf = lp_io1->buf;
@@ -2039,22 +1796,18 @@ void CIOCP::dealws(IOCP_IO_PTR & lp_io, string & jsondata)
                         DataAction(lp_io1, lp_io1->lp_key);
                     }
                 }
-            }
-            else if(vtemp == "00")
-            {
+            } else if(vtemp == "00") {
                 Json::Value tosend = root["data"];
                 string data = tosend.asString();
                 data = gstring::replace(data, " ", "");
                 BYTE bitSend[512] = {0};
                 int len = hex2str(data, bitSend);
 
-                if(len > 0)
-                {
+                if(len > 0) {
                     string addrarea = root["addr"].asString();
                     map<string, IOCP_IO_PTR>::iterator ite = m_mcontralcenter.find(addrarea);
 
-                    if(ite != m_mcontralcenter.end())
-                    {
+                    if(ite != m_mcontralcenter.end()) {
                         IOCP_IO_PTR lp_io1 = ite->second;
                         memcpy(lp_io1->buf, bitSend, len);
                         lp_io1->wsaBuf.buf = lp_io1->buf;
@@ -2074,8 +1827,7 @@ std::string CIOCP::GetDataDir(string name)
     GetModuleFileNameA(NULL, pdir, 216);
     PCHAR  pfind = strrchr((char*)pdir, '\\');
 
-    if(pfind)
-    {
+    if(pfind) {
         memset(pfind + 1, 0, 40);
         strcat(pdir, name.c_str());
     }
@@ -2084,26 +1836,22 @@ std::string CIOCP::GetDataDir(string name)
 }
 BOOL CIOCP::checkFlag(BYTE vv[], int len)
 {
-    if(len < 6)
-    {
+    if(len < 6) {
         return FALSE;
     }
 
-    if(vv[0] == 0x68 && vv[5] == 0x68 && vv[len - 1] == 0x16)
-    {
+    if(vv[0] == 0x68 && vv[5] == 0x68 && vv[len - 1] == 0x16) {
         int nbyte = len - 2 - 6;
         short n11 = (nbyte << 2) | 2;
         short to1 =  *(short*)&vv[1];
         short to2 =  *(short*)&vv[3];
         BYTE  bend = 0;
 
-        for(int j = 6; j < len - 2; j++)
-        {
+        for(int j = 6; j < len - 2; j++) {
             bend += vv[j];
         }
 
-        if(bend == vv[len - 2] && n11 == to1 && n11 == to2)
-        {
+        if(bend == vv[len - 2] && n11 == to1 && n11 == to2) {
             return TRUE;
         }
     }
@@ -2115,8 +1863,7 @@ void  CIOCP::changeByte(char data[], BYTE vv[], int& len)
     char *p = data;
     int i = 0;
 
-    while(*p != '\0')
-    {
+    while(*p != '\0') {
         char p1[3] = {0};
         memcpy(p1, p, 2);
         BYTE b1 = strtol(p1, NULL, 16);
@@ -2143,8 +1890,7 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
     char addrarea[20] = {0};
     sprintf(addrarea, "%02x%02x%02x%02x", addr1[1], addr1[0], addr1[3], addr1[2]); //网关地址
 
-    if(AFN == 0x2)      //链路检测
-    {
+    if(AFN == 0x2) {    //链路检测
         //src[6] == 0xc4 && src[13] & 0x10 == 0x10
         BYTE    con =    src[13] & 0x10;
         BYTE   DirPrmCode = src[6] & 0xc4;
@@ -2153,31 +1899,24 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
         memcpy(DA, &src[14], 2);    //PN P0
         memcpy(DT, &src[16], 2);   //FN  1 登陆 | 3 心跳
 
-        if(DirPrmCode == 0xc4 && con == 0x10)    //需要回复
-        {
+        if(DirPrmCode == 0xc4 && con == 0x10) {  //需要回复
             USHORT Pn = (USHORT) * DA;
             USHORT Fn = (USHORT) * DT;
             isrespos = TRUE;
 
-            if(Pn == 0)   //P0
-            {
-                if(DT[1] == 0)   //DT1组
-                {
-                    if(DT[0] == 1)   //DT0 组功能点
-                    {
+            if(Pn == 0) { //P0
+                if(DT[1] == 0) { //DT1组
+                    if(DT[0] == 1) { //DT0 组功能点
                         glog::GetInstance()->AddLine("登陆包");
                         glog::trace("\n登陆包");
-                        char addr1[10] = {0};
-                        memcpy(addr1, &src[7], 4);
-                        string addrarea = gstring::char2hex(addr1, 4);
+                        //char addr1[10] = {0};
+                        //memcpy(addr1, &src[7], 4);
+                        //string addrarea = gstring::char2hex(addr1, 4);
                         map<string, IOCP_IO_PTR>::iterator it = m_mcontralcenter.find(addrarea);
 
-                        if(it == m_mcontralcenter.end())
-                        {
+                        if(it == m_mcontralcenter.end()) {
                             m_mcontralcenter.insert(pair<string, IOCP_IO_PTR>(addrarea, lp_io));
-                        }
-                        else
-                        {
+                        } else {
                             //it->second;
                             //CloseMySocket(it->second);
                             it->second = lp_io;
@@ -2186,9 +1925,7 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
                         }
 
                         buildConCode(src, des, deslen, 1);
-                    }
-                    else if(DT[0] == 4)
-                    {
+                    } else if(DT[0] == 4) {
                         //02170101
                         //m_mcontralcenter
                         glog::GetInstance()->AddLine("心跳包");
@@ -2199,9 +1936,7 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
                 }
             }
         }
-    }
-    else if(AFN == 0x00)              //全部确认
-    {
+    } else if(AFN == 0x00) {          //全部确认
         BYTE    con =    src[13] & 0x10;
         BYTE   DirPrmCode = src[6] & 0xc0;   //上行  从动
         BYTE   FC = src[6] & 0xF; //控制域名的功能码
@@ -2210,17 +1945,14 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
         memcpy(DA, &src[14], 2);    //PN P0
         memcpy(DT, &src[16], 2);   //FN  1 登陆 | 3 心跳
 
-        if(DirPrmCode == 0x80 && con == 0x0 && FC == 0x8)   //  上行 从动 响应帧   0x80 上行 从动
-        {
+        if(DirPrmCode == 0x80 && con == 0x0 && FC == 0x8) { //  上行 从动 响应帧   0x80 上行 从动
             BYTE frame = src[13] & 0xf;   //帧序号
             BYTE Fn = DT[1] * 8 + DT[0];
             glog::GetInstance()->AddLine("集中器响应帧:%d 确认 Fn:%d", frame, Fn);
 
-            if(Fn == 1)
-            {
+            if(Fn == 1) {
                 //全部确认
-                if(!m_listmsg.empty())
-                {
+                if(!m_listmsg.empty()) {
                     IOCP_IO_PTR lp_io1 = m_listmsg.back();
                     m_listmsg.pop_back();
                     string strret = "";
@@ -2229,8 +1961,7 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
                     Json::Value root;
                     Json::Reader reader;
 
-                    if(reader.parse(strret.c_str(), root))
-                    {
+                    if(reader.parse(strret.c_str(), root)) {
                         SHORT setnum = (SHORT) * (src + 18); //错误的装置号
                         BYTE  errcode = (BYTE) * (src + 20);
                         root["status"] = "success";
@@ -2244,8 +1975,7 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
                         int lenret = 0;
                         int len = wsEncodeFrame(inmsg, outmsg, WS_TEXT_FRAME, lenret);
 
-                        if(len != WS_ERROR_FRAME)
-                        {
+                        if(len != WS_ERROR_FRAME) {
                             memcpy(lp_io1->buf, outmsg, lenret);
                             lp_io1->wsaBuf.buf = lp_io1->buf;
                             lp_io1->wsaBuf.len = lenret;
@@ -2254,12 +1984,9 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
                         }
                     }
                 }
-            }
-            else if(Fn == 2)     //全部否认
-            {
+            } else if(Fn == 2) { //全部否认
                 //全部否认
-                if(!m_listmsg.empty())
-                {
+                if(!m_listmsg.empty()) {
                     IOCP_IO_PTR lp_io1 = m_listmsg.back();
                     m_listmsg.pop_back();
                     string strret = "";
@@ -2268,8 +1995,7 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
                     Json::Value root;
                     Json::Reader reader;
 
-                    if(reader.parse(strret.c_str(), root))
-                    {
+                    if(reader.parse(strret.c_str(), root)) {
                         SHORT setnum = (SHORT) * (src + 18); //错误的装置号
                         BYTE  errcode = (BYTE) * (src + 20);
                         root["status"] = "fail";
@@ -2282,8 +2008,7 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
                         int lenret = 0;
                         int len = wsEncodeFrame(inmsg, outmsg, WS_TEXT_FRAME, lenret);
 
-                        if(len != WS_ERROR_FRAME)
-                        {
+                        if(len != WS_ERROR_FRAME) {
                             memcpy(lp_io1->buf, outmsg, lenret);
                             lp_io1->wsaBuf.buf = lp_io1->buf;
                             lp_io1->wsaBuf.len = lenret;
@@ -2314,11 +2039,8 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
                     //    DataAction(lp_io1, lp_io1->lp_key);
                     //}
                 }
-            }
-            else if(Fn == 4)      //按单元标识事件确认
-            {
-                if(!m_listmsg.empty())
-                {
+            } else if(Fn == 4) {  //按单元标识事件确认
+                if(!m_listmsg.empty()) {
                     IOCP_IO_PTR lp_io1 = m_listmsg.back();
                     m_listmsg.pop_back();
                     string strret = "";
@@ -2327,8 +2049,7 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
                     Json::Value root;
                     Json::Reader reader;
 
-                    if(reader.parse(strret.c_str(), root))
-                    {
+                    if(reader.parse(strret.c_str(), root)) {
                         SHORT setnum = (SHORT) * (src + 18); //错误的装置号
                         BYTE  errcode = (BYTE) * (src + 20);
                         root["status"] = "fail";
@@ -2342,8 +2063,7 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
                         int lenret = 0;
                         int len = wsEncodeFrame(inmsg, outmsg, WS_TEXT_FRAME, lenret);
 
-                        if(len != WS_ERROR_FRAME)
-                        {
+                        if(len != WS_ERROR_FRAME) {
                             memcpy(lp_io1->buf, outmsg, lenret);
                             lp_io1->wsaBuf.buf = lp_io1->buf;
                             lp_io1->wsaBuf.len = lenret;
@@ -2352,16 +2072,12 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
                         }
                     }
                 }
-            }
-            else if(Fn == 3)
-            {
+            } else if(Fn == 3) {
                 IOCP_IO_PTR lp_io1 = m_listmsg.back();
                 m_listmsg.pop_back();
             }
         }
-    }
-    else if(AFN == 0xAC)
-    {
+    } else if(AFN == 0xAC) {
         glog::trace("\n请求1类数据命令");
         BYTE    con =    src[13] & 0x10;
         BYTE   DirPrmCode = src[6] & 0xc0;   //上行  从动
@@ -2381,11 +2097,9 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
         strftime(myday, sizeof(myday), "%Y-%m-%d", tm1);
         glog::trace("\nYesterday:%s", myday);
 
-        if(DirPrmCode == 0x80 && con == 0x0 && FC == 0x8)   //  上行 从动 响应帧   0x80 上行 从动
-        {
+        if(DirPrmCode == 0x80 && con == 0x0 && FC == 0x8) { //  上行 从动 响应帧   0x80 上行 从动
             //三相电压
-            if(DA[0] == 0 && DA[1] == 0 && DT[0] == 0x4 && DT[1] == 0x4)
-            {
+            if(DA[0] == 0 && DA[1] == 0 && DT[0] == 0x4 && DT[1] == 0x4) {
                 BYTE* p1 = src;
                 Json::Value jsonRoot;
                 int p = 0;
@@ -2393,8 +2107,7 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
                 string strB;
                 string strC;
 
-                for(int i = 18; i < srclen - 2; i += 6)
-                {
+                for(int i = 18; i < srclen - 2; i += 6) {
                     BYTE A1[2] = {0};
                     BYTE B1[2] = {0};
                     BYTE C1[2] = {0};
@@ -2430,22 +2143,19 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
 
                 int n1 = strA.find_last_of("|");
 
-                if(n1 == strA.size() - 1)
-                {
+                if(n1 == strA.size() - 1) {
                     strA = strA.substr(0, n1);
                 }
 
                 int n2 = strB.find_last_of("|");
 
-                if(n2 == strB.size() - 1)
-                {
+                if(n2 == strB.size() - 1) {
                     strB = strB.substr(0, n2);
                 }
 
                 int n3 = strC.find_last_of("|");
 
-                if(n3 == strC.size() - 1)
-                {
+                if(n3 == strC.size() - 1) {
                     strC = strC.substr(0, n3);
                 }
 
@@ -2461,8 +2171,7 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
                 sql.append("'");
                 _RecordsetPtr rs = this->dbopen.ExecuteWithResSQL(sql.c_str());
 
-                if(rs && this->dbopen.GetNum(rs) == 0)
-                {
+                if(rs && this->dbopen.GetNum(rs) == 0) {
                     sql = "insert into t_records(day,comaddr,voltage) values(\'";
                     sql.append(myday);
                     sql.append("\',\'");
@@ -2474,12 +2183,9 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
                     _RecordsetPtr rs = this->dbopen.ExecuteWithResSQL(sql.c_str());
                     glog::trace("%s", sql.c_str());
 
-                    if(rs)
-                    {
+                    if(rs) {
                     }
-                }
-                else if(rs && this->dbopen.GetNum(rs) == 1)
-                {
+                } else if(rs && this->dbopen.GetNum(rs) == 1) {
                     sql = "update t_records set voltage=\'";
                     sql.append(inmsg.c_str());
                     sql.append("\'");
@@ -2491,15 +2197,13 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
                     _RecordsetPtr rs = this->dbopen.ExecuteWithResSQL(sql.c_str());
                     glog::trace("%s", sql.c_str());
 
-                    if(rs)
-                    {
+                    if(rs) {
                     }
                 }
             }
 
             //三相电流
-            if(DA[0] == 0 && DA[1] == 0 && DT[0] == 0x20 && DT[1] == 0x4)
-            {
+            if(DA[0] == 0 && DA[1] == 0 && DT[0] == 0x20 && DT[1] == 0x4) {
                 glog::trace("\n三相电流");
                 //isrespos = FALSE;
                 ////InitIoContext(lp_io);
@@ -2511,8 +2215,7 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
                 string strB;
                 string strC;
 
-                for(int i = 18; i < srclen - 2; i += 9)
-                {
+                for(int i = 18; i < srclen - 2; i += 9) {
                     BYTE A1[3] = {0};
                     BYTE B1[3] = {0};
                     BYTE C1[3] = {0};
@@ -2554,22 +2257,19 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
 
                 int n1 = strA.find_last_of("|");
 
-                if(n1 == strA.size() - 1)
-                {
+                if(n1 == strA.size() - 1) {
                     strA = strA.substr(0, n1);
                 }
 
                 int n2 = strB.find_last_of("|");
 
-                if(n2 == strB.size() - 1)
-                {
+                if(n2 == strB.size() - 1) {
                     strB = strB.substr(0, n2);
                 }
 
                 int n3 = strC.find_last_of("|");
 
-                if(n3 == strC.size() - 1)
-                {
+                if(n3 == strC.size() - 1) {
                     strC = strC.substr(0, n3);
                 }
 
@@ -2585,8 +2285,7 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
                 sql.append("'");
                 _RecordsetPtr rs = this->dbopen.ExecuteWithResSQL(sql.c_str());
 
-                if(rs && this->dbopen.GetNum(rs) == 0)
-                {
+                if(rs && this->dbopen.GetNum(rs) == 0) {
                     sql = "insert into t_records(day,comaddr,electric) values(\'";
                     sql.append(myday);
                     sql.append("\',\'");
@@ -2598,12 +2297,9 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
                     _RecordsetPtr rs = this->dbopen.ExecuteWithResSQL(sql.c_str());
                     glog::trace("%s", sql.c_str());
 
-                    if(rs)
-                    {
+                    if(rs) {
                     }
-                }
-                else if(rs && this->dbopen.GetNum(rs) == 1)
-                {
+                } else if(rs && this->dbopen.GetNum(rs) == 1) {
                     sql = "update t_records set electric=\'";
                     sql.append(inmsg.c_str());
                     sql.append("\' ");
@@ -2615,15 +2311,13 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
                     _RecordsetPtr rs = this->dbopen.ExecuteWithResSQL(sql.c_str());
                     glog::trace("%s", sql.c_str());
 
-                    if(rs)
-                    {
+                    if(rs) {
                     }
                 }
             }
 
             //三相有功功率
-            if(DA[0] == 0 && DA[1] == 0 && DT[0] == 0x01 && DT[1] == 0x03)
-            {
+            if(DA[0] == 0 && DA[1] == 0 && DT[0] == 0x01 && DT[1] == 0x03) {
                 BYTE* p1 = src;
                 Json::Value jsonRoot;
                 int p = 0;
@@ -2631,8 +2325,7 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
                 string strB;
                 string strC;
 
-                for(int i = 18; i < srclen - 2; i += 9)
-                {
+                for(int i = 18; i < srclen - 2; i += 9) {
                     BYTE A1[3] = {0};
                     BYTE B1[3] = {0};
                     BYTE C1[3] = {0};
@@ -2674,22 +2367,19 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
 
                 int n1 = strA.find_last_of("|");
 
-                if(n1 == strA.size() - 1)
-                {
+                if(n1 == strA.size() - 1) {
                     strA = strA.substr(0, n1);
                 }
 
                 int n2 = strB.find_last_of("|");
 
-                if(n2 == strB.size() - 1)
-                {
+                if(n2 == strB.size() - 1) {
                     strB = strB.substr(0, n2);
                 }
 
                 int n3 = strC.find_last_of("|");
 
-                if(n3 == strC.size() - 1)
-                {
+                if(n3 == strC.size() - 1) {
                     strC = strC.substr(0, n3);
                 }
 
@@ -2705,8 +2395,7 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
                 sql.append("'");
                 _RecordsetPtr rs = this->dbopen.ExecuteWithResSQL(sql.c_str());
 
-                if(rs && this->dbopen.GetNum(rs) == 0)
-                {
+                if(rs && this->dbopen.GetNum(rs) == 0) {
                     sql = "insert into t_records(day,comaddr,activepower) values(\'";
                     sql.append(myday);
                     sql.append("\',\'");
@@ -2718,12 +2407,9 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
                     _RecordsetPtr rs = this->dbopen.ExecuteWithResSQL(sql.c_str());
                     glog::trace("%s", sql.c_str());
 
-                    if(rs)
-                    {
+                    if(rs) {
                     }
-                }
-                else if(rs && this->dbopen.GetNum(rs) == 1)
-                {
+                } else if(rs && this->dbopen.GetNum(rs) == 1) {
                     sql = "update t_records set activepower=\'";
                     sql.append(inmsg.c_str());
                     sql.append("\' ");
@@ -2735,15 +2421,13 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
                     _RecordsetPtr rs = this->dbopen.ExecuteWithResSQL(sql.c_str());
                     glog::trace("%s", sql.c_str());
 
-                    if(rs)
-                    {
+                    if(rs) {
                     }
                 }
             }
 
             //三相功率因数
-            if(DA[0] == 0 && DA[1] == 0 && DT[0] == 0x40 && DT[1] == 0x03)
-            {
+            if(DA[0] == 0 && DA[1] == 0 && DT[0] == 0x40 && DT[1] == 0x03) {
                 BYTE* p1 = src;
                 Json::Value jsonRoot;
                 int p = 0;
@@ -2752,8 +2436,7 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
                 string strC;
                 string strD;
 
-                for(int i = 18; i < srclen - 2; i += 8)
-                {
+                for(int i = 18; i < srclen - 2; i += 8) {
                     BYTE A1[2] = {0};
                     BYTE B1[2] = {0};
                     BYTE C1[2] = {0};
@@ -2799,29 +2482,25 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
 
                 int n1 = strA.find_last_of("|");
 
-                if(n1 == strA.size() - 1)
-                {
+                if(n1 == strA.size() - 1) {
                     strA = strA.substr(0, n1);
                 }
 
                 int n2 = strB.find_last_of("|");
 
-                if(n2 == strB.size() - 1)
-                {
+                if(n2 == strB.size() - 1) {
                     strB = strB.substr(0, n2);
                 }
 
                 int n3 = strC.find_last_of("|");
 
-                if(n3 == strC.size() - 1)
-                {
+                if(n3 == strC.size() - 1) {
                     strC = strC.substr(0, n3);
                 }
 
                 int n4 = strD.find_last_of("|");
 
-                if(n4 == strD.size() - 1)
-                {
+                if(n4 == strD.size() - 1) {
                     strD = strD.substr(0, n4);
                 }
 
@@ -2838,8 +2517,7 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
                 sql.append("'");
                 _RecordsetPtr rs = this->dbopen.ExecuteWithResSQL(sql.c_str());
 
-                if(rs && this->dbopen.GetNum(rs) == 0)
-                {
+                if(rs && this->dbopen.GetNum(rs) == 0) {
                     sql = "insert into t_records(day,comaddr,powerfactor) values(\'";
                     sql.append(myday);
                     sql.append("\',\'");
@@ -2851,12 +2529,9 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
                     _RecordsetPtr rs = this->dbopen.ExecuteWithResSQL(sql.c_str());
                     glog::trace("%s", sql.c_str());
 
-                    if(rs)
-                    {
+                    if(rs) {
                     }
-                }
-                else if(rs && this->dbopen.GetNum(rs) == 1)
-                {
+                } else if(rs && this->dbopen.GetNum(rs) == 1) {
                     sql = "update t_records set powerfactor=\'";
                     sql.append(inmsg.c_str());
                     sql.append("\' ");
@@ -2868,15 +2543,13 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
                     _RecordsetPtr rs = this->dbopen.ExecuteWithResSQL(sql.c_str());
                     glog::trace("%s", sql.c_str());
 
-                    if(rs)
-                    {
+                    if(rs) {
                     }
                 }
             }
 
             //正向有功电能量
-            if(DA[0] == 0 && DA[1] == 0 && DT[0] == 0x01 && DT[1] == 0x05)
-            {
+            if(DA[0] == 0 && DA[1] == 0 && DT[0] == 0x01 && DT[1] == 0x05) {
                 BYTE* p1 = src;
                 Json::Value jsonRoot;
                 int p = 0;
@@ -2884,8 +2557,7 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
                 float fbegin = 0;
                 float fend = 0;
 
-                for(int i = 18; i < srclen - 2; i += 4)
-                {
+                for(int i = 18; i < srclen - 2; i += 4) {
                     BYTE A1[4] = {0};
                     memcpy(A1, &src[i], 4);
                     char strA1[16] = {0};
@@ -2902,15 +2574,13 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
                     strA.append("|");
                     p += 1;
 
-                    if(i == 18)
-                    {
+                    if(i == 18) {
                         fbegin = atof(strA1);
                     }
 
                     int n1 = i + 4;
 
-                    if(n1 >= srclen - 2)
-                    {
+                    if(n1 >= srclen - 2) {
                         fend = atof(strA1);
                     }
                 }
@@ -2918,8 +2588,7 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
                 glog::trace("\nbegin:%0.2f  end:%0.2f", fbegin, fend);
                 int n1 = strA.find_last_of("|");
 
-                if(n1 == strA.size() - 1)
-                {
+                if(n1 == strA.size() - 1) {
                     strA = strA.substr(0, n1);
                 }
 
@@ -2937,8 +2606,7 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
                 sql.append("'");
                 _RecordsetPtr rs = this->dbopen.ExecuteWithResSQL(sql.c_str());
 
-                if(rs && this->dbopen.GetNum(rs) == 0)
-                {
+                if(rs && this->dbopen.GetNum(rs) == 0) {
                     sql = "insert into t_records(day,comaddr,power) values(\'";
                     sql.append(myday);
                     sql.append("\',\'");
@@ -2950,12 +2618,9 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
                     _RecordsetPtr rs = this->dbopen.ExecuteWithResSQL(sql.c_str());
                     glog::trace("%s", sql.c_str());
 
-                    if(rs)
-                    {
+                    if(rs) {
                     }
-                }
-                else if(rs && this->dbopen.GetNum(rs) == 1)
-                {
+                } else if(rs && this->dbopen.GetNum(rs) == 1) {
                     sql = "update t_records set power=\'";
                     sql.append(inmsg.c_str());
                     sql.append("\' ");
@@ -2965,15 +2630,12 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
                     _RecordsetPtr rs = this->dbopen.ExecuteWithResSQL(sql.c_str());
                     glog::trace("%s", sql.c_str());
 
-                    if(rs)
-                    {
+                    if(rs) {
                     }
                 }
             }
         }
-    }
-    else if(AFN == 0xAA)
-    {
+    } else if(AFN == 0xAA) {
         BYTE    con =    src[13] & 0x10;
         BYTE   DirPrmCode = src[6] & 0xc0;   //上行  从动
         BYTE   FC = src[6] & 0xF; //控制域名的功能码
@@ -2984,15 +2646,13 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
 
         // 查询换日时间
 
-        if(DirPrmCode == 0x80 && con == 0x0 && FC == 0x8)   //  上行 从动 响应帧   0x80 上行 从动
-        {
+        if(DirPrmCode == 0x80 && con == 0x0 && FC == 0x8) { //  上行 从动 响应帧   0x80 上行 从动
             BYTE frame = src[13] & 0xf;   //帧序号
             BYTE Fn = DT[1] * 8 + DT[0];
             glog::GetInstance()->AddLine("参数查询 集中器响应帧:%d 确认 Fn:%d", frame, Fn);
 
             //查询换日时间
-            if(DA[0] == 0 && DA[1] == 0 && DT[0] == 0x04 && DT[1] == 0x00)
-            {
+            if(DA[0] == 0 && DA[1] == 0 && DT[0] == 0x04 && DT[1] == 0x00) {
                 BYTE A1[2] = {0};
                 memcpy(A1, &src[18], 2);
                 BYTE s = A1[0] >> 4 & 0x0f;
@@ -3011,8 +2671,7 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
                 sprintf(time2, "%d%d:%d%d", s2, g2, sw2, gw2);
                 glog::trace("\n换日时间 time:%s 冻结时间:%s", time, time2);
 
-                if(!m_listmsg.empty())
-                {
+                if(!m_listmsg.empty()) {
                     IOCP_IO_PTR lp_io1 = m_listmsg.back();
                     m_listmsg.pop_back();
                     string strret = "";
@@ -3021,8 +2680,7 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
                     Json::Value root;
                     Json::Reader reader;
 
-                    if(reader.parse(strret.c_str(), root))
-                    {
+                    if(reader.parse(strret.c_str(), root)) {
                         SHORT setnum = (SHORT) * (src + 18); //错误的装置号
                         BYTE  errcode = (BYTE) * (src + 20);
                         root["status"] = "success";
@@ -3034,8 +2692,7 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
                         int lenret = 0;
                         int len = wsEncodeFrame(inmsg, outmsg, WS_TEXT_FRAME, lenret);
 
-                        if(len != WS_ERROR_FRAME)
-                        {
+                        if(len != WS_ERROR_FRAME) {
                             glog::trace("\noutmsg:%s lenret:%d", outmsg, lenret);
                             memcpy(lp_io1->buf, outmsg, lenret);
                             lp_io1->wsaBuf.buf = lp_io1->buf;
@@ -3049,10 +2706,8 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
             }
 
             //查询主站信息
-            if(DA[0] == 0 && DA[1] == 0 && DT[0] == 0x01 && DT[1] == 0x00)
-            {
-                if(!m_listmsg.empty())
-                {
+            if(DA[0] == 0 && DA[1] == 0 && DT[0] == 0x01 && DT[1] == 0x00) {
+                if(!m_listmsg.empty()) {
                     char a[16] = {0};
                     int z = 18;
                     sprintf(a, "%d.%d.%d.%d", src[z], src[z + 1], src[z + 2], src[z + 3]);
@@ -3074,14 +2729,10 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
                     memcpy(apn, &src[z], 16);
                     char* p = "";
 
-                    for(int i = 0; i < 16; i++)
-                    {
-                        if(apn[i] == 0x00)
-                        {
+                    for(int i = 0; i < 16; i++) {
+                        if(apn[i] == 0x00) {
                             continue;
-                        }
-                        else
-                        {
+                        } else {
                             p = (char*)&apn[i];
                             break;
                         }
@@ -3102,8 +2753,7 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
                     Json::Value root;
                     Json::Reader reader;
 
-                    if(reader.parse(strret.c_str(), root))
-                    {
+                    if(reader.parse(strret.c_str(), root)) {
                         SHORT setnum = (SHORT) * (src + 18); //错误的装置号
                         BYTE  errcode = (BYTE) * (src + 20);
                         root["status"] = "success";
@@ -3126,8 +2776,7 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
                         int lenret = 0;
                         int len = wsEncodeFrame(inmsg, outmsg, WS_TEXT_FRAME, lenret);
 
-                        if(len != WS_ERROR_FRAME)
-                        {
+                        if(len != WS_ERROR_FRAME) {
                             glog::trace("\noutmsg:%s lenret:%d", outmsg, lenret);
                             memcpy(lp_io1->buf, outmsg, lenret);
                             lp_io1->wsaBuf.buf = lp_io1->buf;
@@ -3140,8 +2789,7 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
                 }
             }
 
-            if(!m_listmsg.empty())
-            {
+            if(!m_listmsg.empty()) {
                 IOCP_IO_PTR lp_io1 = m_listmsg.back();
                 m_listmsg.pop_back();
                 string strret = "";
@@ -3150,8 +2798,7 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
                 Json::Value root;
                 Json::Reader reader;
 
-                if(reader.parse(strret.c_str(), root))
-                {
+                if(reader.parse(strret.c_str(), root)) {
                     root["status"] = "success";
                     root["data"] = gstring::char2hex((const char*)src, srclen);
                     root["length"] = srclen;
@@ -3160,8 +2807,7 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
                     int lenret = 0;
                     int len = wsEncodeFrame(inmsg, outmsg, WS_TEXT_FRAME, lenret);
 
-                    if(len != WS_ERROR_FRAME)
-                    {
+                    if(len != WS_ERROR_FRAME) {
                         memcpy(lp_io1->buf, outmsg, lenret);
                         lp_io1->wsaBuf.buf = lp_io1->buf;
                         lp_io1->wsaBuf.len = lenret;
@@ -3171,9 +2817,7 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
                 }
             }
         }
-    }
-    else if(AFN == 0x0E)             //报警和故障事件
-    {
+    } else if(AFN == 0x0E) {         //报警和故障事件
         string a1 = gstring::char2hex((const char*)src, srclen);
         glog::GetInstance()->AddLine("故障:%s", a1.c_str());
         BYTE    con =    src[13] & 0x10;
@@ -3187,10 +2831,8 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
         memcpy(DA, &src[14], 2);
         memcpy(DT, &src[16], 2);
 
-        if(DirPrmCode == 0xC0 && con == 0)   //上行 启动站     主动上报故障和预警  不需要响应
-        {
-            if(DA[0] == 0 && DA[1] == 0 && DT[0] == 0x01 && DT[1] == 0x00)
-            {
+        if(DirPrmCode == 0xC0 && con == 0) { //上行 启动站     主动上报故障和预警  不需要响应
+            if(DA[0] == 0 && DA[1] == 0 && DT[0] == 0x01 && DT[1] == 0x00) {
                 int j = 19;
                 BYTE errcode = src[j + 0];
                 BYTE datalen = src[j + 1];
@@ -3222,8 +2864,7 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
                 sql.append("'");
                 _RecordsetPtr rs = this->dbopen.ExecuteWithResSQL(sql.c_str());
 
-                if(rs && this->dbopen.GetNum(rs) == 0)
-                {
+                if(rs && this->dbopen.GetNum(rs) == 0) {
                     map<string, _variant_t>m_var;
                     _variant_t  vdate(date);
                     _variant_t  vcomaddr(addrarea.c_str());
@@ -3235,16 +2876,13 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
                     string sql = this->dbopen.GetInsertSql(m_var, "t_fault");
                     _RecordsetPtr rs1 = this->dbopen.ExecuteWithResSQL(sql.c_str());
 
-                    if(!rs1)
-                    {
+                    if(!rs1) {
                         glog::GetInstance()->AddLine("插入报警事件失败");
                     }
                 }
             }
         }
-    }
-    else if(AFN == 0xA4)
-    {
+    } else if(AFN == 0xA4) {
         BYTE    con =    src[13] & 0x10;
         BYTE   DirPrmCode = src[6] & 0xc0;   //上行  从动
         BYTE   FC = src[6] & 0xF; //控制域名的功能码
@@ -3255,17 +2893,14 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
 
         // 参数设置
 
-        if(DirPrmCode == 0x80 && con == 0x0 && FC == 0x8)   //  上行 从动 响应帧   0x80 上行 从动
-        {
+        if(DirPrmCode == 0x80 && con == 0x0 && FC == 0x8) { //  上行 从动 响应帧   0x80 上行 从动
             BYTE frame = src[13] & 0xf;   //帧序号
             BYTE Fn = DT[1] * 8 + DT[0];
             glog::GetInstance()->AddLine("参数查询 集中器响应帧:%d 确认 Fn:%d", frame, Fn);
 
             //设置APN
-            if(DA[0] == 0 && DA[1] == 0 && DT[0] == 0x02 && DT[1] == 0x00)
-            {
-                if(!m_listmsg.empty())
-                {
+            if(DA[0] == 0 && DA[1] == 0 && DT[0] == 0x02 && DT[1] == 0x00) {
+                if(!m_listmsg.empty()) {
                     IOCP_IO_PTR lp_io1 = m_listmsg.back();
                     m_listmsg.pop_back();
                     string strret = "";
@@ -3274,8 +2909,7 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
                     Json::Value root;
                     Json::Reader reader;
 
-                    if(reader.parse(strret.c_str(), root))
-                    {
+                    if(reader.parse(strret.c_str(), root)) {
                         SHORT setnum = (SHORT) * (src + 18); //错误的装置号
                         BYTE  errcode = (BYTE) * (src + 20);
                         root["status"] = "success";
@@ -3285,8 +2919,7 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
                         int lenret = 0;
                         int len = wsEncodeFrame(inmsg, outmsg, WS_TEXT_FRAME, lenret);
 
-                        if(len != WS_ERROR_FRAME)
-                        {
+                        if(len != WS_ERROR_FRAME) {
                             glog::trace("\noutmsg:%s lenret:%d", outmsg, lenret);
                             memcpy(lp_io1->buf, outmsg, lenret);
                             lp_io1->wsaBuf.buf = lp_io1->buf;
@@ -3299,10 +2932,8 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
             }
 
             //查询主站信息
-            if(DA[0] == 0 && DA[1] == 0 && DT[0] == 0x01 && DT[1] == 0x00)
-            {
-                if(!m_listmsg.empty())
-                {
+            if(DA[0] == 0 && DA[1] == 0 && DT[0] == 0x01 && DT[1] == 0x00) {
+                if(!m_listmsg.empty()) {
                     IOCP_IO_PTR lp_io1 = m_listmsg.back();
                     m_listmsg.pop_back();
                     string strret = "";
@@ -3311,8 +2942,7 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
                     Json::Value root;
                     Json::Reader reader;
 
-                    if(reader.parse(strret.c_str(), root))
-                    {
+                    if(reader.parse(strret.c_str(), root)) {
                         SHORT setnum = (SHORT) * (src + 18); //错误的装置号
                         BYTE  errcode = (BYTE) * (src + 20);
                         root["status"] = "success";
@@ -3324,8 +2954,7 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
                         int lenret = 0;
                         int len = wsEncodeFrame(inmsg, outmsg, WS_TEXT_FRAME, lenret);
 
-                        if(len != WS_ERROR_FRAME)
-                        {
+                        if(len != WS_ERROR_FRAME) {
                             glog::trace("\noutmsg:%s lenret:%d", outmsg, lenret);
                             memcpy(lp_io1->buf, outmsg, lenret);
                             lp_io1->wsaBuf.buf = lp_io1->buf;
@@ -3358,8 +2987,7 @@ void CIOCP::buildConCode(BYTE src[], BYTE res[], int& len, BYTE bcon)
     memcpy(&btemp[14], &src[14], 4);
     BYTE  checksum = 0;
 
-    for(int j = 6; j < 18; j++)
-    {
+    for(int j = 6; j < 18; j++) {
         checksum += btemp[j];
     }
 

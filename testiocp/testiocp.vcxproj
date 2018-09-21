@@ -88,12 +88,14 @@
     <ClInclude Include="IOCP.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="SHA1.h" />
+    <ClInclude Include="smtp.h" />
     <ClInclude Include="template.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DBOperation.cpp" />
     <ClCompile Include="IOCP.cpp" />
     <ClCompile Include="SHA1.cpp" />
+    <ClCompile Include="smtp.cpp" />
     <ClCompile Include="template.cpp" />
   </ItemGroup>
   <ItemGroup>

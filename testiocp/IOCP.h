@@ -84,7 +84,7 @@ public:
     KEY_GROUP           m_key_group;
 	char m_configTime[216];				//采集时间
     typedef   list<IOCP_IO_PTR>::iterator ITERATOR;
-	map<string,BOOL>m_day;
+	map<string,_COMADDRVISITE>m_day;
 
 //     typedef struct _WEBSOCKET
 //     {

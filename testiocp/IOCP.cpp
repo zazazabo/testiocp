@@ -810,7 +810,8 @@ BOOL CIOCP::Init()
     char upass[216] = {0};
     GetPrivateProfileStringA("Config", "upass", "", upass, 216, pdir.c_str());
     BOOL bcon = dbopen.ConnToDB(source, database, uname, upass);
-    _RecordsetPtr rs =    dbopen.ExecuteWithResSQL("select * from t_lamp");
+
+
     WSAData data;
 
     if(WSAStartup(MAKEWORD(2, 2), &data) != 0)
@@ -2414,8 +2415,13 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
                 sql.append("\' and comaddr='");
                 sql.append(addrarea);
                 sql.append("'");
+				
                 _RecordsetPtr rs = this->dbopen.ExecuteWithResSQL(sql.c_str());
-
+				if (rs==NULL)
+				{
+					glog::GetInstance()->AddLine("数据库查询有问题 sql:%s",sql.c_str());
+				}
+			
                 if(rs && this->dbopen.GetNum(rs) == 0)
                 {
                     sql = "insert into t_records(day,comaddr,voltage) values(\'";

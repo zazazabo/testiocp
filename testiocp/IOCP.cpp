@@ -201,6 +201,7 @@ BOOL CIOCP::PostAcceptEx()
         lp_io->lp_key = NULL;
         lp_io->timelen = 0;
         memset(lp_io->day, 0, 20);
+        memset(lp_io->gayway, 0, 20);
         //glog::GetInstance()->AddLine("post accecptex socket:%d IOCP_IO_PTR:%p", socket, lp_io);
         /////////////////////////////////////////////////
         bRet = lpAcceptEx(m_listen_socket, lp_io->socket, lp_io->buf,
@@ -491,77 +492,6 @@ BOOL CIOCP::IsBreakPack(BYTE src[], int len)
 }
 
 
-BOOL CIOCP::IsTailPackWeb(BYTE src[], int len, pBREAKPCK pack, IOCP_IO_PTR& lp_io)
-{
-    int lenall = len + pack->len;
-    BYTE* allbyte = new BYTE[lenall];
-    memset(allbyte, 0, lenall);
-    memcpy(allbyte, pack->b, pack->len);
-    memcpy(allbyte +  pack->len, src, len);
-
-    if(lenall <= 1024)
-    {
-        memset(lp_io->wsaBuf.buf, 0, 1024);
-        memcpy(lp_io->wsaBuf.buf, allbyte, lenall);
-        lp_io->wsaBuf.len = lenall;
-    }
-
-    delete allbyte;
-    return FALSE;
-//     delete pack->b;
-//     pack->b = allbyte;
-//     pack->len = lenall;
-//  string ss="";
-//  BOOL b1=FALSE;
-//  wsDecodeFrame((char*)allbyte,ss,lenall,b1);
-    //string begin = "{\"begin\":\"6A\"";
-    //string end = "\"end\":\"6A\"}";
-    //int n1 = len - end.size();
-    //if(n1 >= 0 && _strnicmp(end.c_str(), (const char*)&src[n1], end.size()) == 0)
-    //{
-    //    return TRUE;
-    //}
-    //else
-    //{
-    //    return FALSE;
-    //}
-}
-
-
-
-
-
-
-
-
-BOOL CIOCP::IsTailPack(BYTE src[], int len, pBREAKPCK pack, IOCP_IO_PTR& lp_io)
-{
-    if(len == 0)
-    {
-        return FALSE;
-    }
-
-    if(src[len - 1] == 0x16)
-    {
-        int lenall = len + pack->len;
-        BYTE* allbyte = new BYTE[lenall];
-        memset(allbyte, 0, lenall);
-        memcpy(allbyte, pack->b, pack->len);
-        memcpy(allbyte +  pack->len, src, len);
-        BOOL  bcontro = checkFlag(allbyte, lenall);
-
-        if(bcontro)
-        {
-            BYTE bdest[1024] = {0};
-            int lenret = 0;
-            BOOL  bisres = FALSE;
-            buildcode(allbyte, lenall, bdest, lenret, bisres, lp_io);
-            return TRUE;
-        }
-    }
-
-    return FALSE;
-}
 
 BOOL CIOCP::CloseMySocket(IOCP_IO_PTR lp_io)
 {
@@ -573,9 +503,6 @@ BOOL CIOCP::CloseMySocket(IOCP_IO_PTR lp_io)
     glog::trace("\n CloseMySocket  lp_io:%p  list1 count:%d list0 count:%d from:%d", lp_io, n, n1, lp_io->fromtype);
     return TRUE;
 }
-
-
-
 
 DWORD CIOCP::TimeThread(LPVOID lp_param)
 {
@@ -604,16 +531,24 @@ DWORD CIOCP::TimeThread(LPVOID lp_param)
         char myday[30] = {0};
         strftime(myday, sizeof(myday), "%Y-%m-%d", tm1);
         map<string, IOCP_IO_PTR>::iterator  it1 = lp_this->m_mcontralcenter.begin();
+        int len1 = lp_this->m_mcontralcenter.size();
 
-        if(it1 != lp_this->m_mcontralcenter.end())
+        //glog::trace("\n网关个数:%d",len1);
+
+        //while (it1!=lp_this->m_mcontralcenter.end())
+        //{
+        //  glog::trace("\n%s",it1->first.c_str());
+        //  it1++;
+        //}
+        while(it1 != lp_this->m_mcontralcenter.end())
         {
-            glog::trace("\n%s", it1->first.c_str());
+            // glog::trace("\n网关:%s", it1->first.c_str());
             IOCP_IO_PTR lo = it1->second;
 
             if(_stricmp(lo->day, myday) != 0)
             {
                 //昨天三相电压
-                glog::trace("\n请求昨天三相电压数据");
+                glog::trace("\n网关:%s 请求昨天三相电压数据", it1->first.c_str());
                 unsigned char vol[24] = {0x68, 0x42, 0x00, 0x42, 0x00, 0x68, 0x04, 0x02, 0x17, 0x01, 0x01, 0x02, 0xAC, 0x7A, 0x00, 0x00, 0x04, 0x04, 0x00, 0x00, 0x01, 0x05, 0x55, 0x16};
                 lp_this->InitIoContext(lo);
                 memcpy(lo->buf, vol, sizeof(vol));
@@ -622,8 +557,8 @@ DWORD CIOCP::TimeThread(LPVOID lp_param)
                 lo->operation = IOCP_WRITE;
                 lp_this->DataAction(lo, lo->lp_key);
                 //昨天三相电流
-                Sleep(10000);
-                glog::trace("\n请求昨天三相电流数据");
+                //Sleep(10000);
+                glog::trace("\n网关:%s请求昨天三相电流数据", it1->first.c_str());
                 unsigned char electric[20] = {0x68, 0x32, 0x00, 0x32, 0x00, 0x68, 0x04, 0x02, 0x17, 0x01, 0x01, 0x02, 0xAC, 0x75, 0x00, 0x00, 0x20, 0x04, 0x66, 0x16 };
                 lp_this->InitIoContext(lo);
                 memcpy(lo->buf, electric, sizeof(electric));
@@ -632,8 +567,8 @@ DWORD CIOCP::TimeThread(LPVOID lp_param)
                 lo->operation = IOCP_WRITE;
                 lp_this->DataAction(lo, lo->lp_key);
                 //昨天三相有功功率
-                Sleep(10000);
-                glog::trace("\n请求昨天三相有功功率数据");
+                //Sleep(10000);
+                glog::trace("\n网关:%s请求昨天三相有功功率数据", it1->first.c_str());
                 unsigned char activepower[24] = {0x68, 0x42, 0x00, 0x42, 0x00, 0x68, 0x04, 0x02, 0x17, 0x01, 0x01, 0x02, 0xAC, 0x76, 0x00, 0x00, 0x01, 0x03, 0x00, 0x00, 0x20, 0x04, 0x6B, 0x16 };
                 lp_this->InitIoContext(lo);
                 memcpy(lo->buf, activepower, sizeof(activepower));
@@ -642,8 +577,8 @@ DWORD CIOCP::TimeThread(LPVOID lp_param)
                 lo->operation = IOCP_WRITE;
                 lp_this->DataAction(lo, lo->lp_key);
                 //昨天总功率因数
-                Sleep(10000);
-                glog::trace("\n请求昨天功率因数");
+                //Sleep(10000);
+                glog::trace("\n网关:%s请求昨天功率因数", it1->first.c_str());
                 unsigned char powerfactor[24] = {0x68, 0x42, 0x00, 0x42, 0x00, 0x68, 0x04, 0x02, 0x17, 0x01, 0x01, 0x02, 0xAC, 0x78, 0x00, 0x00, 0x40, 0x03, 0x00, 0x00, 0x20, 0x04, 0xAC, 0x16 };
                 lp_this->InitIoContext(lo);
                 memcpy(lo->buf, powerfactor, sizeof(powerfactor));
@@ -652,8 +587,8 @@ DWORD CIOCP::TimeThread(LPVOID lp_param)
                 lo->operation = IOCP_WRITE;
                 lp_this->DataAction(lo, lo->lp_key);
                 //正向功能量
-                Sleep(10000);
-                glog::trace("\n请求昨天正向功能量");
+                //Sleep(10000);
+                glog::trace("\n网关:%s请求昨天正向功能量", it1->first.c_str());
                 unsigned char power[20] = {0x68, 0x32, 0x00, 0x32, 0x00, 0x68, 0x04, 0x02, 0x17, 0x01, 0x01, 0x02, 0xAC, 0x7B, 0x00, 0x00, 0x01, 0x05, 0x4E, 0x16 };
                 lp_this->InitIoContext(lo);
                 memcpy(lo->buf, power, sizeof(power));
@@ -667,80 +602,11 @@ DWORD CIOCP::TimeThread(LPVOID lp_param)
             it1++;
         }
 
-        //ComaddrViste a={0};
-        //      map<string, _COMADDRVISITE>::iterator ite = lp_this->m_day.find(myday);
-        //if(ite == lp_this->m_day.end()) {
-        //    lp_this->m_day.insert(pair<string, BOOL>(myday, FALSE));
-        //} else {
-        //    //当天还没采集到数据执行
-        //    if(ite->second == FALSE) {
-        //        //集中器客户端去端
-        //        map<string, IOCP_IO_PTR>::iterator  it1 = lp_this->m_mcontralcenter.begin();
-        //        if(it1 != lp_this->m_mcontralcenter.end()) {
-        //            IOCP_IO_PTR lo = it1->second;
-        //            //所有执行
-        //            //昨天三相电压
-        //            glog::trace("\n请求昨天三相电压数据");
-        //            unsigned char vol[24] = {0x68, 0x42, 0x00, 0x42, 0x00, 0x68, 0x04, 0x02, 0x17, 0x01, 0x01, 0x02, 0xAC, 0x7A, 0x00, 0x00, 0x04, 0x04, 0x00, 0x00, 0x01, 0x05, 0x55, 0x16};
-        //            lp_this->InitIoContext(lo);
-        //            memcpy(lo->buf, vol, sizeof(vol));
-        //            lo->wsaBuf.len = sizeof(vol);
-        //            lo->wsaBuf.buf = lo->buf;
-        //            lo->operation = IOCP_WRITE;
-        //            lp_this->DataAction(lo, lo->lp_key);
-        //            //昨天三相电流
-        //            Sleep(10000);
-        //            glog::trace("\n请求昨天三相电流数据");
-        //            unsigned char electric[20] = {0x68, 0x32, 0x00, 0x32, 0x00, 0x68, 0x04, 0x02, 0x17, 0x01, 0x01, 0x02, 0xAC, 0x75, 0x00, 0x00, 0x20, 0x04, 0x66, 0x16 };
-        //            lp_this->InitIoContext(lo);
-        //            memcpy(lo->buf, electric, sizeof(electric));
-        //            lo->wsaBuf.len = sizeof(electric);
-        //            lo->wsaBuf.buf = lo->buf;
-        //            lo->operation = IOCP_WRITE;
-        //            lp_this->DataAction(lo, lo->lp_key);
-        //            //昨天三相有功功率
-        //            Sleep(10000);
-        //            glog::trace("\n请求昨天三相有功功率数据");
-        //            unsigned char activepower[24] = {0x68, 0x42, 0x00, 0x42, 0x00, 0x68, 0x04, 0x02, 0x17, 0x01, 0x01, 0x02, 0xAC, 0x76, 0x00, 0x00, 0x01, 0x03, 0x00, 0x00, 0x20, 0x04, 0x6B, 0x16 };
-        //            lp_this->InitIoContext(lo);
-        //            memcpy(lo->buf, activepower, sizeof(activepower));
-        //            lo->wsaBuf.len = sizeof(activepower);
-        //            lo->wsaBuf.buf = lo->buf;
-        //            lo->operation = IOCP_WRITE;
-        //            lp_this->DataAction(lo, lo->lp_key);
-        //            //昨天总功率因数
-        //            Sleep(10000);
-        //            glog::trace("\n请求昨天功率因数");
-        //            unsigned char powerfactor[24] = {0x68, 0x42, 0x00, 0x42, 0x00, 0x68, 0x04, 0x02, 0x17, 0x01, 0x01, 0x02, 0xAC, 0x78, 0x00, 0x00, 0x40, 0x03, 0x00, 0x00, 0x20, 0x04, 0xAC, 0x16 };
-        //            lp_this->InitIoContext(lo);
-        //            memcpy(lo->buf, powerfactor, sizeof(powerfactor));
-        //            lo->wsaBuf.len = sizeof(powerfactor);
-        //            lo->wsaBuf.buf = lo->buf;
-        //            lo->operation = IOCP_WRITE;
-        //            lp_this->DataAction(lo, lo->lp_key);
-        //            //正向功能量
-        //            Sleep(10000);
-        //            glog::trace("\n请求昨天正向功能量");
-        //            unsigned char power[20] = {0x68, 0x32, 0x00, 0x32, 0x00, 0x68, 0x04, 0x02, 0x17, 0x01, 0x01, 0x02, 0xAC, 0x7B, 0x00, 0x00, 0x01, 0x05, 0x4E, 0x16 };
-        //            lp_this->InitIoContext(lo);
-        //            memcpy(lo->buf, power, sizeof(power));
-        //            lo->wsaBuf.len = sizeof(power);
-        //            lo->wsaBuf.buf = lo->buf;
-        //            lo->operation = IOCP_WRITE;
-        //            lp_this->DataAction(lo, lo->lp_key);
-        //            it1++;
-        //        }
-        //    }
-        //}
         Sleep(10000);
     }
 
     return 1;
 }
-
-
-
-
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 /*-------------------------------------------------------------------------------------------
@@ -836,8 +702,8 @@ BOOL CIOCP::Init()
     }
 
     //定时采集线程
-    DWORD tid = 0;
-    HANDLE hTreadTime = CreateThread(NULL, NULL, TimeThread, (LPVOID)this, NULL, &tid);
+    //DWORD tid = 0;
+    //HANDLE hTreadTime = CreateThread(NULL, NULL, TimeThread, (LPVOID)this, NULL, &tid);
 
     if(!InitSocket())
     {
@@ -933,10 +799,6 @@ BOOL CIOCP::MainLoop()
     return TRUE;
 }
 
-
-
-
-
 /*-------------------------------------------------------------------------------------------
 函数功能：看看是否有连接了，但很长时间没有数据的“无效连接”，有的话，就踢掉
 函数说明：
@@ -949,101 +811,94 @@ void CIOCP::CheckForInvalidConnection()
     IO_POS      pos;
     lp_start =  m_io_group.GetHeadPosition(pos);
     //IOCP_IO_PTR lp_end =       m_io_group.GetEndPosition(pos);
-    map<IOCP_IO_PTR, DWORD>m_io;
+    map<IOCP_IO_PTR, DWORD> m_io;
     m_io.clear();
+    map<IOCP_IO_PTR, int> m_mio;
+    m_mio.clear();
 
+    //glog::trace("come on CheckForInvalidConnection");
     while(lp_start != NULL)
     {
+
+		op_len = sizeof(op);
+		nRet = getsockopt(lp_start->socket, SOL_SOCKET, SO_CONNECT_TIME, (char*)&op, &op_len);
+		if(SOCKET_ERROR == nRet)
+		{
+			glog::traceErrorInfo("CheckForInvalidConnection getsockopt", WSAGetLastError());
+			lp_start = m_io_group.GetNext(pos);
+			continue;
+		}
+
         if(lp_start->fromtype == SOCKET_FROM_Concentrator)
         {
-            op_len = sizeof(op);
-            nRet = getsockopt(lp_start->socket, SOL_SOCKET, SO_CONNECT_TIME, (char*)&op, &op_len);
-
-            if(SOCKET_ERROR == nRet)
-            {
-                glog::traceErrorInfo("getsockopt", WSAGetLastError());
-                lp_start = m_io_group.GetNext(pos);
-                continue;
-            }
 
             if(op != 0xffffffff)
             {
                 int len = op - lp_start->timelen;
 
-                if(len / 60 > 1)
+                if(len / 60 >= 1)
                 {
-//                     if(m_io.find(lp_start) == m_io.end())
-//                     {
-//                         m_io.insert(make_pair(lp_start, len));
-//                     }
+                    // map<string, IOCP_IO_PTR>::iterator  it; m_mcontralcenter.find(lp_start)
+                    glog::GetInstance()->AddLine("网关:%p 超时%d秒 主动关闭 容器长度:%d", lp_start, len, m_io_group.GetCount());
                     closesocket(lp_start->socket);
+                    string sql = "update t_baseinfo set online=0 where comaddr=\'";
+                    sql.append(lp_start->gayway);
+                    sql.append("\'");
+                    glog::trace("\n%s", sql.c_str());
+                    _RecordsetPtr rs =   dbopen.ExecuteWithResSQL(sql.c_str());
+                    map<string, IOCP_IO_PTR>::iterator  it;
+
+                    for(it = m_mcontralcenter.begin(); it != m_mcontralcenter.end();)
+                    {
+                        if(it->second == lp_start)
+                        {
+                            m_mcontralcenter.erase(it++);   //erase 删除后指向下一个迭代器
+                        }
+                        else
+                        {
+                            it++;
+                        }
+                    }
+
+                    break;
+                }
+            }
+        }
+
+
+
+
+        if(lp_start->state == SOCKET_STATE_CONNECT || lp_start->state == SOCKET_STATE_CONNECT_AND_READ)
+        {
+            if(lp_start->fromtype == SOCKET_FROM_WEBSOCKET)
+            {
+                int len = op - lp_start->timelen;
+
+                if(len / 60 >= 20)
+                {
+                    glog::trace("主动关闭客户端");
+                    closesocket(lp_start->socket);
+                    break;
                 }
 
-                //closesocket( lp_io->socket );
+                //网页20分钟主动干掉
             }
+            else if(lp_start->fromtype == SOCKET_FROM_UNKNOW)
+            {
+                int len = op - lp_start->timelen;
 
-            //glog::trace("\nlp_start:%p  op:%d",lp_start,op);
+                if(len / 60 >= 5)
+                {
+                    glog::trace("主动关闭末知客户端");
+                    closesocket(lp_start->socket);
+                    break;
+                }
+            }
         }
 
         lp_start = m_io_group.GetNext(pos);
     }
-
-    map<IOCP_IO_PTR, DWORD>::iterator ite = m_io.begin();
-
-    while(ite != m_io.end())
-    {
-        glog::trace("\nlpio:%p time:%d", ite->first, ite->second);
-        closesocket(ite->first->socket);
-        m_io.erase(ite++);
-//      if(ite->second == lp_io)
-//      {
-//          m_io.erase(ite++);   //erase 删除后指向下一个迭代器
-//      }
-//      else
-//      {
-//          ite++;
-//      }
-    }
-
-//    while( pos != NULL )
-//    {
-//        lp_io = m_io_group.GetNext( pos );
-//        //看看哪个是没有登陆的，再查查它没登陆多长时间了
-//        if( lp_io->state != SOCKET_STATE_CONNECT_AND_READ )
-//        {
-//            op_len = sizeof(op);
-//
-//            nRet = getsockopt( lp_io->socket, SOL_SOCKET, SO_CONNECT_TIME, (char*)&op, &op_len );
-//
-//            if( SOCKET_ERROR == nRet )
-//            {
-//                MSG("SO_CONNECT_TIME failed:");
-//                MSG(WSAGetLastError());
-//
-//                continue;
-//            }
-//            if( op != 0xffffffff && op > 20 )
-//            {
-//                closesocket( lp_io->socket );
-//
-//                m_io_group.RemoveAt( lp_io );
-//
-//                MSG("有一个连接，但没有接收到数据,已经被踢出去了");
-//
-//                MSG( lp_io );
-//            }
-//
-//        }
-    //  }
 }
-
-
-
-
-
-
-
-
 
 /*-------------------------------------------------------------------------------------------
 函数功能：数据处理线程函数
@@ -1083,13 +938,14 @@ DWORD CIOCP::CompletionRoutine(LPVOID lp_param)
         {
             glog::trace("\nlp_io:%p ThreadId:%d  fromtype:%d  state:%d", lp_io, GetCurrentThreadId(), lp_io->fromtype, lp_io->state);
             glog::traceErrorInfo("\nGetQueuedCompletionStatus", GetLastError());
-
-            if(WSAGetLastError() == 64)
-            {
-                lp_this->m_io_group.RemoveAt(lp_io);
-                lp_this->m_key_group.RemoveAt(lp_key);
-            }
-
+            glog::GetInstance()->AddLine("通信出错:%p fromtype:%d 错误代码:%d 容器个数:%d", lp_io, lp_io->fromtype, WSAGetLastError(), lp_this->m_io_group.GetCount());
+            EnterCriticalSection(&lp_this->crtc_sec);
+            lp_this->m_io_group.RemoveAt(lp_io);
+            lp_this->m_key_group.RemoveAt(lp_key);
+            int n11 = lp_this->m_io_group.GetCount();
+            int n00 = lp_this->m_io_group.GetBlankCount();
+            glog::GetInstance()->AddLine("CompletionRoutine Error  lp_io:%p  list1 count:%d list0 count:%d from:%d", lp_io, n11, n00, lp_io->fromtype);
+            LeaveCriticalSection(&lp_this->crtc_sec);
             continue;
             //归还IO句柄；continue;
         }
@@ -1111,18 +967,17 @@ DWORD CIOCP::CompletionRoutine(LPVOID lp_param)
             if(lp_io->fromtype == SOCKET_FROM_Concentrator)
             {
                 //集中器客户端去端
-                map<string, IOCP_IO_PTR>::iterator  it;
+                string sql = "update t_baseinfo set online=0 where comaddr=\'";
+                sql.append(lp_io->gayway);
+                sql.append("\'");
+                glog::trace("\n%s", sql.c_str());
+                _RecordsetPtr rs =   lp_this->dbopen.ExecuteWithResSQL(sql.c_str());
+                string comaddr = lp_io->gayway;
+                map<string, IOCP_IO_PTR>::iterator  it = lp_this->m_mcontralcenter.find(comaddr);
 
-                for(it = lp_this->m_mcontralcenter.begin(); it != lp_this->m_mcontralcenter.end();)
+                if(it != lp_this->m_mcontralcenter.end())
                 {
-                    if(it->second == lp_io)
-                    {
-                        lp_this->m_mcontralcenter.erase(it++);   //erase 删除后指向下一个迭代器
-                    }
-                    else
-                    {
-                        it++;
-                    }
+                    lp_this->m_mcontralcenter.erase(it);
                 }
             }
 
@@ -1177,7 +1032,8 @@ DWORD CIOCP::CompletionRoutine(LPVOID lp_param)
 
         if(SOCKET_ERROR == nRet)
         {
-            glog::traceErrorInfo("getsockopt", WSAGetLastError());
+            //glog::trace("lp_ip:%p",lp_io);
+            glog::trace("\nlp_io:%p errorcode:%d getsockopt", lp_io, WSAGetLastError(), lp_this->m_io_group.GetCount());
             closesocket(lp_io->socket);
             //continue;
         }
@@ -1269,39 +1125,34 @@ DWORD CIOCP::CompletionRoutine(LPVOID lp_param)
                     int n1 = lp_this-> m_listctr->getRowCount();
                     int nrow = -1;
                     string towrite = "";
-
-                    for(int i = 0; i < n1; i++)
-                    {
-                        string vv = lp_this->m_listctr->getCellText(i, 1);
-                        char pp[50] = {0};
-                        sprintf(pp, "%p", lp_io);
-
-                        if(_stricmp(pp, vv.c_str()) == 0)
-                        {
-                            string data = gstring::char2hex(lp_io->buf, lp_io->ol.InternalHigh);
-                            lp_this->m_listctr->setItemText(data.c_str(), i, 4);
-                            char buff[1024] = {0};
-                            memcpy(buff, lp_io->buf, lp_io->ol.InternalHigh);
-                            lp_this->m_listctr->setItemText(buff, i, 5);
-                            nrow = i;
-                            towrite = data;
-                        }
-                    }
-
-#ifdef _DEBUG
+                    int lenghth = lp_io->ol.InternalHigh;
 
                     if(lp_io->fromtype == SOCKET_FROM_Concentrator)
                     {
-                        glog::GetInstance()->AddLine("集中器 数据包 长度:%d:数据:%s", lp_io->ol.InternalHigh, towrite.c_str());
-                    }
-                    else
-                    {
-                        glog::GetInstance()->AddLine("其它数据包 数据包 长度:%d:数据:%s", lp_io->ol.InternalHigh, towrite.c_str());
+                        string data = gstring::char2hex(lp_io->buf, lp_io->ol.InternalHigh);
+                        glog::GetInstance()->AddLine("集中器包 长度:%d 数据:%s ", lenghth, data.c_str());
+                        towrite = data;
                     }
 
-#endif
+                    //string towrite = "";
+                    //for(int i = 0; i < n1; i++)
+                    //{
+                    //    string vv = lp_this->m_listctr->getCellText(i, 1);
+                    //    char pp[50] = {0};
+                    //    sprintf(pp, "%p", lp_io);
+                    //    if(_stricmp(pp, vv.c_str()) == 0)
+                    //    {
+                    //        string data = gstring::char2hex(lp_io->buf, lp_io->ol.InternalHigh);
+                    //        lp_this->m_listctr->setItemText(data.c_str(), i, 4);
+                    //        char buff[1024] = {0};
+                    //        memcpy(buff, lp_io->buf, lp_io->ol.InternalHigh);
+                    //        lp_this->m_listctr->setItemText(buff, i, 5);
+                    //        nrow = i;
+                    //        towrite = data;
+                    //    }
+                    //}
+
                     //不是集中器   判断是不是断包
-                    int lenghth = lp_io->ol.InternalHigh;
 
                     if(lp_this->checkFlag((BYTE*)lp_io->buf, lp_io->ol.InternalHigh) == FALSE)
                     {
@@ -1383,21 +1234,21 @@ DWORD CIOCP::CompletionRoutine(LPVOID lp_param)
                         // glog::GetInstance()->AddLine("接收集中器的包 长度:%d:数据:%s", lp_io->ol.InternalHigh, towrite.c_str());
                         lp_this->buildcode((BYTE*)lp_io->buf, lenghth, tosend, deslen, bresponse, lp_io);
 
-                        if(nrow >= 0 && lp_io->fromtype == SOCKET_FROM_Concentrator)
-                        {
-                            lp_this->m_listctr->setItemText("来自集中器", nrow, 6);
-                        }
+                        //if(nrow >= 0 && lp_io->fromtype == SOCKET_FROM_Concentrator)
+                        //{
+                        //    lp_this->m_listctr->setItemText("来自集中器", nrow, 6);
+                        //}
 
-                        if(nrow >= 0 && lp_io->loginstatus == SOCKET_STATUS_LOGIN)
-                        {
-                            lp_this->m_listctr->setItemText("集中器已经连在线", nrow, 7);
-                        }
+                        //if(nrow >= 0 && lp_io->loginstatus == SOCKET_STATUS_LOGIN)
+                        //{
+                        //    lp_this->m_listctr->setItemText("集中器已经连在线", nrow, 7);
+                        //}
 
                         if(bresponse && deslen > 0)
                         {
                             lp_this->InitIoContext(lp_io);
                             string hex = gstring::char2hex((char*)tosend, deslen);
-                            glog::GetInstance()->AddLine("响应集中器的包:%s", hex.c_str());
+                            //glog::GetInstance()->AddLine("响应集中器的包:%s", hex.c_str());
                             memcpy(lp_io->buf, tosend, deslen);
                             lp_io->wsaBuf.len = deslen;
                             lp_io->operation = IOCP_WRITE;
@@ -1875,7 +1726,7 @@ void CIOCP::dealws(IOCP_IO_PTR & lp_io, string & jsondata)
                     if(ite != m_mcontralcenter.end())
                     {
                         m_listmsg.push_back(lp_io);
-                        glog::GetInstance()->AddLine("总消息长度:%d 添加一个消息队列:%s 参赛设置命令", m_listmsg.size(), root["data"].asString().c_str());
+                        glog::GetInstance()->AddLine("总消息长度:%d 添加一个消息队列:%s 参赛查询命令", m_listmsg.size(), root["data"].asString().c_str());
                     }
 
                     //m_listwebsock.push_back(lp_io);
@@ -2019,6 +1870,47 @@ void CIOCP::dealws(IOCP_IO_PTR & lp_io, string & jsondata)
                     }
                 }
             }
+            else if(vtemp == "AC")
+            {
+                Json::Value isres = root["res"];
+
+                if(isres.asString() == "1")   //发给集中器要求有响应
+                {
+                    string addrarea = root["addr"].asString();
+                    map<string, IOCP_IO_PTR>::iterator ite = m_mcontralcenter.find(addrarea);
+
+                    if(ite != m_mcontralcenter.end())
+                    {
+                        m_listmsg.push_back(lp_io);
+                        glog::GetInstance()->AddLine("总消息长度:%d 添加一个消息队列:%s 查询命令", m_listmsg.size(), root["data"].asString().c_str());
+                    }
+
+                    //m_listwebsock.push_back(lp_io);
+                    //m_qwebsock.push()
+                }
+
+                Json::Value tosend = root["data"];
+                string data = tosend.asString();
+                data = gstring::replace(data, " ", "");
+                BYTE bitSend[512] = {0};
+                int len = hex2str(data, bitSend);
+
+                if(len > 0)
+                {
+                    string addrarea = root["addr"].asString();
+                    map<string, IOCP_IO_PTR>::iterator ite = m_mcontralcenter.find(addrarea);
+
+                    if(ite != m_mcontralcenter.end())
+                    {
+                        IOCP_IO_PTR lp_io1 = ite->second;
+                        memcpy(lp_io1->buf, bitSend, len);
+                        lp_io1->wsaBuf.buf = lp_io1->buf;
+                        lp_io1->wsaBuf.len = len;
+                        lp_io1->operation = IOCP_WRITE;
+                        DataAction(lp_io1, lp_io1->lp_key);
+                    }
+                }
+            }
         }
     }
 }
@@ -2120,11 +2012,19 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
                 {
                     if(DT[0] == 1)   //DT0 组功能点
                     {
-                        glog::GetInstance()->AddLine("登陆包");
-                        glog::trace("\n登陆包");
-                        //char addr1[10] = {0};
-                        //memcpy(addr1, &src[7], 4);
-                        //string addrarea = gstring::char2hex(addr1, 4);
+                        glog::GetInstance()->AddLine("网关:%s 登陆", addrarea);
+                        strcpy(lp_io->gayway, addrarea);
+                        string sql = "update t_baseinfo set online=1 where comaddr=\'";
+                        sql.append(addrarea);
+                        sql.append("\'");
+                        glog::trace("\n%s", sql.c_str());
+                        _RecordsetPtr rs =   dbopen.ExecuteWithResSQL(sql.c_str());
+
+                        if(rs == NULL)
+                        {
+                            glog::GetInstance()->AddLine("更新网关在线状态异常");
+                        }
+
                         map<string, IOCP_IO_PTR>::iterator it = m_mcontralcenter.find(addrarea);
 
                         if(it == m_mcontralcenter.end())
@@ -2133,20 +2033,13 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
                         }
                         else
                         {
-                            //it->second;
-                            //CloseMySocket(it->second);
                             it->second = lp_io;
-                            //m_mcontralcenter.erase(it);
-                            // m_mcontralcenter.insert(pair<string, IOCP_IO_PTR>(addrarea, lp_io));
                         }
 
                         buildConCode(src, des, deslen, 1);
                     }
                     else if(DT[0] == 4)
                     {
-                        //02170101
-                        //m_mcontralcenter
-                        glog::GetInstance()->AddLine("心跳包");
                         glog::trace("\n心跳包");
                         lp_io->loginstatus = SOCKET_STATUS_LOGIN;
                         buildConCode(src, des, deslen, 1);
@@ -2450,6 +2343,8 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
                     {
                     }
                 }
+
+                return;
             }
 
             //三相电流
@@ -2574,6 +2469,8 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
                     {
                     }
                 }
+
+                return;
             }
 
             //三相有功功率
@@ -2694,6 +2591,8 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
                     {
                     }
                 }
+
+                return;
             }
 
             //三相功率因数
@@ -2827,6 +2726,8 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
                     {
                     }
                 }
+
+                return;
             }
 
             //正向有功电能量
@@ -2982,13 +2883,45 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
                 sql.append(" and comaddr=\'");
                 sql.append(addrarea);
                 sql.append("\')");
-				glog::trace("\n%s",sql.c_str());
+                glog::trace("\n%s", sql.c_str());
                 rs = this->dbopen.ExecuteWithResSQL(sql.c_str());
 
                 if(rs)
                 {
                 }
 
+                return;
+            }
+
+            if(!m_listmsg.empty())
+            {
+                IOCP_IO_PTR lp_io1 = m_listmsg.back();
+                m_listmsg.pop_back();
+                string strret = "";
+                BOOL bFullPack = FALSE;
+                int lenread = wsDecodeFrame(lp_io1->buf, strret, lp_io1->ol.InternalHigh, bFullPack);
+                Json::Value root;
+                Json::Reader reader;
+
+                if(reader.parse(strret.c_str(), root))
+                {
+                    root["status"] = "success";
+                    root["data"] = gstring::char2hex((const char*)src, srclen);
+                    root["length"] = srclen;
+                    string inmsg = root.toStyledString();
+                    char outmsg[1048] = {0};
+                    int lenret = 0;
+                    int len = wsEncodeFrame(inmsg, outmsg, WS_TEXT_FRAME, lenret);
+
+                    if(len != WS_ERROR_FRAME)
+                    {
+                        memcpy(lp_io1->buf, outmsg, lenret);
+                        lp_io1->wsaBuf.buf = lp_io1->buf;
+                        lp_io1->wsaBuf.len = lenret;
+                        lp_io1->operation = IOCP_WRITE;
+                        DataAction(lp_io1, lp_io1->lp_key);
+                    }
+                }
             }
         }
     }
@@ -3010,155 +2943,155 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
             BYTE Fn = DT[1] * 8 + DT[0];
             glog::GetInstance()->AddLine("参数查询 集中器响应帧:%d 确认 Fn:%d", frame, Fn);
 
-            //查询换日时间
-            if(DA[0] == 0 && DA[1] == 0 && DT[0] == 0x04 && DT[1] == 0x00)
-            {
-                BYTE A1[2] = {0};
-                memcpy(A1, &src[18], 2);
-                BYTE s = A1[0] >> 4 & 0x0f;
-                BYTE g = A1[0]  & 0x0f;
-                BYTE sw = A1[1] >> 4 & 0x0f;
-                BYTE gw = A1[1]  & 0x0f;
-                char time[30] = {0};
-                sprintf(time, "%d%d:%d%d", s, g, sw, gw);
-                BYTE A2[2] = {0};
-                memcpy(A2, &src[20], 2);
-                BYTE s2 = A2[0] >> 4 & 0x0f;
-                BYTE g2 = A2[0]  & 0x0f;
-                BYTE sw2 = A2[1] >> 4 & 0x0f;
-                BYTE gw2 = A2[1]  & 0x0f;
-                char time2[30] = {0};
-                sprintf(time2, "%d%d:%d%d", s2, g2, sw2, gw2);
-                glog::trace("\n换日时间 time:%s 冻结时间:%s", time, time2);
-
-                if(!m_listmsg.empty())
-                {
-                    IOCP_IO_PTR lp_io1 = m_listmsg.back();
-                    m_listmsg.pop_back();
-                    string strret = "";
-                    BOOL bFullPack = FALSE;
-                    int lenread = wsDecodeFrame(lp_io1->buf, strret, lp_io1->ol.InternalHigh, bFullPack);
-                    Json::Value root;
-                    Json::Reader reader;
-
-                    if(reader.parse(strret.c_str(), root))
-                    {
-                        SHORT setnum = (SHORT) * (src + 18); //错误的装置号
-                        BYTE  errcode = (BYTE) * (src + 20);
-                        root["status"] = "success";
-                        root["frame"] = frame;
-                        root["chgdaytime"] = time;
-                        root["flozetime"] = time2;
-                        string inmsg = root.toStyledString();
-                        char outmsg[1024] = {0};
-                        int lenret = 0;
-                        int len = wsEncodeFrame(inmsg, outmsg, WS_TEXT_FRAME, lenret);
-
-                        if(len != WS_ERROR_FRAME)
-                        {
-                            glog::trace("\noutmsg:%s lenret:%d", outmsg, lenret);
-                            memcpy(lp_io1->buf, outmsg, lenret);
-                            lp_io1->wsaBuf.buf = lp_io1->buf;
-                            lp_io1->wsaBuf.len = lenret;
-                            lp_io1->operation = IOCP_WRITE;
-                            DataAction(lp_io1, lp_io1->lp_key);
-                            return;
-                        }
-                    }
-                }
-            }
-
-            //查询主站信息
-            if(DA[0] == 0 && DA[1] == 0 && DT[0] == 0x01 && DT[1] == 0x00)
-            {
-                if(!m_listmsg.empty())
-                {
-                    char a[16] = {0};
-                    int z = 18;
-                    sprintf(a, "%d.%d.%d.%d", src[z], src[z + 1], src[z + 2], src[z + 3]);
-                    SHORT aport = *(SHORT*)&src[z + 4];
-                    z = z + 6;
-                    char b[16] = {0};
-                    sprintf(b, "%d.%d.%d.%d", src[z], src[z + 1], src[z + 2], src[z + 3]);
-                    SHORT bport = *(SHORT*)&src[z + 4];
-                    z = z + 6;
-                    char c[16] = {0};
-                    sprintf(c, "%d.%d.%d.%d", src[z], src[z + 1], src[z + 2], src[z + 3]);
-                    SHORT cport = *(SHORT*)&src[z + 4];
-                    z = z + 6;
-                    char d[16] = {0};
-                    sprintf(d, "%d.%d.%d.%d", src[z], src[z + 1], src[z + 2], src[z + 3]);
-                    SHORT dport = *(SHORT*)&src[z + 4];
-                    z = z + 6;
-                    char apn[20] = {0};
-                    memcpy(apn, &src[z], 16);
-                    char* p = "";
-
-                    for(int i = 0; i < 16; i++)
-                    {
-                        if(apn[i] == 0x00)
-                        {
-                            continue;
-                        }
-                        else
-                        {
-                            p = (char*)&apn[i];
-                            break;
-                        }
-                    }
-
-                    z = z + 16;
-                    //memcpy(apn, &src[z], 16);
-                    SHORT areanLen = src[z];
-                    z = z + 1;
-                    char domain[216] = {0};
-                    memcpy(domain, &src[z], areanLen);
-                    glog::trace("\na:%s-%d b:%s-%d c:%s-%d d:%s-%d apn:%s", a, aport, b, bport, c, cport, d, dport, apn);
-                    IOCP_IO_PTR lp_io1 = m_listmsg.back();
-                    m_listmsg.pop_back();
-                    string strret = "";
-                    BOOL bFullPack = FALSE;
-                    int lenread = wsDecodeFrame(lp_io1->buf, strret, lp_io1->ol.InternalHigh, bFullPack);
-                    Json::Value root;
-                    Json::Reader reader;
-
-                    if(reader.parse(strret.c_str(), root))
-                    {
-                        SHORT setnum = (SHORT) * (src + 18); //错误的装置号
-                        BYTE  errcode = (BYTE) * (src + 20);
-                        root["status"] = "success";
-                        root["frame"] = frame;
-                        root["dnsip"] = a;
-                        root["dnsport"] = aport;
-                        root["dnsip_"] = b;
-                        root["dnsport_"] = bport;
-                        root["siteip"] = c;
-                        root["siteport"] = cport;
-                        root["siteip_"] = d;
-                        root["siteport_"] = dport;
-                        root["apn"] = p;
-                        root["areanLen"] = areanLen;
-                        root["domain"] = domain;
-//                         root["data"] = gstring::char2hex((const char*)src, srclen);
-//                         root["length"] = srclen;
-                        string inmsg = root.toStyledString();
-                        char outmsg[1024] = {0};
-                        int lenret = 0;
-                        int len = wsEncodeFrame(inmsg, outmsg, WS_TEXT_FRAME, lenret);
-
-                        if(len != WS_ERROR_FRAME)
-                        {
-                            glog::trace("\noutmsg:%s lenret:%d", outmsg, lenret);
-                            memcpy(lp_io1->buf, outmsg, lenret);
-                            lp_io1->wsaBuf.buf = lp_io1->buf;
-                            lp_io1->wsaBuf.len = lenret;
-                            lp_io1->operation = IOCP_WRITE;
-                            DataAction(lp_io1, lp_io1->lp_key);
-                            return;
-                        }
-                    }
-                }
-            }
+//            //查询换日时间
+//            if(DA[0] == 0 && DA[1] == 0 && DT[0] == 0x04 && DT[1] == 0x00)
+//            {
+//                BYTE A1[2] = {0};
+//                memcpy(A1, &src[18], 2);
+//                BYTE s = A1[0] >> 4 & 0x0f;
+//                BYTE g = A1[0]  & 0x0f;
+//                BYTE sw = A1[1] >> 4 & 0x0f;
+//                BYTE gw = A1[1]  & 0x0f;
+//                char time[30] = {0};
+//                sprintf(time, "%d%d:%d%d", s, g, sw, gw);
+//                BYTE A2[2] = {0};
+//                memcpy(A2, &src[20], 2);
+//                BYTE s2 = A2[0] >> 4 & 0x0f;
+//                BYTE g2 = A2[0]  & 0x0f;
+//                BYTE sw2 = A2[1] >> 4 & 0x0f;
+//                BYTE gw2 = A2[1]  & 0x0f;
+//                char time2[30] = {0};
+//                sprintf(time2, "%d%d:%d%d", s2, g2, sw2, gw2);
+//                glog::trace("\n换日时间 time:%s 冻结时间:%s", time, time2);
+//
+//                if(!m_listmsg.empty())
+//                {
+//                    IOCP_IO_PTR lp_io1 = m_listmsg.back();
+//                    m_listmsg.pop_back();
+//                    string strret = "";
+//                    BOOL bFullPack = FALSE;
+//                    int lenread = wsDecodeFrame(lp_io1->buf, strret, lp_io1->ol.InternalHigh, bFullPack);
+//                    Json::Value root;
+//                    Json::Reader reader;
+//
+//                    if(reader.parse(strret.c_str(), root))
+//                    {
+//                        SHORT setnum = (SHORT) * (src + 18); //错误的装置号
+//                        BYTE  errcode = (BYTE) * (src + 20);
+//                        root["status"] = "success";
+//                        root["frame"] = frame;
+//                        root["chgdaytime"] = time;
+//                        root["flozetime"] = time2;
+//                        string inmsg = root.toStyledString();
+//                        char outmsg[1024] = {0};
+//                        int lenret = 0;
+//                        int len = wsEncodeFrame(inmsg, outmsg, WS_TEXT_FRAME, lenret);
+//
+//                        if(len != WS_ERROR_FRAME)
+//                        {
+//                            glog::trace("\noutmsg:%s lenret:%d", outmsg, lenret);
+//                            memcpy(lp_io1->buf, outmsg, lenret);
+//                            lp_io1->wsaBuf.buf = lp_io1->buf;
+//                            lp_io1->wsaBuf.len = lenret;
+//                            lp_io1->operation = IOCP_WRITE;
+//                            DataAction(lp_io1, lp_io1->lp_key);
+//                            return;
+//                        }
+//                    }
+//                }
+//            }
+//
+//            //查询主站信息
+//            if(DA[0] == 0 && DA[1] == 0 && DT[0] == 0x01 && DT[1] == 0x00)
+//            {
+//                if(!m_listmsg.empty())
+//                {
+//                    char a[16] = {0};
+//                    int z = 18;
+//                    sprintf(a, "%d.%d.%d.%d", src[z], src[z + 1], src[z + 2], src[z + 3]);
+//                    SHORT aport = *(SHORT*)&src[z + 4];
+//                    z = z + 6;
+//                    char b[16] = {0};
+//                    sprintf(b, "%d.%d.%d.%d", src[z], src[z + 1], src[z + 2], src[z + 3]);
+//                    SHORT bport = *(SHORT*)&src[z + 4];
+//                    z = z + 6;
+//                    char c[16] = {0};
+//                    sprintf(c, "%d.%d.%d.%d", src[z], src[z + 1], src[z + 2], src[z + 3]);
+//                    SHORT cport = *(SHORT*)&src[z + 4];
+//                    z = z + 6;
+//                    char d[16] = {0};
+//                    sprintf(d, "%d.%d.%d.%d", src[z], src[z + 1], src[z + 2], src[z + 3]);
+//                    SHORT dport = *(SHORT*)&src[z + 4];
+//                    z = z + 6;
+//                    char apn[20] = {0};
+//                    memcpy(apn, &src[z], 16);
+//                    char* p = "";
+//
+//                    for(int i = 0; i < 16; i++)
+//                    {
+//                        if(apn[i] == 0x00)
+//                        {
+//                            continue;
+//                        }
+//                        else
+//                        {
+//                            p = (char*)&apn[i];
+//                            break;
+//                        }
+//                    }
+//
+//                    z = z + 16;
+//                    //memcpy(apn, &src[z], 16);
+//                    SHORT areanLen = src[z];
+//                    z = z + 1;
+//                    char domain[216] = {0};
+//                    memcpy(domain, &src[z], areanLen);
+//                    glog::trace("\na:%s-%d b:%s-%d c:%s-%d d:%s-%d apn:%s", a, aport, b, bport, c, cport, d, dport, apn);
+//                    IOCP_IO_PTR lp_io1 = m_listmsg.back();
+//                    m_listmsg.pop_back();
+//                    string strret = "";
+//                    BOOL bFullPack = FALSE;
+//                    int lenread = wsDecodeFrame(lp_io1->buf, strret, lp_io1->ol.InternalHigh, bFullPack);
+//                    Json::Value root;
+//                    Json::Reader reader;
+//
+//                    if(reader.parse(strret.c_str(), root))
+//                    {
+//                        SHORT setnum = (SHORT) * (src + 18); //错误的装置号
+//                        BYTE  errcode = (BYTE) * (src + 20);
+//                        root["status"] = "success";
+//                        root["frame"] = frame;
+//                        root["dnsip"] = a;
+//                        root["dnsport"] = aport;
+//                        root["dnsip_"] = b;
+//                        root["dnsport_"] = bport;
+//                        root["siteip"] = c;
+//                        root["siteport"] = cport;
+//                        root["siteip_"] = d;
+//                        root["siteport_"] = dport;
+//                        root["apn"] = p;
+//                        root["areanLen"] = areanLen;
+//                        root["domain"] = domain;
+////                         root["data"] = gstring::char2hex((const char*)src, srclen);
+////                         root["length"] = srclen;
+//                        string inmsg = root.toStyledString();
+//                        char outmsg[1024] = {0};
+//                        int lenret = 0;
+//                        int len = wsEncodeFrame(inmsg, outmsg, WS_TEXT_FRAME, lenret);
+//
+//                        if(len != WS_ERROR_FRAME)
+//                        {
+//                            glog::trace("\noutmsg:%s lenret:%d", outmsg, lenret);
+//                            memcpy(lp_io1->buf, outmsg, lenret);
+//                            lp_io1->wsaBuf.buf = lp_io1->buf;
+//                            lp_io1->wsaBuf.len = lenret;
+//                            lp_io1->operation = IOCP_WRITE;
+//                            DataAction(lp_io1, lp_io1->lp_key);
+//                            return;
+//                        }
+//                    }
+//                }
+//            }
 
             if(!m_listmsg.empty())
             {
@@ -3402,18 +3335,5 @@ BOOL CIOCP::AppendByte(BYTE src[], int len, pBREAKPCK pack, IOCP_IO_PTR& lp_io)
     memset(lp_io->wsaBuf.buf, 0, 1024);
     memcpy(lp_io->wsaBuf.buf, allbyte, n1);
     lp_io->wsaBuf.len = n1;
-//     if(lenall > 1024) {
-//         glog::trace("\n包大于1024");
-//         return FALSE;
-//     }
-//  if (lenall<=1024)
-//  {
-//          memset(lp_io->wsaBuf.buf,0,1024);
-//          memcpy(lp_io->wsaBuf.buf,allbyte,lenall);
-//          lp_io->wsaBuf.len=lenall;
-//          delete pack->b;
-//
-//  }
-//  delete allbyte;
     return TRUE;
 }

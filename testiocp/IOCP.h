@@ -16,6 +16,9 @@
 #include <list>
 #include <map>
 #include "DBOperation.h"
+#include "MainFrame.h"
+
+
 #include "E:\\code\\glib\\h\\glistctr.h"
 #include "E:\\code\\glib\\h\\gstring.h"
 #include "E:\\code\\glib\\h\\MemoryModule.h"
@@ -74,14 +77,23 @@ enum WS_FrameType
 
 
 
-class CIOCP
+class CIOCP:public CMainFrame
 {
+
+
+
 public:
     CIOCP();
+	CIOCP(string skin);
     virtual ~CIOCP();
 public:
-    IO_GROUP            m_io_group;
-    KEY_GROUP           m_key_group;
+	IO_GROUP            m_io_group;
+	KEY_GROUP           m_key_group;
+
+
+	 void    Notify(TNotifyUI& msg);
+
+
 	char m_configTime[216];				//采集时间
     typedef   list<IOCP_IO_PTR>::iterator ITERATOR;
 	map<string,_COMADDRVISITE>m_day;
@@ -93,31 +105,32 @@ public:
 //     }WEBSOCKET;
 
 
-    HANDLE              m_h_iocp;
-    SOCKET              m_listen_socket;
+	HANDLE              m_h_iocp;
+	SOCKET              m_listen_socket;
 
     list<IOCP_IO_PTR>      m_listmsg;        //消息列表
     map<string, IOCP_IO_PTR> m_mcontralcenter;  //集中器队列
 
 	map<IOCP_IO_PTR,pBREAKPCK>m_pack;			//断包结构
-
-
-
+//
+//
+//
     CRITICAL_SECTION    crtc_sec;
-    LPFN_TRANSMITFILE   lpTransmitFile;
-    LPFN_ACCEPTEX       lpAcceptEx;
-    LPFN_GETACCEPTEXSOCKADDRS lpGetAcceptExSockaddrs;
+	LPFN_TRANSMITFILE   lpTransmitFile;
+	LPFN_ACCEPTEX       lpAcceptEx;
+	LPFN_GETACCEPTEXSOCKADDRS lpGetAcceptExSockaddrs;
 
-    UINT                uPort;
-    char                szAddress[20];
-    CDBOperation        dbopen;
-    int                 m_n_thread_count;
-    HANDLE              m_h_thread[MAXTHREAD_COUNT];
-    HANDLE              m_h_accept_event;
-    gListCtr*           m_listctr;
-    HWND                hWnd;
+	UINT                uPort;
+	char                szAddress[20];
+	CDBOperation        dbopen;
+	int                 m_n_thread_count;
+	HANDLE              m_h_thread[MAXTHREAD_COUNT];
+	HANDLE              m_h_accept_event;
+	void				Init();
+	gListCtr*           m_listctr;
+	HWND                hWnd;
 public:
-    BOOL                Init();
+	BOOL                InitAll();
     BOOL                MainLoop();
     BOOL                SendData(ULONG_PTR s, ULONG_PTR key);
     BOOL                SendWebsocket(ULONG_PTR s);
@@ -135,26 +148,26 @@ public:
     void                buildConCode(BYTE src[], BYTE res[], int& len, BYTE bcon);
 	BOOL				CloseMySocket(IOCP_IO_PTR lp_io);
 private:
-    void                InitIoContext(IOCP_IO_PTR lp_io);
-    void                Close();
-    BOOL                RegAcceptEvent();
+	void                InitIoContext(IOCP_IO_PTR lp_io);
+    void                Close1();
+	BOOL                RegAcceptEvent();
 
-    BOOL                DataAction(IOCP_IO_PTR lp_io, IOCP_KEY_PTR lp_key);
-    BOOL                HandleData(IOCP_IO_PTR lp_io, int nFlags, IOCP_KEY_PTR lp_key);
-    BOOL                GetFunPointer();
-    BOOL                StartThread();
-    BOOL                BindAndListenSocket();
-    void                CloseThreadHandle(int count);
-    BOOL                InitSocket();
-    static DWORD WINAPI CompletionRoutine(LPVOID lp_param);
-    BOOL                PostAcceptEx();
-    BOOL                GetAddrAndPort(char*buf, char ip[], UINT &port);
+	BOOL                DataAction(IOCP_IO_PTR lp_io, IOCP_KEY_PTR lp_key);
+	BOOL                HandleData(IOCP_IO_PTR lp_io, int nFlags, IOCP_KEY_PTR lp_key);
+	BOOL                GetFunPointer();
+	BOOL                StartThread();
+	BOOL                BindAndListenSocket();
+	void                CloseThreadHandle(int count);
+	BOOL                InitSocket();
+	static DWORD WINAPI CompletionRoutine(LPVOID lp_param);
+	BOOL                PostAcceptEx();
+	BOOL                GetAddrAndPort(char*buf, char ip[], UINT &port);
 
 	BOOL				IsBreakPack(BYTE src[],int len);
 
 	BOOL				AppendByte(BYTE src[],int len,pBREAKPCK pack,IOCP_IO_PTR& lp_io);
-	 static DWORD WINAPI	TimeThread(LPVOID lp_param);
-	 void		CheckForInvalidConnection();
+	static DWORD WINAPI	TimeThread(LPVOID lp_param);
+ void		CheckForInvalidConnection();
 };
 
 //////////////////////////////////////////////////////////////////////////

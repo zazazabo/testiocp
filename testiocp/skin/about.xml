@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<Window size="430,350" sizebox="4,4,4,4" caption="0,0,0,32" mininfo="400,400">
+    <Default shared="true" name="Option" value="textcolor=&quot;#FFbac0c5&quot; hottextcolor=&quot;#FF386382&quot; selectedtextcolor=&quot;#FF386382&quot; disabledtextcolor=&quot;#FFbac0c5&quot; textpadding=&quot;18,2,0,0&quot; align=&quot;left&quot; selectedimage=&quot;file='RadioBtnSel.png' source='0,0,13,13' dest='0,5,14,19'&quot; normalimage=&quot;file='RadioBtnNon.png' source='0,0,13,13' dest='0,5,14,19'&quot;" />
+    <Include source="scrollbar.xml" />
+
+    <VerticalLayout bkcolor="#FFF0F0F0" bkcolor2="#FFAAAAFF" >
+        <HorizontalLayout height="30" bkcolor="#ffD1EAF4" bkcolor2="#ffD1EAF4">
+      <!--    <Label bkimage="系统图标.png" width="30" height="30" /> -->
+
+            <Control />
+             <Label text="关于我们"  ></Label>
+            <HorizontalLayout height="17" width="40">
+
+                
+                <Button name="closebtn" maxheight="17" maxwidth="45" textcolor="#FF000000" disabledtextcolor="#FFA7A6AA" align="center" normalimage="file=&apos;sys_dlg_close.png&apos; source=&apos;90,0,135,17&apos;" hotimage="file=&apos;sys_dlg_close.png&apos; source=&apos;45,0,90,17&apos;" pushedimage="file=&apos;sys_dlg_close.png&apos; source=&apos;0,0,45,17&apos;" />
+            </HorizontalLayout>
+        </HorizontalLayout>
+
+ <HorizontalLayout height="1" bkcolor="#FFCCCEDB" />
+
+      <VerticalLayout  bordercolor="#FFF0F0F0" bordersize="1"  align="top"   padding="0,0" >
+
+                            
+
+                     <HorizontalLayout padding="0,30" bordersize="0" bordercolor="#FFff0000" height="40">
+                          <VerticalLayout>
+                            <Label text="<f 0>湛江鼎方电磁阀科技有限公司</f>" align="center"  width="500" showhtml="true" ></Label>
+
+                            <Label padding="0,5" align="center" text="<f 1>ZhanJiang DingFang Electric Magnetic Technology CO. Ltd</f>" showhtml="true" ></Label>
+                          </VerticalLayout>
+                    </HorizontalLayout>
+
+              <HorizontalLayout padding="80,10" height="20">
+                  <Label text="<b>      网站:</b>" width="80" showhtml="true" ></Label>
+                  <Button align="left" name="home" text=" <a>Http://www.zjdingfang.com</a>" showhtml="true" ></Button>
+              </HorizontalLayout>
+           <HorizontalLayout padding="80,5" height="20">
+                  <Label text="<b>      邮箱:</b>" width="80" showhtml="true" ></Label>
+                  <Label text=" <b>2298600709@qq.com</b>" showhtml="true" ></Label>
+              </HorizontalLayout>
+          
+                   <HorizontalLayout padding="80,5" height="20">
+                  <Label text="<b>      电话:</b>" width="80" showhtml="true" ></Label>
+                  <Label text=" <b>0759—3303860 3303830 </b>" showhtml="true" ></Label>
+              </HorizontalLayout>
+
+                  <HorizontalLayout padding="80,5" height="20">
+                  <Label text="<b>    联系人:</b>" width="80" showhtml="true" ></Label>
+                  <Label text=" <b>刘经理 </b>" showhtml="true" ></Label>
+              </HorizontalLayout>
+       
+           <HorizontalLayout padding="80,5" height="20">
+                  <Label text="<b>      传真:</b>" width="80" showhtml="true" ></Label>
+                  <Label text=" <b>0759—2722788</b>" showhtml="true" ></Label>
+              </HorizontalLayout>
+   
+       <HorizontalLayout padding="80,5" height="20">
+                  <Label text="<b>      地址:</b>" width="80" showhtml="true" ></Label>
+                  <Label text=" <b>湛江市麻章区金康东路14号</b>" showhtml="true" ></Label>
+              </HorizontalLayout>
+       <HorizontalLayout padding="80,5" height="20">
+                  <Label text="<b>  技术支持:</b>" width="80" showhtml="true" ></Label>
+                  <Label text=" <b>湛江市佳德科技有限公司</b>" showhtml="true" ></Label>
+              </HorizontalLayout>
+    </VerticalLayout>
+
+    </VerticalLayout>
+</Window>

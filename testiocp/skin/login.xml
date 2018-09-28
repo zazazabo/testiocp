@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<Window size="398,282"  sizebox="4,4,4,4" caption="0,0,0,32" mininfo="398,282"  roundcorner="10,10,10,10"    >
+
+
+    <VerticalLayout    bkimage="file='res/loginbg.png' corner='10.10,10,10' ">
+
+
+
+
+
+            <VerticalLayout width="400" height="170" bordersize="0" padding="50,135"  inset="5,0,0,0" >
+
+                 
+                   <HorizontalLayout  height="40" width="220"  bordercolor="#FF16E4DC" padding="40,10" inset="5,0,5,5" >
+                         <Label text="用 户 名:" height="30" name="lblcardid"  width = "80"  align="center"  />
+                                                
+                         <Edit wanttab="false" wantreturn="false" name="edt_uname" height="25" borderround="4,4,4,4" textpadding="0,2" width="100" padding="2,4" font="0"  nativebkcolor="#ff5AD2F6" bkcolor="#ff5AD2F6" textcolor="#FFFF0000"  />  
+                    </HorizontalLayout>
+
+                     <HorizontalLayout height="35" width="220" bordercolor="#FF16E4DC" padding="40,0" inset="5,3,5,5" >
+                         <Label text="登陆密码:"  height="30" width = "80" textcolor="#00000000" align="center"  />
+                                                
+                         <Edit wanttab="false" wantreturn="false" borderround="4,4,4,4" name="edt_upassword" password="true" height="25" nativebkcolor="#ff5AD2F6" bkcolor="#ff5AD2F6" padding="2,2"  width="100" font="0" textcolor="#FFFF0000"  />  
+                      </HorizontalLayout>
+
+                      <HorizontalLayout height="40" width="300" bordercolor="#FF16E4DC" padding="30,15" inset="5,5,5,5" >
+
+                      <Button  name="btnlogin" height="28"  width="80"  normalimage="res/login.png" hotimage="res/loginhoving.png" pushedimage="res/loginpush.png" />
+
+                                    <Button  name="btnexit" corner="2,2,2,2" padding="50" width="91"  normalimage="res/exit.png" hotimage="res/exithoving.png" pushedimage="res/exitpush.png" />
+
+                      </HorizontalLayout>               
+                </VerticalLayout> 
+
+    </VerticalLayout>
+</Window>

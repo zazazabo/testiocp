@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<Window size="500,600" sizebox="4,4,4,4" caption="0,0,0,32" mininfo="400,400">
+    <Default shared="true" name="Option" value="textcolor=&quot;#FFbac0c5&quot; hottextcolor=&quot;#FF386382&quot; selectedtextcolor=&quot;#FF386382&quot; disabledtextcolor=&quot;#FFbac0c5&quot; textpadding=&quot;18,2,0,0&quot; align=&quot;left&quot; selectedimage=&quot;file='RadioBtnSel.png' source='0,0,13,13' dest='0,5,14,19'&quot; normalimage=&quot;file='RadioBtnNon.png' source='0,0,13,13' dest='0,5,14,19'&quot;" />
+<Include source="scrollbar.xml" />
+
+    <VerticalLayout bkcolor="#FFF0F0F0" bkcolor2="#FFAAAAFF" >
+        <HorizontalLayout height="30" bkcolor="#ffD1EAF4" bkcolor2="#ffD1EAF4">
+      <!--    <Label bkimage="系统图标.png" width="30" height="30" /> -->
+
+            <Control />
+             <Label text="选择用户"  ></Label>
+            <HorizontalLayout height="17" width="40">
+
+                
+                <Button name="closebtn" maxheight="17" maxwidth="45" textcolor="#FF000000" disabledtextcolor="#FFA7A6AA" align="center" normalimage="file=&apos;sys_dlg_close.png&apos; source=&apos;90,0,135,17&apos;" hotimage="file=&apos;sys_dlg_close.png&apos; source=&apos;45,0,90,17&apos;" pushedimage="file=&apos;sys_dlg_close.png&apos; source=&apos;0,0,45,17&apos;" />
+            </HorizontalLayout>
+        </HorizontalLayout>
+
+ <HorizontalLayout height="1" bkcolor="#FFCCCEDB" />
+      <VerticalLayout    padding="0,0" >
+
+
+
+            <VerticalLayout bordersize="0" height="120"  borderround="4,4,4,4"   bordercolor="#FF16E4DC">
+               <HorizontalLayout height="30"  padding="0,10"  >
+
+ 
+         
+                         <Label text="姓名:"  width = "50" textcolor="#5533aadd" align="center"  />
+                                                
+                         <Edit name="edt_cardname" bkcolor="#FFFFFFFF" width="100" height="20" font="0" padding="0,5" borderround="4,4,4,4" textcolor="#FFFF0000"  /> 
+
+
+                              <Label text="部门:"  width = "50" padding="10" textcolor="#5533aadd" align="center"  />
+                                                
+                         
+                    <Combo name="combodptment"  width="100" padding="0,0" height="20"  tooltip="请点击这里选择您准备使用的账号" padding="0,5" normalimage="file='Combo_nor.bmp' corner='2,2,24,2'" hotimage="file='Combo_over.bmp' corner='2,2,24,2'" pushedimage="file='Combo_over.bmp' corner='2,2,24,2'" textpadding="10,1,1,1" >
+                                  <ListLabelElement  text=""  />
+                                </Combo>
+                         <Label text="性别:"  width = "50" padding="10" textcolor="#5533aadd" align="center"  />
+                          <Combo name="combosex"  width="100" padding="0,5" height="20" borderround="4,4,4,4" tooltip="请点击这里选择您准备使用的账号" normalimage="file='Combo_nor.bmp' corner='2,2,24,2'" hotimage="file='Combo_over.bmp' corner='2,2,24,2'" pushedimage="file='Combo_over.bmp' corner='2,2,24,2'" textpadding="10,1,1,1" >
+                             <ListLabelElement  text=""  />
+                              <ListLabelElement text="男"  />
+                              <ListLabelElement text="女" />
+
+                          </Combo>
+
+                   
+                </HorizontalLayout>
+
+
+            <HorizontalLayout height="25"  padding="40,40">
+
+              
+                      <Button  name="queryuser" text="查询"  width="75" normalimage="button_nor.bmp" hotimage="button_over.bmp" pushedimage="button_down.bmp" padding="50" />
+                      <Button  name="importalluser" text="全部导入" visible="FALSE" padding="50"  width="75" normalimage="button_nor.bmp" hotimage="button_over.bmp" pushedimage="button_down.bmp" />
+                      <Button  padding="200" padding="50" name="closebtn" text="退出"  width="75" normalimage="button_nor.bmp" hotimage="button_over.bmp" pushedimage="button_down.bmp" />
+
+            </HorizontalLayout>
+
+    
+</VerticalLayout>
+             
+
+    
+
+
+
+
+
+
+
+
+       <HorizontalLayout borderround="4,4,4,4"  bordersize="1" bordercolor="#FFA7A6AA" inset="1,1,1,1"  padding="0,10"   > 
+
+
+                                        <List  menu="true" itemlinecolor="#FF115500" borderround="5,5,5,5" padding="1,1"  headerbkimage="file='list_header_bg.png'" hscrollbar="true" inset="0,0" itemalign="center" itemaltbk="FALSE" itemlinecolor="00222827" multiexpanding="true"   itemshowhtml="true"  name="domainlist" vscrollbar="true" bkcolor="#FFB5CCE4"   bkcolor2="#FF5182AA"  >
+                                              <ListHeader height="24" bordersize="1" bordercolor="00222827" >
+
+                                              <ListHeaderItem font="1" hotimage="file='list_header_hot.png'" pushedimage="file='list_header_pushed.png'" userdata="num" sepimage="file='list_header_sep.png'" sepwidth="1" text="序号" width="80">
+                                              
+                                              </ListHeaderItem>
+                                              <ListHeaderItem font="1" hotimage="file='list_header_hot.png'" pushedimage="file='list_header_pushed.png'" userdata="num" sepimage="file='list_header_sep.png'" sepwidth="1" text="ID" width="80"/>
+                                              <ListHeaderItem font="1" hotimage="file='list_header_hot.png'" pushedimage="file='list_header_pushed.png'" sepimage="file='list_header_sep.png'" sepwidth="1" text="姓名" width="80"/>
+                                              <ListHeaderItem font="1" hotimage="file='list_header_hot.png'" pushedimage="file='list_header_pushed.png'" sepimage="file='list_header_sep.png'" sepwidth="1" text="姓别" width="80"/>
+                                              <ListHeaderItem font="1" hotimage="file='list_header_hot.png'" pushedimage="file='list_header_pushed.png'" sepimage="file='list_header_sep.png'" sepwidth="1" text="部门" width="80"/>
+                                              <ListHeaderItem font="1" hotimage="file='list_header_hot.png'" pushedimage="file='list_header_pushed.png'" sepimage="file='list_header_sep.png'" sepwidth="1" text="电话" width="80"/>
+                                              <ListHeaderItem font="1" hotimage="file='list_header_hot.png'" pushedimage="file='list_header_pushed.png'" sepimage="file='list_header_sep.png'" sepwidth="1" text="身份证" width="80"/>
+                                              <ListHeaderItem font="1" hotimage="file='list_header_hot.png'" pushedimage="file='list_header_pushed.png'" sepimage="file='list_header_sep.png'" sepwidth="1" text="邮箱" width="80"/>
+                                              <ListHeaderItem font="1" hotimage="file='list_header_hot.png'" pushedimage="file='list_header_pushed.png'" sepimage="file='list_header_sep.png'" sepwidth="1" text="QQ" width="80"/>
+                                         </ListHeader>
+                                        </List>
+
+
+
+                       </HorizontalLayout>
+
+
+
+    </VerticalLayout>
+
+
+
+    </VerticalLayout>
+</Window>

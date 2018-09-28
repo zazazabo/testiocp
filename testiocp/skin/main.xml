@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Window caption="0,0,0,36" roundcorner="5,5" size="1200,650" sizebox="6,6,6,6" mininfo="80,60">
+  <Font name="微软雅黑" size="12" bold="false" default="true" />
+  <Font name="微软雅黑" size="12" bold="true"/>  
+   <Include source="scrollbar.xml" />
+  <VerticalLayout bkcolor="#FFFFFFFF" bordersize="1" bordercolor="#FF0934DA">
+
+    <HorizontalLayout name="header" height="36" bkcolor="#FF5B9BD5">
+      <HorizontalLayout>
+        <Control width="10"/>
+        <Label name="apptitle" text="华铭路灯控制服务端" font="1" textcolor="#FFFFFFFF" />
+      </HorizontalLayout>
+      <HorizontalLayout height="25" width="96">
+        <Button name="minbtn" tooltip="最小化" height="18" width="26" normalimage="file=&apos;res/minimize.png&apos;" hotimage="file=&apos;res/minimize_h.png&apos;" pushedimage="file=&apos;res/minimize_p.png&apos;"/>
+        <Button name="maxbtn" tooltip="最大化" height="18" width="25" normalimage="file=&apos;res/maximize.png&apos;" hotimage="file=&apos;res/maximize_h.png&apos;" pushedimage="file=&apos;res/maximize_p.png&apos;"/>
+        <Button name="restorebtn" visible="false" tooltip="恢复" height="18" width="25" normalimage="file=&apos;res/restore.png&apos;" hotimage="file=&apos;res/restore_h.png&apos;" pushedimage="file=&apos;res/restore_p.png&apos;"/>
+        <Button name="closebtn" tooltip="关闭" height="18" width="43" normalimage="file=&apos;res/close.png&apos;" hotimage="file=&apos;res/close_h.png&apos;" pushedimage="file=&apos;res/close_p.png&apos;"/>
+      </HorizontalLayout>
+    </HorizontalLayout>
+
+
+    <VerticalLayout name="body" padding="2,0,2,2" bkcolor="#FFBDD0E9" bkcolor2="#FFaaaaaa">
+
+
+
+
+
+
+      		<HorizontalLayout>
+      			<Button name="start" text="启动服务端" width="100" height="30" bkcolor="#FF24759F" hottextcolor="#FF24865F"  padding="10,10" bkcolor2="#3BC7FA"/>
+
+            <Button name="clear" text="清空日志" width="100" height="30" bkcolor="#FF24759F" hottextcolor="#FF24865F"  padding="10,10" bkcolor2="#3BC7FA"/>
+
+      		 <Button name="gaywaylist" text="集中器列表" width="100" height="30" bkcolor="#FF24759F" hottextcolor="#FF24865F"  padding="10,10" bkcolor2="#3BC7FA"/>
+
+               <Label text="数据:" width="30" height="30"  padding="10,10" />
+               <Edit name="data"  borderround="4,4,4,4" nativebkcolor="#ff5AD2F6" bkcolor="#ff5AD2F6"  width="400" height="30"  padding="1,10" />  
+
+               <Button name="gaywaylist" text="设置" width="100" height="30" bkcolor="#FF24759F" hottextcolor="#FF24865F"  padding="10,10" bkcolor2="#3BC7FA"/>
+
+                   <Button name="gaywaylist" text="发送" width="100" height="30" bkcolor="#FF24759F" hottextcolor="#FF24865F"  padding="10,10" bkcolor2="#3BC7FA"/>
+      <Button name="closesocket" text="关闭socket" width="100" height="30" bkcolor="#FF24759F" hottextcolor="#FF24865F"  padding="10,10" bkcolor2="#3BC7FA"/>
+          </HorizontalLayout>
+
+
+            <List  height="200" menu="true" borderround="5,5,5,5" padding="1,1"  headerbkimage="file='list_header_bg.png'" hscrollbar="true" inset="0,0" itemalign="center" itemaltbk="FALSE" itemlinecolor="#FF115500" multiexpanding="true"   itemshowhtml="true"  name="socketlist" vscrollbar="true"  >
+                                                          <ListHeader height="24" bordersize="1" bordercolor="00222827" >
+                                                          <ListHeaderItem font="1" hotimage="file='list_header_hot.png'" pushedimage="file='list_header_pushed.png'" userdata="num" sepimage="file='list_header_sep.png'" sepwidth="1" text="序号" width="30"/>
+
+                                                           <ListHeaderItem font="1" hotimage="file='list_header_hot.png'" pushedimage="file='list_header_pushed.png'" userdata="num" sepimage="file='list_header_sep.png'" sepwidth="1" text="IP" width="130"/>
+
+                                                          <ListHeaderItem font="1" hotimage="file='list_header_hot.png'" pushedimage="file='list_header_pushed.png'" sepimage="file='list_header_sep.png'" sepwidth="1" text="通信指针" width="100"/>
+                                                           <ListHeaderItem font="1" hotimage="file='list_header_hot.png'" pushedimage="file='list_header_pushed.png'" sepimage="file='list_header_sep.png'" sepwidth="1" text="Key" width="100"/>
+                                                          <ListHeaderItem font="1" hotimage="file='list_header_hot.png'" pushedimage="file='list_header_pushed.png'" sepimage="file='list_header_sep.png'" sepwidth="1" text="设置发送的数据" width="150"/>
+                                                          <ListHeaderItem font="1" hotimage="file='list_header_hot.png'" pushedimage="file='list_header_pushed.png'" sepimage="file='list_header_sep.png'" sepwidth="1" text="收到的数据" width="200"/>
+                                                          <ListHeaderItem font="1" hotimage="file='list_header_hot.png'" pushedimage="file='list_header_pushed.png'" sepimage="file='list_header_sep.png'" sepwidth="1" text="收到的ascii码" width="200"/>
+                                                          <ListHeaderItem font="1" hotimage="file='list_header_hot.png'" pushedimage="file='list_header_pushed.png'" sepimage="file='list_header_sep.png'" sepwidth="1" text="长度" width="50"/>
+                                                          <ListHeaderItem font="1" hotimage="file='list_header_hot.png'" pushedimage="file='list_header_pushed.png'" sepimage="file='list_header_sep.png'" sepwidth="1" text="客户端类型" width="80"/>
+
+                                         </ListHeader>
+                                        </List>
+
+  <HorizontalLayout height="1" bkcolor="#FF272822" /> 
+
+                <RichEdit name="opera" height="300" readonly="true"  text="" autovscroll="true" menu="true"  multiline="true" vscrollbar="true" >
+                   
+
+                </RichEdit>
+                
+ <HorizontalLayout height="1" bkcolor="#FF272822" /> 
+
+              <VerticalLayout name="ooo" height="1" />
+                <HorizontalLayout  height="30" bkcolor="#FF595959" bkcolor2="#FF393939"  >
+                    <Label text="欢迎使用智能路灯系统" width="200" padding="10" textcolor="FFFFFFFF"></Label>
+                    <VerticalLayout width="2" bkcolor="#FF292929">          
+                    </VerticalLayout>
+
+                     <Label text="版本号:V1.0.0.1" width="200" padding="10" textcolor="FFFFFFFF"></Label>
+                    <VerticalLayout width="2" bkcolor="#FF292929">          
+                    </VerticalLayout>
+
+                                     <Label name="nowdate" text="当前日期" width="200" padding="10" textcolor="FFFFFFFF"></Label>
+                    <VerticalLayout width="2" bkcolor="#FF292929">          
+                    </VerticalLayout>    
+
+                                     <Label name="loguser" text="登陆用户:" width="200" padding="10" textcolor="FFFFFFFF"></Label>
+                    <VerticalLayout width="2" bkcolor="#FF292929">          
+                    </VerticalLayout> 
+
+            </HorizontalLayout>
+
+
+    </VerticalLayout>
+
+  </VerticalLayout>
+</Window>

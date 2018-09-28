@@ -1805,23 +1805,23 @@ void CIOCP::dealws(IOCP_IO_PTR & lp_io, string & jsondata)
 
     if(reader.parse(jsondata.c_str(), root))
     {
-        Json::Value vtemp = root["msg"];
+        Json::Value msgtype = root["msg"];
 
-        if(vtemp.isNull())
+        if(msgtype.isNull())
         {
             glog::trace("\nthis is null data pack\n");
         }
-        else if(vtemp.isArray())
+        else if(msgtype.isArray())
         {
             glog::trace("\nthis is array data pack\n");
         }
-        else if(vtemp.isObject())
+        else if(msgtype.isObject())
         {
             glog::trace("\nthis is object data pack\n");
         }
-        else if(vtemp.isString())
+        else if(msgtype.isString())
         {
-            if(vtemp == "getStatus")
+            if(msgtype == "getStatus")
             {
                 string addrarea = root["addr"].asString();
                 map<string, IOCP_IO_PTR>::iterator ite = m_mcontralcenter.find(addrarea);
@@ -1847,7 +1847,7 @@ void CIOCP::dealws(IOCP_IO_PTR & lp_io, string & jsondata)
                     lp_io->operation = IOCP_WRITE;
                 }
             }
-            else if(vtemp == "Online")
+            else if(msgtype == "Online")
             {
                 root["count"] = m_mcontralcenter.size();
                 root["status"] = "success";
@@ -1864,7 +1864,7 @@ void CIOCP::dealws(IOCP_IO_PTR & lp_io, string & jsondata)
                     lp_io->operation = IOCP_WRITE;
                 }
             }
-            else if(vtemp == "AA")          //参数查询
+            else if(msgtype == "AA")          //参数查询
             {
                 Json::Value isres = root["res"];
 
@@ -1905,7 +1905,7 @@ void CIOCP::dealws(IOCP_IO_PTR & lp_io, string & jsondata)
                     }
                 }
             }
-            else if(vtemp == "A4")          //设置命令
+            else if(msgtype == "A4")          //设置命令
             {
                 Json::Value isres = root["res"];
 
@@ -1946,7 +1946,7 @@ void CIOCP::dealws(IOCP_IO_PTR & lp_io, string & jsondata)
                     }
                 }
             }
-            else if(vtemp == "A5")                  //控制命令
+            else if(msgtype == "A5")                  //控制命令
             {
                 Json::Value isres = root["res"];
 
@@ -1996,7 +1996,7 @@ void CIOCP::dealws(IOCP_IO_PTR & lp_io, string & jsondata)
                     }
                 }
             }
-            else if(vtemp == "00")
+            else if(msgtype == "00")
             {
                 Json::Value tosend = root["data"];
                 string data = tosend.asString();

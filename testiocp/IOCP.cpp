@@ -80,22 +80,22 @@ void CIOCP::Notify(TNotifyUI& msg)
         {
             SendMessageA(WM_SYSCOMMAND, SC_MAXIMIZE, 0);
         }
-		else if (msg.pSender->GetName()=="closesocket")
-		{
-			int n= m_plistuser->GetCurSel();
-			if (n==-1)
-			{
-				gstring::tip("请勾选数据");
-				return;
-			}
-			CListTextElementUI* pText = (CListTextElementUI*) m_plistuser->GetItemAt(n);
-			string lpio= pText->GetText(2);
-			DWORD lp=strtol(lpio.c_str(),NULL,16);
-			IOCP_IO_PTR pIo=(IOCP_IO_PTR)lp;
-			closesocket(pIo->socket);
-			
+        else if(msg.pSender->GetName() == "closesocket")
+        {
+            int n = m_plistuser->GetCurSel();
 
-		}
+            if(n == -1)
+            {
+                gstring::tip("请勾选数据");
+                return;
+            }
+
+            CListTextElementUI* pText = (CListTextElementUI*) m_plistuser->GetItemAt(n);
+            string lpio = pText->GetText(2);
+            DWORD lp = strtol(lpio.c_str(), NULL, 16);
+            IOCP_IO_PTR pIo = (IOCP_IO_PTR)lp;
+            closesocket(pIo->socket);
+        }
         else if(msg.pSender->GetName() == "gaywaylist")
         {
             int         op, op_len, nRet;
@@ -407,24 +407,19 @@ BOOL CIOCP::HandleData(IOCP_IO_PTR lp_io, int nFlags, IOCP_KEY_PTR lp_key)
                 lpGetAcceptExSockaddrs(lp_io->buf, 0, sizeof(SOCKADDR_IN) + 16, sizeof(SOCKADDR_IN) + 16, (LPSOCKADDR*)&addrLocal, &nLocalLen, (LPSOCKADDR*)&addrClient, &nClientLen);
                 char* ip1 = inet_ntoa(addrClient->sin_addr);
                 sprintf(szPeerAddress, "%s:%d", ip1, addrClient->sin_port);
-
-				CListTextElementUI* pListElement = new CListTextElementUI;
-				m_plistuser->Add(pListElement);
-				char vvv[20] = {0};
-				int n= m_plistuser->GetCount();
-				sprintf(vvv, "%d", n);
-				pListElement->SetText(0, vvv);
-				pListElement->SetText(1,szPeerAddress);
-				sprintf(vvv,"%p",lp_io);
-				pListElement->SetText(2,vvv);
-				sprintf(vvv,"%p",lp_key);
-				pListElement->SetText(3,vvv);
-
-				//sprintf(vvv,"%p",lp_key);
-				//pListElement->SetText(4,vvv);
-
-
-
+                CListTextElementUI* pListElement = new CListTextElementUI;
+                m_plistuser->Add(pListElement);
+                char vvv[20] = {0};
+                int n = m_plistuser->GetCount();
+                sprintf(vvv, "%d", n);
+                pListElement->SetText(0, vvv);
+                pListElement->SetText(1, szPeerAddress);
+                sprintf(vvv, "%p", lp_io);
+                pListElement->SetText(2, vvv);
+                sprintf(vvv, "%p", lp_key);
+                pListElement->SetText(3, vvv);
+                //sprintf(vvv,"%p",lp_key);
+                //pListElement->SetText(4,vvv);
                 //InitIoContext(lp_io);
                 //SOCKADDR_IN addr_conn = {0};
                 //int nSize = sizeof(addr_conn);
@@ -728,12 +723,18 @@ DWORD CIOCP::TimeThread(LPVOID lp_param)
             // glog::trace("\n网关:%s", it1->first.c_str());
             //lp_this->PostLog("采集电能量");
             IOCP_IO_PTR lo = it1->second;
-	
+
             if(_stricmp(lo->day, myday) != 0)
             {
                 //昨天三相电压
                 lp_this->PostLog("网关:%s 请求昨天三相电压数据", it1->first.c_str());
-                unsigned char vol[24] = {0x68, 0x42, 0x00, 0x42, 0x00, 0x68, 0x04, 0x02, 0x17, 0x01, 0x01, 0x02, 0xAC, 0x7A, 0x00, 0x00, 0x04, 0x04, 0x00, 0x00, 0x01, 0x05, 0x55, 0x16};
+                BYTE  comaddr[4] = {0};
+                int n1 = lp_this-> hex2str(it1->first, comaddr);
+                unsigned char vol[24] = {0x68, 0x42, 0x00, 0x42, 0x00, 0x68, 0x04, comaddr[1], comaddr[0], comaddr[3], comaddr[2], 0x02, 0xAC, 0x7A, 0x00, 0x00, 0x04, 0x04, 0x00, 0x00, 0x01, 0x05, 0x55, 0x16};
+                //vol[7]=comaddr[1];
+                //vol[8]=comaddr[0];
+                //vol[9]=comaddr[3];
+                //vol[10]=comaddr[2];
                 lp_this->InitIoContext(lo);
                 memcpy(lo->buf, vol, sizeof(vol));
                 lo->wsaBuf.len = sizeof(vol);
@@ -742,9 +743,9 @@ DWORD CIOCP::TimeThread(LPVOID lp_param)
                 lp_this->DataAction(lo, lo->lp_key);
                 //昨天三相电流
                 Sleep(10000);
-				lp_this->PostLog("io:%p",lo);
+                lp_this->PostLog("io:%p", lo);
                 lp_this->PostLog("网关:%s请求昨天三相电流数据", it1->first.c_str());
-                unsigned char electric[20] = {0x68, 0x32, 0x00, 0x32, 0x00, 0x68, 0x04, 0x02, 0x17, 0x01, 0x01, 0x02, 0xAC, 0x75, 0x00, 0x00, 0x20, 0x04, 0x66, 0x16 };
+                unsigned char electric[20] = {0x68, 0x32, 0x00, 0x32, 0x00, 0x68, 0x04, comaddr[1], comaddr[0], comaddr[3], comaddr[2], 0x02, 0xAC, 0x75, 0x00, 0x00, 0x20, 0x04, 0x66, 0x16 };
                 lp_this->InitIoContext(lo);
                 memcpy(lo->buf, electric, sizeof(electric));
                 lo->wsaBuf.len = sizeof(electric);
@@ -753,9 +754,9 @@ DWORD CIOCP::TimeThread(LPVOID lp_param)
                 lp_this->DataAction(lo, lo->lp_key);
                 //昨天三相有功功率
                 Sleep(10000);
-				lp_this->PostLog("io:%p",lo);
+                lp_this->PostLog("io:%p", lo);
                 lp_this->PostLog("网关:%s请求昨天三相有功功率数据", it1->first.c_str());
-                unsigned char activepower[24] = {0x68, 0x42, 0x00, 0x42, 0x00, 0x68, 0x04, 0x02, 0x17, 0x01, 0x01, 0x02, 0xAC, 0x76, 0x00, 0x00, 0x01, 0x03, 0x00, 0x00, 0x20, 0x04, 0x6B, 0x16 };
+                unsigned char activepower[24] = {0x68, 0x42, 0x00, 0x42, 0x00, 0x68, 0x04, comaddr[1], comaddr[0], comaddr[3], comaddr[2], 0x02, 0xAC, 0x76, 0x00, 0x00, 0x01, 0x03, 0x00, 0x00, 0x20, 0x04, 0x6B, 0x16 };
                 lp_this->InitIoContext(lo);
                 memcpy(lo->buf, activepower, sizeof(activepower));
                 lo->wsaBuf.len = sizeof(activepower);
@@ -764,9 +765,9 @@ DWORD CIOCP::TimeThread(LPVOID lp_param)
                 lp_this->DataAction(lo, lo->lp_key);
                 //昨天总功率因数
                 Sleep(10000);
-				lp_this->PostLog("io:%p",lo);
+                lp_this->PostLog("io:%p", lo);
                 lp_this->PostLog("网关:%s请求昨天功率因数", it1->first.c_str());
-                unsigned char powerfactor[24] = {0x68, 0x42, 0x00, 0x42, 0x00, 0x68, 0x04, 0x02, 0x17, 0x01, 0x01, 0x02, 0xAC, 0x78, 0x00, 0x00, 0x40, 0x03, 0x00, 0x00, 0x20, 0x04, 0xAC, 0x16 };
+                unsigned char powerfactor[24] = {0x68, 0x42, 0x00, 0x42, 0x00, 0x68, 0x04,comaddr[1], comaddr[0], comaddr[3], comaddr[2], 0x02, 0xAC, 0x78, 0x00, 0x00, 0x40, 0x03, 0x00, 0x00, 0x20, 0x04, 0xAC, 0x16 };
                 lp_this->InitIoContext(lo);
                 memcpy(lo->buf, powerfactor, sizeof(powerfactor));
                 lo->wsaBuf.len = sizeof(powerfactor);
@@ -775,9 +776,9 @@ DWORD CIOCP::TimeThread(LPVOID lp_param)
                 lp_this->DataAction(lo, lo->lp_key);
                 //正向功能量
                 Sleep(10000);
-				lp_this->PostLog("io:%p",lo);
+                lp_this->PostLog("io:%p", lo);
                 lp_this->PostLog("网关:%s请求昨天正向功能量", it1->first.c_str());
-                unsigned char power[20] = {0x68, 0x32, 0x00, 0x32, 0x00, 0x68, 0x04, 0x02, 0x17, 0x01, 0x01, 0x02, 0xAC, 0x7B, 0x00, 0x00, 0x01, 0x05, 0x4E, 0x16 };
+                unsigned char power[20] = {0x68, 0x32, 0x00, 0x32, 0x00, 0x68, 0x04,  comaddr[1], comaddr[0], comaddr[3], comaddr[2], 0x02, 0xAC, 0x7B, 0x00, 0x00, 0x01, 0x05, 0x4E, 0x16 };
                 lp_this->InitIoContext(lo);
                 memcpy(lo->buf, power, sizeof(power));
                 lo->wsaBuf.len = sizeof(power);
@@ -891,8 +892,8 @@ BOOL CIOCP::InitAll()
     }
 
     //定时采集线程
-	DWORD tid = 0;
-	HANDLE hTreadTime = CreateThread(NULL, NULL, TimeThread, (LPVOID)this, NULL, &tid);
+    DWORD tid = 0;
+    //HANDLE hTreadTime = CreateThread(NULL, NULL, TimeThread, (LPVOID)this, NULL, &tid);
 
     if(!InitSocket())
     {
@@ -1111,9 +1112,9 @@ DWORD CIOCP::CompletionRoutine(LPVOID lp_param)
         //*lpOverlapped为空并且函数没有从完成端口取出完成包，返回值则为0。函数则不会在lpNumberOfBytes and lpCompletionKey所指向的参数中存储信息。
         if(lp_io == NULL)
         {
-            lp_this->PostLog("GetQueuedCompletionStatus lp_io:%p bRet:%d ThreadId:%d error:%d", lp_io, bRet, GetCurrentThreadId(),WSAGetLastError());
+            lp_this->PostLog("GetQueuedCompletionStatus lp_io:%p bRet:%d ThreadId:%d error:%d", lp_io, bRet, GetCurrentThreadId(), WSAGetLastError());
             glog::traceErrorInfo("\n lp_io is NULL  GetQueuedCompletionStatus", GetLastError());
-			//closesocket(lp_key->socket);
+            //closesocket(lp_key->socket);
             //lp_this->m_io_group.RemoveAt(lp_io);
             //lp_this->m_key_group.RemoveAt(lp_key);
             continue;

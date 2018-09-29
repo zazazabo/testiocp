@@ -66,7 +66,6 @@ void dealCommand(int wid)
     else if(wid == IDC_BUTTON8)
     {
         //int n1 = list1.getSelectIndex();
-
         //if(n1 >= 0)
         //{
         //    string socket = list1.getCellText(n1, 1);
@@ -79,7 +78,6 @@ void dealCommand(int wid)
     else if(wid == IDC_BUTTON2)
     {
         //int n1 = list1.getSelectIndex();
-
         //if(n1 >= 0)
         //{
         //    char data[1024] = {0};
@@ -90,7 +88,6 @@ void dealCommand(int wid)
     else if(wid == IDC_BUTTON3)
     {
         //int n1 = list1.getSelectIndex();
-
         //if(n1 >= 0)
         //{
         //    string socket = list1.getCellText(n1, 1);
@@ -103,7 +100,6 @@ void dealCommand(int wid)
     else if(wid == IDC_BUTTON7)
     {
         //int n1 = list1.getSelectIndex();
-
         //if(n1 >= 0)
         //{
         //    string socket = list1.getCellText(n1, 1);
@@ -116,18 +112,17 @@ void dealCommand(int wid)
     else if(wid == IDC_BUTTON4)
     {
         //int nnn = list1.getSelectIndex();
-
         //if(nnn >= 0)
         //{
         //    string val = list1.getCellText(nnn, 4);
         //    gstring::copyToclip(val.c_str(), val.size());
         //    list1.setItemText("", nnn, 4);
         //    ;
-        //}  
+        //}
     }
     else if(wid == IDC_BUTTON5)
     {
-        int nnn =0;// list1.getSelectIndex();
+        int nnn = 0; // list1.getSelectIndex();
 
         if(nnn >= -1)
         {
@@ -222,70 +217,54 @@ int APIENTRY WinMain(HINSTANCE hInstance,
                      LPSTR     lpCmdLine,
                      int       nCmdShow)
 {
-
-
-	SHORT vv=0x420;
-	BYTE b1= vv>>8&0x00ff;  //04
-	BYTE b2= vv&0x00ff;   //20
-
-	glog::setOpenLog(TRUE);
-	CoInitialize(NULL);
-	show();
+    gstring::setIcon(NULL, IDI_ICON1);
+    SHORT vv = 0x420;
+    BYTE b1 = vv >> 8 & 0x00ff; //04
+    BYTE b2 = vv & 0x00ff; //20
+    glog::setOpenLog(TRUE);
+    CoInitialize(NULL);
+    show();
     return TRUE;
 }
 void show()
 {
+    int iret = 5;
+    HRESULT Hr = ::CoInitialize(NULL);
 
+    if(FAILED(Hr)) return ;
 
-	int iret = 5;
-	HRESULT Hr = ::CoInitialize(NULL);
-
-	if(FAILED(Hr)) return ;
-
-	LPVOID  a1=NULL;
-	int     size1=0;
-
-	gstring::getResInfo(a1, size1, IDR_ZIP1, "zip", hInst);
+    LPVOID  a1 = NULL;
+    int     size1 = 0;
+    gstring::getResInfo(a1, size1, IDR_ZIP1, "zip", hInst);
 #ifdef _DEBUG
-	CPaintManagerUI::SetResourcePath("skin");
+    CPaintManagerUI::SetResourcePath("skin");
 #else
-	CPaintManagerUI::SetResourceZip(a1, size1);
+    CPaintManagerUI::SetResourceZip(a1, size1);
 #endif
+    CIOCP* pAddCard = new CIOCP("main.xml");
 
-	CIOCP* pAddCard = new CIOCP("main.xml");
-	//CMainFrame* pAddCard = new CMainFrame("main.xml");
-	if(pAddCard == NULL) return;
-	LPVOID pRes = NULL;
-	int uSize = 0;
-	HWND hwnd = pAddCard->Create(NULL, _T(""), UI_WNDSTYLE_DIALOG, WS_EX_WINDOWEDGE);
+    //CMainFrame* pAddCard = new CMainFrame("main.xml");
+    if(pAddCard == NULL) return;
 
-	RECT rc;
-	pAddCard->CenterWindow();
-	::ShowWindow(hwnd, SW_NORMAL);
-
-	::UpdateWindow(hwnd);
-	pAddCard->ShowModal();
-
-
-
-
-
-
-
-
-
-	//MSG msg;
-	//hWindow = CreateDialog(hInst, MAKEINTRESOURCE(IDD_DIALOG1), NULL, DLGPROC(DialogProc));
-	//ShowWindow(hWindow, SW_NORMAL);
-	//UpdateWindow(hWindow);
-	//ShowCursor(TRUE);
-	//DWORD progID = GetWindowThreadProcessId(hWindow, NULL);
-
-	//while(GetMessage(&msg, NULL, 0, 0))
-	//{
-	//	TranslateMessage(&msg);
-	//	DispatchMessage(&msg);
-	//}
+    LPVOID pRes = NULL;
+    int uSize = 0;
+    HWND hwnd = pAddCard->Create(NULL, _T(""), UI_WNDSTYLE_DIALOG, WS_EX_WINDOWEDGE);
+    RECT rc;
+    pAddCard->CenterWindow();
+    ::ShowWindow(hwnd, SW_NORMAL);
+    ::UpdateWindow(hwnd);
+    pAddCard->ShowModal();
+    //MSG msg;
+    //hWindow = CreateDialog(hInst, MAKEINTRESOURCE(IDD_DIALOG1), NULL, DLGPROC(DialogProc));
+    //ShowWindow(hWindow, SW_NORMAL);
+    //UpdateWindow(hWindow);
+    //ShowCursor(TRUE);
+    //DWORD progID = GetWindowThreadProcessId(hWindow, NULL);
+    //while(GetMessage(&msg, NULL, 0, 0))
+    //{
+    //  TranslateMessage(&msg);
+    //  DispatchMessage(&msg);
+    //}
 }
 int CALLBACK DialogProc(
     HWND hwndDlg,  // handle to dialog box

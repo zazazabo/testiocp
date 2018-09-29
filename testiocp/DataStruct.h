@@ -3,7 +3,7 @@
 #include "DoubleList.h"
 //////////////////////////////////////////////////////////////////////////
 
-#define    BUFFER_SIZE           1024
+#define    BUFFER_SIZE           2048
 #define    MAXTHREAD_COUNT       8
 
 #define    PORT                  5050//6369

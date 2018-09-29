@@ -35,9 +35,13 @@ public:
     ~CMainFrame(void);
 
     string m_strskin;
-    CDBOperation*   m_pdbOpen;
-	 CListUI*   m_plistuser;
-	 CEditUI* m_pData;
+    CDBOperation*   dbopen;
+    CListUI*   m_plistuser;
+    CEditUI* m_pData;
+    CLabelUI* m_pDate;
+    CLabelUI* m_pUserName;
+    char m_configTime[216];             //采集时间
+    char m_sql[4096];
     char                    chlog[2048];
     LPCTSTR GetWindowClassName() const
     {
@@ -68,11 +72,18 @@ public:
     LRESULT OnTimer(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
     LRESULT HandleCustomMessage(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
     LRESULT OnUser(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled);
-    // void    Dealdataskin(string btn, TNotifyUI& msg);
+
 
     string  GetDataDir(string name);
     int IsNum(char s[]);
     void PostLog(const char* pData, ...);
-	string getItemText(CListUI* pControl,int irow,int icolum);
-	void setItemText(CListUI* pControl,int irow,int icolum,string data);
+
+    string getItemText(CListUI* pControl, int irow, int icolum);
+    void setItemText(CListUI* pControl, int irow, int icolum, string data);
+    void clearEndChar(string& str, string c);
+    void dealSqlRecords(string addrarea, string myday, string inmsg, string colum);
+    void dealSqlPower(string addrarea, string myday, string power00, string power45);
+    void setOnline(string comaddr, int status);
+    string getErrorInfo(int ercode);
+    void  DeleteByIo(ULONG_PTR io);
 };

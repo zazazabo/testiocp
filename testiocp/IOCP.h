@@ -94,7 +94,7 @@ public:
 	 void    Notify(TNotifyUI& msg);
 
 
-	char m_configTime[216];				//采集时间
+
     typedef   list<IOCP_IO_PTR>::iterator ITERATOR;
 	map<string,_COMADDRVISITE>m_day;
 
@@ -122,7 +122,7 @@ public:
 
 	UINT                uPort;
 	char                szAddress[20];
-	CDBOperation        dbopen;
+	//CDBOperation        dbopen;
 	int                 m_n_thread_count;
 	HANDLE              m_h_thread[MAXTHREAD_COUNT];
 	HANDLE              m_h_accept_event;
@@ -140,10 +140,8 @@ public:
     int                 wsDecodeFrame(char inFrame[], string &outMessage, int len,BOOL& fullpack);
     int                 wsEncodeFrame(string inMessage, char outFrame[], enum WS_FrameType frameType,int& lenret);
     void                dealws(IOCP_IO_PTR& lp_io, string& jsondata);
-    string              GetDataDir(string filename);
     //集中器
     BOOL                checkFlag(BYTE vv[], int len);
-    void                changeByte(char data[], BYTE vv[], int& len);
     void                buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL& isrespos, IOCP_IO_PTR& lp_io);
     void                buildConCode(BYTE src[], BYTE res[], int& len, BYTE bcon);
 	BOOL				CloseMySocket(IOCP_IO_PTR lp_io);

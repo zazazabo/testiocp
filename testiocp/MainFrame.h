@@ -37,6 +37,7 @@ public:
     string m_strskin;
     CDBOperation*   m_pdbOpen;
 	 CListUI*   m_plistuser;
+	 CEditUI* m_pData;
     char                    chlog[2048];
     LPCTSTR GetWindowClassName() const
     {
@@ -72,4 +73,6 @@ public:
     string  GetDataDir(string name);
     int IsNum(char s[]);
     void PostLog(const char* pData, ...);
+	string getItemText(CListUI* pControl,int irow,int icolum);
+	void setItemText(CListUI* pControl,int irow,int icolum,string data);
 };

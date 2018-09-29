@@ -132,7 +132,7 @@ public:
 public:
 	BOOL                InitAll();
     BOOL                MainLoop();
-    BOOL                SendData(ULONG_PTR s, ULONG_PTR key);
+    BOOL                SendData(ULONG_PTR s, ULONG_PTR key,string vvv);
     BOOL                SendWebsocket(ULONG_PTR s);
 
     int                 hex2str(string str, BYTE tosend[]);
@@ -167,6 +167,7 @@ private:
 
 	BOOL				AppendByte(BYTE src[],int len,pBREAKPCK pack,IOCP_IO_PTR& lp_io);
 	static DWORD WINAPI	TimeThread(LPVOID lp_param);
+	int  buidByte(string comaddr,BYTE C, BYTE AFN,BYTE SEQ,SHORT DA,SHORT DT,vector<BYTE>&v_b,BYTE des[]);
  void		CheckForInvalidConnection();
 };
 

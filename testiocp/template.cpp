@@ -224,7 +224,9 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 {
 
 
-
+	SHORT vv=0x420;
+	BYTE b1= vv>>8&0x00ff;  //04
+	BYTE b2= vv&0x00ff;   //20
 
 	glog::setOpenLog(TRUE);
 	CoInitialize(NULL);

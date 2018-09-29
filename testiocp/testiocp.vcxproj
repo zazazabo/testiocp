@@ -41,8 +41,8 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>E:\code\jsoncpp-1.8.0\include\json;$(IncludePath)</IncludePath>
-    <LibraryPath>E:\code\jsoncpp-1.8.0\makefiles\msvc2010\Debug;$(LibraryPath)</LibraryPath>
+    <IncludePath>E:\code\jsoncpp-1.8.0\include\json;E:\code\123\duilib\DuiLib;$(IncludePath)</IncludePath>
+    <LibraryPath>E:\code\jsoncpp-1.8.0\makefiles\msvc2010\Debug;E:\code\123\duilib\DuiLib\Build\Debug;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
@@ -82,6 +82,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="MainFrame.h" />
     <ClInclude Include="DataStruct.h" />
     <ClInclude Include="DBOperation.h" />
     <ClInclude Include="DoubleList.h" />
@@ -92,6 +93,7 @@
     <ClInclude Include="template.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="MainFrame.cpp" />
     <ClCompile Include="DBOperation.cpp" />
     <ClCompile Include="IOCP.cpp" />
     <ClCompile Include="SHA1.cpp" />
@@ -100,6 +102,9 @@
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="template.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="server.zip" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

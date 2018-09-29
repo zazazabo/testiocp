@@ -39,6 +39,9 @@
     <ClInclude Include="smtp.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="MainFrame.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="template.cpp">
@@ -56,10 +59,16 @@
     <ClCompile Include="smtp.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="MainFrame.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="template.rc">
       <Filter>资源文件</Filter>
     </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="server.zip" />
   </ItemGroup>
 </Project>

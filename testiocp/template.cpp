@@ -7,9 +7,9 @@
 #include <Windows.h>
 #include <IO.H>
 #include <TlHelp32.h>
+
 #include <assert.h>
 #include "E:\\code\\glib\\h\\gstring.h"
-
 #include "E:\\code\\glib\\h\\MemoryModule.h"
 #include "E:\\code\\glib\\h\\glog.h"
 #include "E:\\code\\glib\\h\\gprocess.h"
@@ -40,19 +40,19 @@ using namespace std;
 
 HWND  hWindow;
 HINSTANCE hInst;
-gListCtr list1;
-CIOCP io;
-void dealiocp()
-{
-    if(io.Init() == FALSE)
-    {
-        return;
-    }
-
-    io.m_listctr = &list1;
-    io.hWnd = hWindow;
-    io.MainLoop();
-}
+//gListCtr list1;
+//CIOCP io;
+//void dealiocp()
+//{
+//    if(io.InitAll() == FALSE)
+//    {
+//        return;
+//    }
+//
+//    io.m_listctr = &list1;
+//    io.hWnd = hWindow;
+//    io.MainLoop();
+//}
 
 
 
@@ -60,74 +60,74 @@ void dealCommand(int wid)
 {
     if(wid == IDC_BUTTON1)
     {
-        DWORD tid = 0;
-        HANDLE h1 = CreateThread(NULL, NULL, (LPTHREAD_START_ROUTINE)dealiocp, NULL, NULL, &tid);
+        //DWORD tid = 0;
+        //HANDLE h1 = CreateThread(NULL, NULL, (LPTHREAD_START_ROUTINE)dealiocp, NULL, NULL, &tid);
     }
     else if(wid == IDC_BUTTON8)
     {
-        int n1 = list1.getSelectIndex();
+        //int n1 = list1.getSelectIndex();
 
-        if(n1 >= 0)
-        {
-            string socket = list1.getCellText(n1, 1);
-            ULONG_PTR s =  strtol(socket.c_str(), NULL, 16);
-            string socketkey = list1.getCellText(n1, 3);
-            ULONG_PTR key = strtol(socketkey.c_str(), NULL, 16);
-            io.CloseMySocket((IOCP_IO_PTR)s);
-        }
+        //if(n1 >= 0)
+        //{
+        //    string socket = list1.getCellText(n1, 1);
+        //    ULONG_PTR s =  strtol(socket.c_str(), NULL, 16);
+        //    string socketkey = list1.getCellText(n1, 3);
+        //    ULONG_PTR key = strtol(socketkey.c_str(), NULL, 16);
+        //    io.CloseMySocket((IOCP_IO_PTR)s);
+        //}
     }
     else if(wid == IDC_BUTTON2)
     {
-        int n1 = list1.getSelectIndex();
+        //int n1 = list1.getSelectIndex();
 
-        if(n1 >= 0)
-        {
-            char data[1024] = {0};
-            GetDlgItemText(hWindow, IDC_EDIT1, data, 1024);
-            list1.setItemText(data, n1, 2);
-        }
+        //if(n1 >= 0)
+        //{
+        //    char data[1024] = {0};
+        //    GetDlgItemText(hWindow, IDC_EDIT1, data, 1024);
+        //    list1.setItemText(data, n1, 2);
+        //}
     }
     else if(wid == IDC_BUTTON3)
     {
-        int n1 = list1.getSelectIndex();
+        //int n1 = list1.getSelectIndex();
 
-        if(n1 >= 0)
-        {
-            string socket = list1.getCellText(n1, 1);
-            ULONG_PTR s =  strtol(socket.c_str(), NULL, 16);
-            string socketkey = list1.getCellText(n1, 3);
-            ULONG_PTR key = strtol(socketkey.c_str(), NULL, 16);
-            io.SendData(s, key);
-        }
+        //if(n1 >= 0)
+        //{
+        //    string socket = list1.getCellText(n1, 1);
+        //    ULONG_PTR s =  strtol(socket.c_str(), NULL, 16);
+        //    string socketkey = list1.getCellText(n1, 3);
+        //    ULONG_PTR key = strtol(socketkey.c_str(), NULL, 16);
+        //    io.SendData(s, key);
+        //}
     }
     else if(wid == IDC_BUTTON7)
     {
-        int n1 = list1.getSelectIndex();
+        //int n1 = list1.getSelectIndex();
 
-        if(n1 >= 0)
-        {
-            string socket = list1.getCellText(n1, 1);
-            ULONG_PTR s =  strtol(socket.c_str(), NULL, 16);
-            string socketkey = list1.getCellText(n1, 3);
-            ULONG_PTR key = strtol(socketkey.c_str(), NULL, 16);
-            io.SendWebsocket(s);
-        }
+        //if(n1 >= 0)
+        //{
+        //    string socket = list1.getCellText(n1, 1);
+        //    ULONG_PTR s =  strtol(socket.c_str(), NULL, 16);
+        //    string socketkey = list1.getCellText(n1, 3);
+        //    ULONG_PTR key = strtol(socketkey.c_str(), NULL, 16);
+        //    io.SendWebsocket(s);
+        //}
     }
     else if(wid == IDC_BUTTON4)
     {
-        int nnn = list1.getSelectIndex();
+        //int nnn = list1.getSelectIndex();
 
-        if(nnn >= 0)
-        {
-            string val = list1.getCellText(nnn, 4);
-            gstring::copyToclip(val.c_str(), val.size());
-            list1.setItemText("", nnn, 4);
-            ;
-        }
+        //if(nnn >= 0)
+        //{
+        //    string val = list1.getCellText(nnn, 4);
+        //    gstring::copyToclip(val.c_str(), val.size());
+        //    list1.setItemText("", nnn, 4);
+        //    ;
+        //}  
     }
     else if(wid == IDC_BUTTON5)
     {
-        int nnn = list1.getSelectIndex();
+        int nnn =0;// list1.getSelectIndex();
 
         if(nnn >= -1)
         {
@@ -200,19 +200,19 @@ DWORD Threadid;
 void show();
 void init(HWND hwnd)
 {
-    vector<string>v_head;
-    v_head.push_back("ip");
-    v_head.push_back("socket");
-    v_head.push_back("设置发送数据");
-    v_head.push_back("key");
-    v_head.push_back("收到的数据");
-    v_head.push_back("收到asic数据");
-    v_head.push_back("客户端类型");
-    v_head.push_back("登陆状态");
-    list1.initList(GetDlgItem(hwnd, IDC_LIST1));
-    list1.insertHead(v_head);
-    list1.setColumWide(0, 180);
-    list1.setColumWide(2, 120);
+    //vector<string>v_head;
+    //v_head.push_back("ip");
+    //v_head.push_back("socket");
+    //v_head.push_back("设置发送数据");
+    //v_head.push_back("key");
+    //v_head.push_back("收到的数据");
+    //v_head.push_back("收到asic数据");
+    //v_head.push_back("客户端类型");
+    //v_head.push_back("登陆状态");
+    //list1.initList(GetDlgItem(hwnd, IDC_LIST1));
+    //list1.insertHead(v_head);
+    //list1.setColumWide(0, 180);
+    //list1.setColumWide(2, 120);
 }
 
 typedef std::list<int > TESTLIST;
@@ -222,76 +222,70 @@ int APIENTRY WinMain(HINSTANCE hInstance,
                      LPSTR     lpCmdLine,
                      int       nCmdShow)
 {
-    //24    0x18    0001 1000
-    //BYTE b=0x28;
-    //BYTE bbb= b>>4&0x0f;
-	char* ppp=NULL;
-	char vv[10]={0x00,0x00,0x00,0x00,0x63,0x6d,0x6e,0x65,0x74};
-	for (int i=0;i<16;i++)
-	{
-		if (vv[i]==0x00)
-		{
-			i++;
-		}else{
-			ppp=&vv[i];
-			break;
-		}
-	}
-	SHORT b =*(SHORT*)vv;
-
-    glog::setOpenLog(TRUE);
-    CoInitialize(NULL);
-    TESTLIST t;
-		string abc="33|55|";
-	 int n= abc.find_last_of("|");
-	 if (n==abc.size()-1)
-	 {
-		abc=abc.substr(0,n);
-	 }
 
 
+	SHORT vv=0x420;
+	BYTE b1= vv>>8&0x00ff;  //04
+	BYTE b2= vv&0x00ff;   //20
 
-    for(int i = 0; i < 10; i++)
-    {
-        t.push_back(i);
-    }
-
-    for(TESTLIST::iterator it = t.begin(); it != t.end();)
-    {
-        TESTLIST::iterator it1 = it;
-        it1++;
-        t.erase(it);
-        it = it1;
-    }
-
-//  Json::Value root;
-//  Json::Reader reader;
-//  const char* s = "{\"uploadid\": \"UP000000\",\"code\": 100,\"msg\": \"\",\"files\": \"\"}";
-//  if(!reader.parse(s, root)){
-//      // "parse fail";
-//  }
-//  else{
-//      //std::cout << root["uploadid"].asString();//print "UP000000"
-//
-//      glog::trace("%s",root["uploadid"].asString().c_str);
-//  }
-    show();
+	glog::setOpenLog(TRUE);
+	CoInitialize(NULL);
+	show();
     return TRUE;
 }
 void show()
 {
-    MSG msg;
-    hWindow = CreateDialog(hInst, MAKEINTRESOURCE(IDD_DIALOG1), NULL, DLGPROC(DialogProc));
-    ShowWindow(hWindow, SW_NORMAL);
-    UpdateWindow(hWindow);
-    ShowCursor(TRUE);
-    DWORD progID = GetWindowThreadProcessId(hWindow, NULL);
 
-    while(GetMessage(&msg, NULL, 0, 0))
-    {
-        TranslateMessage(&msg);
-        DispatchMessage(&msg);
-    }
+
+	int iret = 5;
+	HRESULT Hr = ::CoInitialize(NULL);
+
+	if(FAILED(Hr)) return ;
+
+	LPVOID  a1=NULL;
+	int     size1=0;
+
+	gstring::getResInfo(a1, size1, IDR_ZIP1, "zip", hInst);
+#ifdef _DEBUG
+	CPaintManagerUI::SetResourcePath("skin");
+#else
+	CPaintManagerUI::SetResourceZip(a1, size1);
+#endif
+
+	CIOCP* pAddCard = new CIOCP("main.xml");
+	//CMainFrame* pAddCard = new CMainFrame("main.xml");
+	if(pAddCard == NULL) return;
+	LPVOID pRes = NULL;
+	int uSize = 0;
+	HWND hwnd = pAddCard->Create(NULL, _T(""), UI_WNDSTYLE_DIALOG, WS_EX_WINDOWEDGE);
+
+	RECT rc;
+	pAddCard->CenterWindow();
+	::ShowWindow(hwnd, SW_NORMAL);
+
+	::UpdateWindow(hwnd);
+	pAddCard->ShowModal();
+
+
+
+
+
+
+
+
+
+	//MSG msg;
+	//hWindow = CreateDialog(hInst, MAKEINTRESOURCE(IDD_DIALOG1), NULL, DLGPROC(DialogProc));
+	//ShowWindow(hWindow, SW_NORMAL);
+	//UpdateWindow(hWindow);
+	//ShowCursor(TRUE);
+	//DWORD progID = GetWindowThreadProcessId(hWindow, NULL);
+
+	//while(GetMessage(&msg, NULL, 0, 0))
+	//{
+	//	TranslateMessage(&msg);
+	//	DispatchMessage(&msg);
+	//}
 }
 int CALLBACK DialogProc(
     HWND hwndDlg,  // handle to dialog box

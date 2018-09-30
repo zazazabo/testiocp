@@ -98,17 +98,19 @@ public:
     typedef   list<IOCP_IO_PTR>::iterator ITERATOR;
 	map<string,_COMADDRVISITE>m_day;
 
-//     typedef struct _WEBSOCKET
-//     {
-//         IOCP_IO_PTR lp_io;
-//         IOCP_KEY_PTR lp_key;
-//     }WEBSOCKET;
+	typedef struct MSGPACK
+	{
+		IOCP_IO_PTR lp_io;
+		BYTE seq;
+		char comaddr[20];
+	}_MSGPACK;
 
+	map<string,vector<MSGPACK>>m_MsgPack;
 
 	HANDLE              m_h_iocp;
 	SOCKET              m_listen_socket;
 
-    list<IOCP_IO_PTR>      m_listmsg;        //消息列表
+    list<MSGPACK>      m_listmsg;        //消息列表
     map<string, IOCP_IO_PTR> m_mcontralcenter;  //集中器队列
 
 	map<IOCP_IO_PTR,pBREAKPCK>m_pack;			//断包结构
@@ -160,7 +162,7 @@ private:
 	static DWORD WINAPI CompletionRoutine(LPVOID lp_param);
 	BOOL                PostAcceptEx();
 	BOOL                GetAddrAndPort(char*buf, char ip[], UINT &port);
-
+	void				DealWebsockMsg(IOCP_IO_PTR& lp_io,IOCP_KEY_PTR& lp_key,BYTE msg[],int len,BOOL bAnswer);
 	BOOL				IsBreakPack(BYTE src[],int len);
 
 	BOOL				AppendByte(BYTE src[],int len,pBREAKPCK pack,IOCP_IO_PTR& lp_io);

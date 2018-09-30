@@ -83,8 +83,10 @@ typedef struct
 	IOCP_KEY_PTR                lp_key;
 	char						day[20];
 	char						gayway[20];
+	PVOID						pUserData;
 	int							timelen;
 	volatile int				state;
+	
 }IOCP_IO,*IOCP_IO_PTR;
 
 

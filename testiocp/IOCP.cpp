@@ -714,7 +714,7 @@ void CIOCP::DealWebsockMsg(IOCP_IO_PTR& lp_io, IOCP_KEY_PTR& lp_key, BYTE msg[],
 
                 if(tosend.isString() && tosend != "")
                 {
-                    if(msgType == "AA" || msgType == "A4" || msgType == "A5" || msgType == "AC" || msgType == "00")
+                    if(msgType == "AA" || msgType == "A4" || msgType == "A5" || msgType == "AC" || msgType == "00"||msgType=="FE")
                     {
                         string data = tosend.asString();
                         data = gstring::replace(data, " ", "");
@@ -1101,7 +1101,7 @@ BOOL CIOCP::MainLoop()
                 {
                     //检测集中器超时处理
                     //cout << "Server is running.........." << nCount++ << " times" << endl;
-                    // CheckForInvalidConnection();
+                     CheckForInvalidConnection();
                 }
                 break;
 
@@ -1193,7 +1193,7 @@ void CIOCP::CheckForInvalidConnection()
 
                 if(len / 60 >= 20)
                 {
-                    glog::trace("主动关闭客户端");
+					glog::GetInstance()->AddLine("主动关闭网页客户端");
                     closesocket(lp_start->socket);
                     break;
                 }
@@ -1206,7 +1206,7 @@ void CIOCP::CheckForInvalidConnection()
 
                 if(len / 60 >= 5)
                 {
-                    glog::trace("主动关闭末知客户端");
+					glog::GetInstance()->AddLine("主动关闭末知客户端");
                     closesocket(lp_start->socket);
                     break;
                 }
@@ -1294,6 +1294,7 @@ DWORD CIOCP::CompletionRoutine(LPVOID lp_param)
         if(op != 0xffffffff)
         {
             lp_io->timelen = op;
+			//glog::traceErrorInfo("getsockopt",WSAGetLastError());
             //glog::trace("\nlp_io:%p timelen:%d",lp_io,lp_io->timelen);
         }
 
@@ -1383,7 +1384,6 @@ DWORD CIOCP::CompletionRoutine(LPVOID lp_param)
                     
                     towrite = data;
                     CListTextElementUI* pElement = (CListTextElementUI*)lp_io->pUserData;
-
                     if(pElement)
                     {
                         pElement->SetText(8, lp_io->gayway);
@@ -2210,7 +2210,7 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
             }
         }
     }
-    else if(AFN == 0x00 || AFN == 0xAA || AFN == 0xA4)      //全部确认
+    else if(AFN == 0x00 || AFN == 0xAA || AFN == 0xA4||AFN==0xFF||AFN==0xFE)      //全部确认
     {
         if(DirPrmCode == 0x80 && con == 0x0 && FC == 0x8)   //  上行 从动 响应帧   0x80 上行 从动
         {
@@ -2780,85 +2780,7 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
             }
         }
     }
-    else if(AFN == 0xA4)
-    {
-        //// 参数设置
-        //if(DirPrmCode == 0x80 && con == 0x0 && FC == 0x8)   //  上行 从动 响应帧   0x80 上行 从动
-        //{
-        //    BYTE frame = src[13] & 0xf;   //帧序号
-        //    BYTE Fn = DT[1] * 8 + DT[0];
-        //    //glog::GetInstance()->AddLine("参数查询 集中器响应帧:%d 确认 Fn:%d", frame, Fn);
-        //    //设置APN
-        //    if(DA[0] == 0 && DA[1] == 0 && DT[0] == 0x02 && DT[1] == 0x00)
-        //    {
-        //        if(!m_listmsg.empty())
-        //        {
-        //            IOCP_IO_PTR lp_io1 = m_listmsg.back();
-        //            m_listmsg.pop_back();
-        //            string strret = "";
-        //            BOOL bFullPack = FALSE;
-        //            int lenread = wsDecodeFrame(lp_io1->buf, strret, lp_io1->ol.InternalHigh, bFullPack);
-        //            Json::Value root;
-        //            Json::Reader reader;
-        //            if(reader.parse(strret.c_str(), root))
-        //            {
-        //                SHORT setnum = (SHORT) * (src + 18); //错误的装置号
-        //                BYTE  errcode = (BYTE) * (src + 20);
-        //                root["status"] = "success";
-        //                root["frame"] = frame;
-        //                string inmsg = root.toStyledString();
-        //                char outmsg[1024] = {0};
-        //                int lenret = 0;
-        //                int len = wsEncodeFrame(inmsg, outmsg, WS_TEXT_FRAME, lenret);
-        //                if(len != WS_ERROR_FRAME)
-        //                {
-        //                    PostLog("outmsg:%s lenret:%d", outmsg, lenret);
-        //                    memcpy(lp_io1->buf, outmsg, lenret);
-        //                    lp_io1->wsaBuf.buf = lp_io1->buf;
-        //                    lp_io1->wsaBuf.len = lenret;
-        //                    lp_io1->operation = IOCP_WRITE;
-        //                    DataAction(lp_io1, lp_io1->lp_key);
-        //                }
-        //            }
-        //        }
-        //    }
-        //    if(DA[0] == 0 && DA[1] == 0 && DT[0] == 0x01 && DT[1] == 0x00)
-        //    {
-        //        if(!m_listmsg.empty())
-        //        {
-        //            IOCP_IO_PTR lp_io1 = m_listmsg.back();
-        //            m_listmsg.pop_back();
-        //            string strret = "";
-        //            BOOL bFullPack = FALSE;
-        //            int lenread = wsDecodeFrame(lp_io1->buf, strret, lp_io1->ol.InternalHigh, bFullPack);
-        //            Json::Value root;
-        //            Json::Reader reader;
-        //            if(reader.parse(strret.c_str(), root))
-        //            {
-        //                SHORT setnum = (SHORT) * (src + 18); //错误的装置号
-        //                BYTE  errcode = (BYTE) * (src + 20);
-        //                root["status"] = "success";
-        //                root["frame"] = frame;
-        //                //                         root["data"] = gstring::char2hex((const char*)src, srclen);
-        //                //                         root["length"] = srclen;
-        //                string inmsg = root.toStyledString();
-        //                char outmsg[1024] = {0};
-        //                int lenret = 0;
-        //                int len = wsEncodeFrame(inmsg, outmsg, WS_TEXT_FRAME, lenret);
-        //                if(len != WS_ERROR_FRAME)
-        //                {
-        //                    glog::trace("\noutmsg:%s lenret:%d", outmsg, lenret);
-        //                    memcpy(lp_io1->buf, outmsg, lenret);
-        //                    lp_io1->wsaBuf.buf = lp_io1->buf;
-        //                    lp_io1->wsaBuf.len = lenret;
-        //                    lp_io1->operation = IOCP_WRITE;
-        //                    DataAction(lp_io1, lp_io1->lp_key);
-        //                }
-        //            }
-        //        }
-        //    }
-        //}
-    }
+
 }
 
 void CIOCP::buildConCode(BYTE src[], BYTE res[], int& len, BYTE bcon)

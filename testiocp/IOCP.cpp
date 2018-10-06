@@ -109,14 +109,13 @@ void CIOCP::Notify(TNotifyUI& msg)
                 return;
             }
 
-            op_len = sizeof(op);
-            nRet = getsockopt(lp_start->socket, SOL_SOCKET, SO_CONNECT_TIME, (char*)&op, &op_len);
-
             //glog::trace("come on CheckForInvalidConnection");
             while(lp_start != NULL)
             {
                 if(lp_start->fromtype == SOCKET_FROM_Concentrator)
                 {
+                    op_len = sizeof(op);
+                    nRet = getsockopt(lp_start->socket, SOL_SOCKET, SO_CONNECT_TIME, (char*)&op, &op_len);
                     int len = 0;
 
                     if(op != 0xffffffff)
@@ -714,7 +713,7 @@ void CIOCP::DealWebsockMsg(IOCP_IO_PTR& lp_io, IOCP_KEY_PTR& lp_key, BYTE msg[],
 
                 if(tosend.isString() && tosend != "")
                 {
-                    if(msgType == "AA" || msgType == "A4" || msgType == "A5" || msgType == "AC" || msgType == "00"||msgType=="FE")
+                    if(msgType == "AA" || msgType == "A4" || msgType == "A5" || msgType == "AC" || msgType == "00" || msgType == "FE")
                     {
                         string data = tosend.asString();
                         data = gstring::replace(data, " ", "");
@@ -886,7 +885,7 @@ DWORD CIOCP::TimeThread(LPVOID lp_param)
                 BYTE electric[50] = {0}; //{0x68, 0x32, 0x00, 0x32, 0x00, 0x68, 0x04, comaddr[1], comaddr[0], comaddr[3], comaddr[2], 0x02, 0xAC, 0x75, 0x00, 0x00, 0x20, 0x04, 0x66, 0x16 };
                 n = lp_this->buidByte(it1->first, 0x4, 0xAC, 0x71, 0, 0x420, v_b, electric);
                 string data1 = gstring::char2hex((const char*)electric, n);
-                glog::GetInstance()->AddLine("电流发送包:%s", data1.c_str());
+                //glog::GetInstance()->AddLine("电流发送包:%s", data1.c_str());
                 lp_this->InitIoContext(lo);
                 memcpy(lo->buf, electric, n);
                 lo->wsaBuf.len = n;
@@ -947,18 +946,14 @@ DWORD CIOCP::TimeThread(LPVOID lp_param)
 BOOL CIOCP::InitAll()
 {
     CoInitialize(NULL);
-
-
-	//objeamil.SetEmailTitle(string("aaaa"));
-	//objeamil.AddTargetEmail(string("277402131@qq.com"));
-	//objeamil.SetContent(string("asdfsdfsdfsdfsdf"));
-	//objeamil.SendVecotrEmail();
-
-
-
+    // objeamil.AddTargetEmail();
+    //objeamil.SetEmailTitle(string("aaaa"));
+    //objeamil.AddTargetEmail(string("277402131@qq.com"));
+    //objeamil.SetContent(string("asdfsdfsdfsdfsdf"));
+    //objeamil.SendVecotrEmail();
     //CSmtp smtp(25, "smtp.126.com","z277402131@126.com", /*你的邮箱地址*/"z277402131",/*邮箱密码*/"zhizhuchun@qq.com",/*目的邮箱地址*/"TEST",/*主题*/"测试测试！收到请回复！"  /*邮件正文*/);
-         //string filePath("D:\\附件.txt");
-         //smtp.AddAttachment(filePath);
+    //string filePath("D:\\附件.txt");
+    //smtp.AddAttachment(filePath);
     /*还可以调用CSmtp::DeleteAttachment函数删除附件，还有一些函数，自己看头文件吧!*/
     //int err;
     //if((err = smtp.SendEmail_Ex()) != 0) {
@@ -971,26 +966,20 @@ BOOL CIOCP::InitAll()
     //  if(err == 4)
     //      cout << "错误4: 请检查附件目录是否正确，以及文件是否存在!" << endl;
     //}
-
-         //string strTarEmail = "12345678@qq.com";
-         //smtp.AddTargetEmail(strTarEmail);
-    
-         //if((err = smtp.SendVecotrEmail()) != 0) {
-         //    if(err == -1)
-         //        cout << "错误-1: 没有目地邮箱地址!" << endl;
-    
-         //    if(err == 1)
-         //        cout << "错误1: 由于网络不畅通，发送失败!" << endl;
-    
-         //    if(err == 2)
-         //        cout << "错误2: 用户名错误,请核对!" << endl;
-    
-         //    if(err == 3)
-         //        cout << "错误3: 用户密码错误，请核对!" << endl;
-    
-         //    if(err == 4)
-         //        cout << "错误4: 请检查附件目录是否正确，以及文件是否存在!" << endl;
-         //}
+    //string strTarEmail = "12345678@qq.com";
+    //smtp.AddTargetEmail(strTarEmail);
+    //if((err = smtp.SendVecotrEmail()) != 0) {
+    //    if(err == -1)
+    //        cout << "错误-1: 没有目地邮箱地址!" << endl;
+    //    if(err == 1)
+    //        cout << "错误1: 由于网络不畅通，发送失败!" << endl;
+    //    if(err == 2)
+    //        cout << "错误2: 用户名错误,请核对!" << endl;
+    //    if(err == 3)
+    //        cout << "错误3: 用户密码错误，请核对!" << endl;
+    //    if(err == 4)
+    //        cout << "错误4: 请检查附件目录是否正确，以及文件是否存在!" << endl;
+    //}
     WSAData data;
 
     if(WSAStartup(MAKEWORD(2, 2), &data) != 0)
@@ -1018,12 +1007,11 @@ BOOL CIOCP::InitAll()
     //定时采集线程
     DWORD tid = 0;
     HANDLE hTreadTime = CreateThread(NULL, NULL, TimeThread, (LPVOID)this, NULL, &tid);
-	CloseHandle(hTreadTime);
-
-	//定时采集线程
-	DWORD tidEmail = 0;
-	HANDLE hTreadEmail = CreateThread(NULL, NULL, TimeEmail, (LPVOID)this, NULL, &tidEmail);
-	CloseHandle(hTreadEmail);
+    CloseHandle(hTreadTime);
+    //定时采集线程
+    DWORD tidEmail = 0;
+    HANDLE hTreadEmail = CreateThread(NULL, NULL, TimeEmail, (LPVOID)this, NULL, &tidEmail);
+    CloseHandle(hTreadEmail);
 
     if(!InitSocket())
     {
@@ -1101,7 +1089,7 @@ BOOL CIOCP::MainLoop()
                 {
                     //检测集中器超时处理
                     //cout << "Server is running.........." << nCount++ << " times" << endl;
-                     CheckForInvalidConnection();
+                    CheckForInvalidConnection();
                 }
                 break;
 
@@ -1193,7 +1181,7 @@ void CIOCP::CheckForInvalidConnection()
 
                 if(len / 60 >= 20)
                 {
-					glog::GetInstance()->AddLine("主动关闭网页客户端");
+                    glog::GetInstance()->AddLine("主动关闭网页客户端");
                     closesocket(lp_start->socket);
                     break;
                 }
@@ -1206,7 +1194,7 @@ void CIOCP::CheckForInvalidConnection()
 
                 if(len / 60 >= 5)
                 {
-					glog::GetInstance()->AddLine("主动关闭末知客户端");
+                    glog::GetInstance()->AddLine("主动关闭末知客户端");
                     closesocket(lp_start->socket);
                     break;
                 }
@@ -1269,9 +1257,14 @@ DWORD CIOCP::CompletionRoutine(LPVOID lp_param)
             //归还IO句柄；continue;
         }
 
+        //if (bRet==TRUE&&dwBytes==0)
+        //{
+        //  lp_this->PostLog("bRet=1 dwByte=0 errorcode:%s",lp_this->getErrorInfo(WSAGetLastError()).c_str());
+        //}
+
         //如果关联到一个完成端口的一个socket句柄被关闭了，则GetQueuedCompletionStatus返回ERROR_SUCCESS（也是0）,并且lpNumberOfBytes等于0
         //退出处理
-        if((IOCP_ACCEPT != lp_io->operation) && (0 == dwBytes) && (bRet == 0))
+        if((IOCP_ACCEPT != lp_io->operation) && (0 == dwBytes))
         {
             lp_this->PostLog("正常退出");
             lp_this->ExitSocket(lp_io, lp_key, GetLastError());
@@ -1294,7 +1287,7 @@ DWORD CIOCP::CompletionRoutine(LPVOID lp_param)
         if(op != 0xffffffff)
         {
             lp_io->timelen = op;
-			//glog::traceErrorInfo("getsockopt",WSAGetLastError());
+            //glog::traceErrorInfo("getsockopt",WSAGetLastError());
             //glog::trace("\nlp_io:%p timelen:%d",lp_io,lp_io->timelen);
         }
 
@@ -1380,19 +1373,19 @@ DWORD CIOCP::CompletionRoutine(LPVOID lp_param)
                     //if(lp_io->fromtype == SOCKET_FROM_Concentrator)
                     //{
                     string data = gstring::char2hex(lp_io->buf, lp_io->ol.InternalHigh);
-					lenghth>0?glog::GetInstance()->AddLine("包长度:%d 包数据:%s", lenghth, data.c_str()):1;
-                    
+                    lenghth > 0 ? glog::GetInstance()->AddLine("包长度:%d 包数据:%s", lenghth, data.c_str()) : 1;
                     towrite = data;
                     CListTextElementUI* pElement = (CListTextElementUI*)lp_io->pUserData;
+
                     if(pElement)
                     {
                         pElement->SetText(8, lp_io->gayway);
                         pElement->SetText(5, data.c_str());
                         pElement->SetText(6, lp_io->buf);
-						char lenstr[20]={0};
-						sprintf(lenstr,"%d",lenghth);
-						pElement->SetText(6, lp_io->buf);
-						pElement->SetText(7,lenstr);
+                        char lenstr[20] = {0};
+                        sprintf(lenstr, "%d", lenghth);
+                        pElement->SetText(6, lp_io->buf);
+                        pElement->SetText(7, lenstr);
                     }
 
                     //不是集中器   判断是不是断包 //先检测是不是断包 断包就拼搓数据
@@ -2210,7 +2203,7 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
             }
         }
     }
-    else if(AFN == 0x00 || AFN == 0xAA || AFN == 0xA4||AFN==0xFF||AFN==0xFE)      //全部确认
+    else if(AFN == 0x00 || AFN == 0xAA || AFN == 0xA4 || AFN == 0xFF || AFN == 0xFE) //全部确认
     {
         if(DirPrmCode == 0x80 && con == 0x0 && FC == 0x8)   //  上行 从动 响应帧   0x80 上行 从动
         {
@@ -2630,77 +2623,76 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
                 return;
             }
 
-			map<string, list<MSGPACK>>::iterator itmsg = m_MsgPack.find(addrarea);
+            map<string, list<MSGPACK>>::iterator itmsg = m_MsgPack.find(addrarea);
 
-			if(itmsg != m_MsgPack.end())
-			{
-				list<MSGPACK>v_msg = itmsg->second;
+            if(itmsg != m_MsgPack.end())
+            {
+                list<MSGPACK>v_msg = itmsg->second;
 
-				if(v_msg.size() > 0)
-				{
-					MSGPACK msgEnd = v_msg.back();
-					IOCP_IO_PTR lp_io1 = NULL;
+                if(v_msg.size() > 0)
+                {
+                    MSGPACK msgEnd = v_msg.back();
+                    IOCP_IO_PTR lp_io1 = NULL;
 
-					if(msgEnd.seq == frame)
-					{
-						lp_io1 = msgEnd.lp_io;
-						itmsg->second.pop_back();
-					}
-					else
-					{
-						// EnterCriticalSection(&crtc_sec);
-						list<MSGPACK>::reverse_iterator it = itmsg->second.rbegin();
+                    if(msgEnd.seq == frame)
+                    {
+                        lp_io1 = msgEnd.lp_io;
+                        itmsg->second.pop_back();
+                    }
+                    else
+                    {
+                        // EnterCriticalSection(&crtc_sec);
+                        list<MSGPACK>::reverse_iterator it = itmsg->second.rbegin();
 
-						while(it != itmsg->second.rend())
-						{
-							MSGPACK pack = *it;
+                        while(it != itmsg->second.rend())
+                        {
+                            MSGPACK pack = *it;
 
-							if(pack.seq == frame)
-							{
-								lp_io1 = pack.lp_io;
-								itmsg->second.erase((++it).base());
-								break;
-							}
+                            if(pack.seq == frame)
+                            {
+                                lp_io1 = pack.lp_io;
+                                itmsg->second.erase((++it).base());
+                                break;
+                            }
 
-							it++;
-						}
+                            it++;
+                        }
 
-						//  LeaveCriticalSection(&crtc_sec);
-					}
+                        //  LeaveCriticalSection(&crtc_sec);
+                    }
 
-					if(lp_io1 != NULL)
-					{
-						string strret = "";
-						BOOL bFullPack = FALSE;
-						int lenread = wsDecodeFrame(lp_io1->buf, strret, lp_io1->ol.InternalHigh, bFullPack);
-						Json::Value root;
-						Json::Reader reader;
+                    if(lp_io1 != NULL)
+                    {
+                        string strret = "";
+                        BOOL bFullPack = FALSE;
+                        int lenread = wsDecodeFrame(lp_io1->buf, strret, lp_io1->ol.InternalHigh, bFullPack);
+                        Json::Value root;
+                        Json::Reader reader;
 
-						if(reader.parse(strret.c_str(), root))
-						{
-							root["status"] = "success";
-							root["frame"] = frame;
-							root["comaddr"] = addrarea;
-							root["data"] = gstring::char2hex((const char*)src, srclen);
-							root["length"] = srclen;
-							string inmsg = root.toStyledString();
-							char outmsg[1048] = {0};
-							int lenret = 0;
-							int len = wsEncodeFrame(inmsg, outmsg, WS_TEXT_FRAME, lenret);
+                        if(reader.parse(strret.c_str(), root))
+                        {
+                            root["status"] = "success";
+                            root["frame"] = frame;
+                            root["comaddr"] = addrarea;
+                            root["data"] = gstring::char2hex((const char*)src, srclen);
+                            root["length"] = srclen;
+                            string inmsg = root.toStyledString();
+                            char outmsg[1048] = {0};
+                            int lenret = 0;
+                            int len = wsEncodeFrame(inmsg, outmsg, WS_TEXT_FRAME, lenret);
 
-							if(len != WS_ERROR_FRAME)
-							{
-								memcpy(lp_io1->buf, outmsg, lenret);
-								lp_io1->wsaBuf.buf = lp_io1->buf;
-								lp_io1->wsaBuf.len = lenret;
-								lp_io1->operation = IOCP_WRITE;
-								DataAction(lp_io1, lp_io1->lp_key);
-							}
-						}
-					}
-				}
-			}
-
+                            if(len != WS_ERROR_FRAME)
+                            {
+                                memcpy(lp_io1->buf, outmsg, lenret);
+                                lp_io1->wsaBuf.buf = lp_io1->buf;
+                                lp_io1->wsaBuf.len = lenret;
+                                lp_io1->operation = IOCP_WRITE;
+                                DataAction(lp_io1, lp_io1->lp_key);
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
     else if(AFN == 0x0E)             //报警和故障事件
@@ -2724,7 +2716,7 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
             {
                 int j = 18;
                 BYTE errcode = src[j + 0];
-                BYTE datalen = src[j + 1];
+                int datalen = src[j + 1];
                 BYTE min = src[j + 2];
                 BYTE hour = src[j + 3];
                 BYTE day = src[j + 4];
@@ -2741,7 +2733,7 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
                 sprintf(chour, "%d%d", hour >> 4 & 0x0f, hour & 0xf);
                 sprintf(cday, "%d%d", day >> 4 & 0x0f, day & 0xf);
                 sprintf(cmonth, "%d%d", month >> 4 & 0x0f, month & 0xf);
-                sprintf(cyear, "%d%d", year >> 4 & 0x0f, year & 0xf);
+                sprintf(cyear, "20%d%d", year >> 4 & 0x0f, year & 0xf);
                 char date[30] = {0};
                 sprintf(date, "%s-%s-%s", cyear, cmonth, cday);
                 char err[20] = {0};
@@ -2750,11 +2742,9 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
                 sql.append(date);
                 sql.append("\' and f_comaddr='");
                 sql.append(addrarea);
-                sql.append("'");
-
-
-
-
+                sql.append("\' and f_type=\'");
+                sql.append(err);
+                sql.append("\'");
                 _RecordsetPtr rs = dbopen->ExecuteWithResSQL(sql.c_str());
 
                 if(rs && dbopen->GetNum(rs) == 0)
@@ -2763,24 +2753,43 @@ void CIOCP::buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL & is
                     _variant_t  vdate(date);
                     _variant_t  vcomaddr(addrarea.c_str());
                     _variant_t  verr(err);
-                    _variant_t  vdata(a1.c_str());
-					_variant_t  vlen(datalen);
+                    _variant_t  vdata(hexdata.c_str());
+                    _variant_t  vlen(datalen);
                     m_var.insert(pair<string, _variant_t>("f_day", vdate));
                     m_var.insert(pair<string, _variant_t>("f_comaddr", vcomaddr));
                     m_var.insert(pair<string, _variant_t>("f_type", verr));
-					 m_var.insert(pair<string, _variant_t>("f_len", vlen));
-					 m_var.insert(pair<string, _variant_t>("f_data", vdata));
+                    m_var.insert(pair<string, _variant_t>("f_len", vlen));
+                    m_var.insert(pair<string, _variant_t>("f_data", vdata));
                     string sql = dbopen->GetInsertSql(m_var, "t_fault");
                     _RecordsetPtr rs1 = dbopen->ExecuteWithResSQL(sql.c_str());
+
                     if(!rs1)
                     {
-                        glog::GetInstance()->AddLine("插入报警事件失败");
+                        glog::GetInstance()->AddLine("插入报警事件失败:sql %s", sql.c_str());
                     }
+
+                    string sql1 = "select * from t_people where u_pid in (select pid from t_baseinfo where comaddr=\'";
+					sql1.append(addrarea);
+                    sql1.append("\')");
+                    _RecordsetPtr rs = dbopen->ExecuteWithResSQL(sql1.c_str());
+
+                    while(!rs->adoEOF)
+                    {
+                        _variant_t vname = rs->GetCollect("u_name");
+                        _variant_t vemail = rs->GetCollect("u_email");
+                        string name = _com_util::ConvertBSTRToString(vname.bstrVal);
+                        string email = _com_util::ConvertBSTRToString(vemail.bstrVal);
+                        objeamil.SetEmailTitle(string(err));
+                        objeamil.SetContent(a1);
+                        objeamil.AddTargetEmail(email);
+                        rs->MoveNext();
+                    }
+
+                    //objeamil.AddTargetEmail();
                 }
             }
         }
     }
-
 }
 
 void CIOCP::buildConCode(BYTE src[], BYTE res[], int& len, BYTE bcon)
@@ -2975,11 +2984,12 @@ void CIOCP::ExitSocket(IOCP_IO_PTR& lp_io, IOCP_KEY_PTR& lp_key, int errcode)
 
 DWORD WINAPI CIOCP::TimeEmail(LPVOID lp_param)
 {
-	while (TRUE)
-	{
-		CIOCP* pThis=(CIOCP*)lp_param;
-		pThis->objeamil.SendVecotrEmail();
-		Sleep(5000);
-	}
-	return 1;
+    while(TRUE)
+    {
+        CIOCP* pThis = (CIOCP*)lp_param;
+        pThis->objeamil.SendVecotrEmail();
+        Sleep(5000);
+    }
+
+    return 1;
 }

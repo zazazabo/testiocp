@@ -34,12 +34,10 @@
 #else
 #ifdef _WIN64
 #pragma comment(lib,"E:\\code\\glib\\x64\\Release\\glib.lib")
-#pragma comment(lib,"E:\\code\\Detours Pro v3.0.316\\lib.X64\\detours.lib")
 #pragma comment(lib,"E:\\code\\zlib\\x64\\Release\\zlib.lib")
 
 #else
 #pragma comment(lib,"E:\\code\\glib\\Release\\glib.lib")
-#pragma comment(lib,"E:\\code\\Detours Pro v3.0.316\\lib.X86\\detours.lib")
 #pragma comment(lib,"E:\\code\\zlib\\Release\\zlib.lib")
 #endif
 #endif

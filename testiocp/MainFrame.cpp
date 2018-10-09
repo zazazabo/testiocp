@@ -93,7 +93,7 @@ void CMainFrame::Init()
   m_pData->SetText("683200320068040117660002ac7100002004c516");
   m_plistuser->RemoveAll();
   string pdir = GetDataDir("config.ini");
-  GetPrivateProfileStringA("Config", "time", "", m_configTime, 216, pdir.c_str());
+  //GetPrivateProfileStringA("Config", "time", "", m_configTime, 216, pdir.c_str());
   char source[216] = {0};
   GetPrivateProfileStringA("Config", "source", "", source, 216, pdir.c_str());
   char database[216] = {0};

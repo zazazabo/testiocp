@@ -25,7 +25,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v110</PlatformToolset>
+    <PlatformToolset>v110_xp</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
@@ -41,11 +41,13 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>E:\code\jsoncpp-1.8.0\include\json;E:\code\123\duilib\DuiLib;$(IncludePath)</IncludePath>
-    <LibraryPath>E:\code\jsoncpp-1.8.0\makefiles\msvc2010\Debug;E:\code\123\duilib\DuiLib\Build\Debug;$(LibraryPath)</LibraryPath>
+    <IncludePath>E:\code\jsoncpp-1.8.0\include\json;E:\code\123\;$(IncludePath)</IncludePath>
+    <LibraryPath>E:\code\jsoncpp-1.8.0\makefiles\msvc2010\Debug;E:\code\123\Build\Debug;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
+    <IncludePath>E:\code\jsoncpp-1.8.0\include\json;E:\code\123\;$(IncludePath)</IncludePath>
+    <LibraryPath>E:\code\jsoncpp-1.8.0\makefiles\msvc2010\Release;E:\code\123\Build\Release;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>

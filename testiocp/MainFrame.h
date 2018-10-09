@@ -38,7 +38,7 @@ public:
   CEditUI* m_pData;
   CLabelUI* m_pDate;
   CLabelUI* m_pUserName;
-  char m_configTime[216];             //采集时间
+ // char m_configTime[216];             //采集时间
   char m_sql[4096];
   char                    chlog[2048];
   LPCTSTR GetWindowClassName() const

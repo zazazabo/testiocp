@@ -283,7 +283,7 @@ BOOL CIOCP::BindAndListenSocket()
   addr.sin_family         = AF_INET;
   //addr.sin_addr.s_addr    = htons(ADDR);//inet_addr(ADDR);
   //addr.sin_port           = htons(PORT);
-  addr.sin_addr.s_addr    = htons(ADDR);//inet_addr(ip);//htons(ip);//inet_addr(ADDR);
+  addr.sin_addr.s_addr    = inet_addr(ip); //inet_addr(ip);//htons(ip);//inet_addr(ADDR);
   addr.sin_port           = htons(port);
   int nRet;
   nRet = bind(m_listen_socket, (SOCKADDR*)&addr, sizeof(SOCKADDR));
@@ -835,12 +835,12 @@ BOOL CIOCP::CloseMySocket(IOCP_IO_PTR lp_io)
 DWORD CIOCP::TimeThread(LPVOID lp_param)
 {
   CIOCP*          lp_this         = (CIOCP*)lp_param;
-  string strtime = lp_this->m_configTime;
-  vector<string>v_str;
-  gstring::split(strtime, v_str, ":");
-  int h = atoi(v_str[0].c_str());
-  int m = atoi(v_str[1].c_str());
-  int allm = h * 60 + m;
+  //string strtime = lp_this->m_configTime;
+  //vector<string>v_str;
+  //gstring::split(strtime, v_str, ":");
+  //int h = atoi(v_str[0].c_str());
+  //int m = atoi(v_str[1].c_str());
+  //int allm = h * 60 + m;
 
 //  vector<string>v_str;
 //  string strtime=m_configTime;
@@ -852,8 +852,8 @@ DWORD CIOCP::TimeThread(LPVOID lp_param)
       struct tm *tm1 = NULL;
       time(&tmtamp) ;
       tm1 = localtime(&tmtamp) ;
-      int allm1 = tm1->tm_hour * 60 + tm1->tm_min;
-      int difftime1 = allm1 - allm;
+      //int allm1 = tm1->tm_hour * 60 + tm1->tm_min;
+      //int difftime1 = allm1 - allm;
       tm1->tm_mday--;
       mktime(tm1);
       char myday[30] = {0};
@@ -1056,9 +1056,9 @@ BOOL CIOCP::InitAll()
     }
 
   //定时采集线程
-  //DWORD tid = 0;
-  //HANDLE hTreadTime = CreateThread(NULL, NULL, TimeThread, (LPVOID)this, NULL, &tid);
-  //CloseHandle(hTreadTime);
+  DWORD tid = 0;
+  HANDLE hTreadTime = CreateThread(NULL, NULL, TimeThread, (LPVOID)this, NULL, &tid);
+  CloseHandle(hTreadTime);
   //定时采集线程
   DWORD tidEmail = 0;
   HANDLE hTreadEmail = CreateThread(NULL, NULL, TimeEmail, (LPVOID)this, NULL, &tidEmail);

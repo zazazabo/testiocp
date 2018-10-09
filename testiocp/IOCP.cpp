@@ -654,7 +654,7 @@ void CIOCP::DealWebsockMsg(IOCP_IO_PTR& lp_io, IOCP_KEY_PTR& lp_key, BYTE msg[],
   BOOL bFullPack = TRUE;
   int lenread = wsDecodeFrame(lp_io->buf, strret, len, bFullPack);
   //glog::trace("\n%s", strret.c_str());
-  PostLog("帧:%d 长度:%d web端命令:%s ",lenread,len,strret.c_str());
+  PostLog("帧:%d 长度:%d web端命令:%s ", lenread, len, strret.c_str());
 
   if(lenread == WS_CLOSING_FRAME)
     {
@@ -699,7 +699,7 @@ void CIOCP::DealWebsockMsg(IOCP_IO_PTR& lp_io, IOCP_KEY_PTR& lp_key, BYTE msg[],
   //    lp_io->operation = IOCP_END;
   //  }
 
-  if(lenread !=WS_CLOSING_FRAME&&lenread!=WS_ERROR_FRAME)
+  if(lenread != WS_CLOSING_FRAME && lenread != WS_ERROR_FRAME)
     {
       Json::Value root;
       Json::Reader reader;
@@ -976,7 +976,6 @@ DWORD CIOCP::TimeThread(LPVOID lp_param)
 BOOL CIOCP::InitAll()
 {
   CoInitialize(NULL);
-
   //------------------------------------------------------------
   //-----------       Created with 010 Editor        -----------
   //------         www.sweetscape.com/010editor/          ------
@@ -986,17 +985,11 @@ BOOL CIOCP::InitAll()
   // Size    : 16 (0x10)
   //------------------------------------------------------------
   //unsigned char hexData[16] = {
-	 // 0x81, 0xFE, 0x01, 0x3D, 0x69, 0x35, 0x6B, 0x58, 0x12, 0x17, 0x09, 0x3D, 0x0E, 0x5C, 0x05, 0x7A 
+  // 0x81, 0xFE, 0x01, 0x3D, 0x69, 0x35, 0x6B, 0x58, 0x12, 0x17, 0x09, 0x3D, 0x0E, 0x5C, 0x05, 0x7A
   //};
-
   //string out="";
   //BOOL fullpack=FALSE;
   //wsDecodeFrame((char*)hexData,out,16,fullpack);
-
-
-
-
-
   // objeamil.AddTargetEmail();
   //objeamil.SetEmailTitle(string("aaaa"));
   //objeamil.AddTargetEmail(string("277402131@qq.com"));
@@ -1279,6 +1272,14 @@ DWORD CIOCP::CompletionRoutine(LPVOID lp_param)
       lp_io   = (IOCP_IO_PTR)lp_ov;
 
       //*lpOverlapped为空并且函数没有从完成端口取出完成包，返回值则为0。函数则不会在lpNumberOfBytes and lpCompletionKey所指向的参数中存储信息。
+
+      if(dwBytes == 0 && lp_key == 0&&lp_ov==0)
+        {
+          int errcode = WSAGetLastError();
+          lp_this->PostLog("完成端口已关闭");
+          break;
+        }
+
       if(bRet == 0 && lp_io == NULL)
         {
           int errcode = WSAGetLastError();
@@ -1298,12 +1299,6 @@ DWORD CIOCP::CompletionRoutine(LPVOID lp_param)
           lp_this->PostLog("GetQueuedCompletionStatus lp_io:%p bRet:%d 错误代码:%d 错误信息:%s operation:%d", lp_io, bRet, errcode, lp_this->getErrorInfo(errcode).c_str(), lp_io->operation);
           lp_this->PostLog("异常退出");
           lp_this->ExitSocket(lp_io, lp_key, errcode);
-          //EnterCriticalSection(&lp_this->crtc_sec);
-          //closesocket(lp_io->socket);
-          //lp_this->m_io_group.RemoveAt(lp_io);
-          //lp_this->m_key_group.RemoveAt(lp_key);
-          //lp_this->DeleteByIo((ULONG_PTR)lp_io->pUserData);
-          //LeaveCriticalSection(&lp_this->crtc_sec);
           continue;
           //归还IO句柄；continue;
         }
@@ -1315,7 +1310,7 @@ DWORD CIOCP::CompletionRoutine(LPVOID lp_param)
 
       //如果关联到一个完成端口的一个socket句柄被关闭了，则GetQueuedCompletionStatus返回ERROR_SUCCESS（也是0）,并且lpNumberOfBytes等于0
       //退出处理
-      if((IOCP_ACCEPT != lp_io->operation) && (0 == dwBytes))
+      if((lp_io != NULL) && (IOCP_ACCEPT != lp_io->operation) && (0 == dwBytes))
         {
           lp_this->PostLog("正常退出");
           lp_this->ExitSocket(lp_io, lp_key, GetLastError());
@@ -1484,7 +1479,7 @@ DWORD CIOCP::CompletionRoutine(LPVOID lp_param)
                                   b->len = lp_io->ol.InternalHigh;
                                   lp_this->m_pack.insert(make_pair(lp_io, b));
                                   lp_this->PostLog("Web 断包包头:lp_io:%p 长度:%d", lp_io, lenghth);
-								  goto ToMsg;
+                                  goto ToMsg;
                                 }
                             }
                         }
@@ -1505,7 +1500,7 @@ DWORD CIOCP::CompletionRoutine(LPVOID lp_param)
                       lp_this->AppendByte((BYTE*)lp_io->buf, lp_io->ol.InternalHigh, itepack->second, lp_io);
                       BREAK_PACK* pack = (BREAK_PACK*)itepack->second;
                       lenghth = pack->len;
-					  lp_io->ol.InternalHigh=pack->len;
+                      lp_io->ol.InternalHigh = pack->len;
                       delete pack;
                       lp_this->m_pack.erase(itepack);
                     }
@@ -1776,7 +1771,6 @@ int CIOCP::wsDecodeFrame(char inFrame[], string & outMessage, int len, BOOL& ful
           payloadFieldExtraBytes = 2;
           memcpy(&payloadLength16b, &frameData[2], payloadFieldExtraBytes);
           payloadLength = ntohs(payloadLength16b);
-
         }
       else if(payloadLength == 0x7f)
         {
@@ -1800,14 +1794,12 @@ int CIOCP::wsDecodeFrame(char inFrame[], string & outMessage, int len, BOOL& ful
   // 数据解码
   if((ret != WS_ERROR_FRAME) && (payloadLength > 0))
     {
-
-		if (payloadLength>len)
-		{
-			fullpack=FALSE;
-			glog::trace("web 断包");
-			return ret;
-		}
-
+      if(payloadLength > len)
+        {
+          fullpack = FALSE;
+          glog::trace("web 断包");
+          return ret;
+        }
 
       // header: 2字节, masking key: 4字节
       const char *maskingKey = &frameData[2 + payloadFieldExtraBytes];
@@ -1820,17 +1812,12 @@ int CIOCP::wsDecodeFrame(char inFrame[], string & outMessage, int len, BOOL& ful
           payloadData[i] = payloadData[i] ^ maskingKey[i % 4];
         }
 
-	  outMessage = payloadData;
-
-
-
+      outMessage = payloadData;
       //string begin = "{\"begin\":\"6A\"";
       //string end = "\"end\":\"6A\"}";
-
       //if(_strnicmp(begin.c_str(), payloadData, begin.size()) == 0)
       //  {
       //    int n1 = payloadLength - end.size();
-
       //    if(n1 >= 0 && _strnicmp(end.c_str(), &payloadData[n1], begin.size()) == 0)
       //      {
       //        //glog::trace("\nwebsocket is one pack");
@@ -1843,7 +1830,6 @@ int CIOCP::wsDecodeFrame(char inFrame[], string & outMessage, int len, BOOL& ful
       //        fullpack = FALSE;
       //      }
       //  }
-
 //         size_t len1 = 0;
 //         int num = payloadLength * 3;
 //         WCHAR* poutBuf = new WCHAR[num];

@@ -40,20 +40,6 @@
 #endif
 #endif
 
-SCARDCONTEXT            hContext;
-SCARDHANDLE             hCard;
-unsigned long           dwActProtocol;
-LPCBYTE                 pbSend;
-DWORD                   dwSend, dwRecv, size = 64;
-LPBYTE                  pbRecv;
-SCARD_IO_REQUEST        ioRequest;
-int                     retCode;
-char                    readerName [256];
-DWORD                   SendLen, RecvLen, ByteRet;;
-BYTE                    SendBuff[262], RecvBuff[262];
-SCARD_IO_REQUEST        IO_REQ;
-unsigned char           HByteArray[16];
-
 
 
 CMainFrame::CMainFrame(void)

@@ -17,6 +17,8 @@
 #define IDC_BUTTON6                     1009
 #define IDC_BUTTON7                     1010
 #define IDC_BUTTON8                     1011
+#define ID_SHOW		40001
+#define ID_EXIT		40002
 
 // Next default values for new objects
 // 

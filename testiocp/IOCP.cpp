@@ -68,9 +68,11 @@ void CIOCP::Notify(TNotifyUI& msg)
     {
       if(msg.pSender->GetName() == "closebtn")
         {
+			  Shell_NotifyIcon(NIM_ADD, &nid); //在托盘区添加图标de函数
+			this->ShowWindow(false);
           //SendMessageA(WM_SYSCOMMAND, SC_CLOSE, 0);
           //SendMessageA(WM_SYSCOMMAND, SC_CLOSE, 0);
-          Close();
+         // Close();
         }
       else if(msg.pSender->GetName() == "minbtn")
         {

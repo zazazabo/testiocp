@@ -212,16 +212,49 @@ void init(HWND hwnd)
 
 typedef std::list<int > TESTLIST;
 
+
+
+
+void ShowTrayIcon(HWND m_hWnd)
+{
+	////显示托盘
+	//NOTIFYICONDATA nid;    //NOTIFYICONDATA结构包含了系统用来处理托盘图标的信息，
+	////它包括选择的图标、回调消息、提示消息和图标对应的窗口等内容。
+	//nid.cbSize=(DWORD)sizeof(NOTIFYICONDATA);         //以字节为单位的这个结构的大小
+	//nid.hWnd = m_hWnd;          //接收托盘图标通知消息的窗口句柄
+	//nid.uID = IDI_ICON1;    //应用程序定义的该图标的ID号
+	//nid.uFlags = NIF_ICON|NIF_MESSAGE|NIF_TIP ;     //设置该图标的属性
+	//nid.uCallbackMessage = WM_TRAYICON;             //应用程序定义的消息ID号，此消息传递给hWnd  
+	//nid.hIcon = LoadIcon(AfxGetInstanceHandle(),MAKEINTRESOURCE(IDR_MAINFRAME1));   //图标的句柄
+	//wcscpy(nid.szInfoTitle,_T("提示"));
+	//strTip.Format(_T("系统崩溃了。。。"));
+	//wcscpy(nid.szTip,strTip);   	//鼠标停留在图标上显示的提示信息 
+	//Shell_NotifyIcon(NIM_ADD,&nid);	//在托盘区添加图标de函数
+}
+
+
+
+
+
+
+
+
+
 int APIENTRY WinMain(HINSTANCE hInstance,
                      HINSTANCE hPrevInstance,
                      LPSTR     lpCmdLine,
                      int       nCmdShow)
 {
 
+
+
+	hInst=hInstance;
+
     gstring::setIcon(NULL, IDI_ICON1);
     glog::setOpenLog(TRUE);
 
     CoInitialize(NULL);
+	
     show();
     return TRUE;
 }
@@ -235,6 +268,7 @@ void show()
     LPVOID  a1 = NULL;
     int     size1 = 0;
     gstring::getResInfo(a1, size1, IDR_ZIP1, "zip", hInst);
+	CPaintManagerUI::SetInstance(hInst);
 #ifdef _DEBUG
     CPaintManagerUI::SetResourcePath("skin");
 #else

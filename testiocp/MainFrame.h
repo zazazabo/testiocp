@@ -1,6 +1,7 @@
 #pragma once
 #include "smtp.h"
 #include <windows.h>
+#include "resource.h"
 #include <UIlib.h>
 #include "DBOperation.h"
 using namespace DuiLib;
@@ -12,7 +13,7 @@ using namespace DuiLib;
 #pragma pack(1)
 
 
-
+#define WM_TRAYICON (WM_USER + 100)
 
 class CMainFrame  : public CWindowWnd, public INotifyUI
 {
@@ -25,8 +26,11 @@ public:
   CPaintManagerUI m_pm;
   SHORT     port;
   char      ip[20];
-public:
 
+  HMENU   hMenu;
+  NOTIFYICONDATA nid;    //NOTIFYICONDATA结构包含了系统用来处理托盘图标的信息，
+public:
+  void ShowTrayIcon();
   CMainFrame(void);
   CMainFrame(string skin);
   CSmtp objeamil;
@@ -38,7 +42,7 @@ public:
   CEditUI* m_pData;
   CLabelUI* m_pDate;
   CLabelUI* m_pUserName;
- // char m_configTime[216];             //采集时间
+// char m_configTime[216];             //采集时间
   char m_sql[4096];
   char                    chlog[2048];
   LPCTSTR GetWindowClassName() const

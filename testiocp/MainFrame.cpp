@@ -90,6 +90,7 @@ void CMainFrame::Init()
   GetPrivateProfileStringA("Config", "upass", "", upass, 216, pdir.c_str());
   dbopen = new CDBOperation();
   BOOL bcon = dbopen->ConnToDB(source, database, uname, upass);
+ glog::GetInstance()->AddLine("%d",bcon);
   setOnline("1=1", 0);
   //dealSql("17020101", "2018-09-28", "bbb", "activepower");
   this->m_hParanWnd = this->m_hWnd;

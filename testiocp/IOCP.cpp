@@ -281,9 +281,9 @@ BOOL CIOCP::BindAndListenSocket()
   SOCKADDR_IN addr;
   memset(&addr, 0, sizeof(SOCKADDR_IN));
   addr.sin_family         = AF_INET;
-  //addr.sin_addr.s_addr    = htons(ADDR);//inet_addr(ADDR);
+  addr.sin_addr.s_addr    = htons(ADDR);//inet_addr(ADDR);
   //addr.sin_port           = htons(PORT);
-  addr.sin_addr.s_addr    = inet_addr(ip); //inet_addr(ip);//htons(ip);//inet_addr(ADDR);
+ // addr.sin_addr.s_addr    = inet_addr(ip); //inet_addr(ip);//htons(ip);//inet_addr(ADDR);
   addr.sin_port           = htons(port);
   int nRet;
   nRet = bind(m_listen_socket, (SOCKADDR*)&addr, sizeof(SOCKADDR));

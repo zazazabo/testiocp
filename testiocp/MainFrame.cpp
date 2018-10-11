@@ -106,49 +106,10 @@ void CMainFrame::Init()
   GetPrivateProfileStringA("Config", "emailpass", "", temp, 216, pdir.c_str());
   string strpass = temp;
   objeamil.SetPass(strpass);
-
   GetPrivateProfileStringA("Config", "ip", "", ip, 216, pdir.c_str());
-
-   GetPrivateProfileStringA("Config", "port", "", temp, 216, pdir.c_str());
-   port=atoi(temp);
-
-  //CSmtp smtp(25, "smtp.126.com","z277402131@126.com", /*你的邮箱地址*/"z277402131",/*邮箱密码*/"277402131@qq.com",/*目的邮箱地址*/"TEST",/*主题*/"测试测试！收到请回复！"  /*邮件正文*/);
-  //添加附件时注意,\一定要写成\\，因为转义字符的缘故
-  //     string filePath("D:\\附件.txt");
-  //     smtp.AddAttachment(filePath);
-  /*还可以调用CSmtp::DeleteAttachment函数删除附件，还有一些函数，自己看头文件吧!*/
-  //单个发送
-  //int err;
-  //if((err = smtp.SendEmail_Ex()) != 0) {
-  //  if(err == 1)
-  //      cout << "错误1: 由于网络不畅通，发送失败!" << endl;
-  //  if(err == 2)
-  //      cout << "错误2: 用户名错误,请核对!" << endl;
-  //  if(err == 3)
-  //      cout << "错误3: 用户密码错误，请核对!" << endl;
-  //  if(err == 4)
-  //      cout << "错误4: 请检查附件目录是否正确，以及文件是否存在!" << endl;
-  //}
-  //群发
-  //     string strTarEmail = "12345678@qq.com";
-  //     smtp.AddTargetEmail(strTarEmail);
-  //
-  //     if((err = smtp.SendVecotrEmail()) != 0) {
-  //         if(err == -1)
-  //             cout << "错误-1: 没有目地邮箱地址!" << endl;
-  //
-  //         if(err == 1)
-  //             cout << "错误1: 由于网络不畅通，发送失败!" << endl;
-  //
-  //         if(err == 2)
-  //             cout << "错误2: 用户名错误,请核对!" << endl;
-  //
-  //         if(err == 3)
-  //             cout << "错误3: 用户密码错误，请核对!" << endl;
-  //
-  //         if(err == 4)
-  //             cout << "错误4: 请检查附件目录是否正确，以及文件是否存在!" << endl;
-  //     }
+  GetPrivateProfileStringA("Config", "port", "", temp, 216, pdir.c_str());
+  port = atoi(temp);
+  ShowTrayIcon();
 }
 
 
@@ -160,13 +121,15 @@ void CMainFrame::Notify(TNotifyUI& msg)
     {
       if(msg.pSender->GetName() == "closebtn")
         {
+          //ShowWindow(SW_HIDE);
           //SendMessageA(WM_SYSCOMMAND, SC_CLOSE, 0);
           //SendMessageA(WM_SYSCOMMAND, SC_CLOSE, 0);
-          Close();
+          //Close();
         }
       else if(msg.pSender->GetName() == "exitsys")
         {
-          Close();
+          this->ShowWindow(false);
+          //Close();
           //SendMessageA(WM_SYSCOMMAND, SC_CLOSE, 0);
           //this->Close();
         }
@@ -446,6 +409,44 @@ LRESULT CMainFrame::HandleCustomMessage(UINT uMsg, WPARAM wParam, LPARAM lParam,
       OnUser(uMsg, wParam, lParam, bHandled);
       bHandled = false;
       return 0;
+    }
+
+  if(uMsg == WM_TRAYICON)
+    {
+      switch(lParam)
+        {
+          case WM_RBUTTONDOWN:
+            {
+              //获取鼠标坐标
+              POINT pt;
+              GetCursorPos(&pt);
+              //解决在菜单外单击左键菜单不消失的问题
+              SetForegroundWindow(m_pm.GetPaintWindow());
+              //使菜单某项变灰
+              //EnableMenuItem(hMenu, ID_SHOW, MF_GRAYED);
+              //显示并获取选中的菜单
+              int cmd = TrackPopupMenu(hMenu, TPM_RETURNCMD, pt.x, pt.y, NULL, m_pm.GetPaintWindow(), NULL);
+
+              if(cmd == ID_SHOW)
+                {
+                  Shell_NotifyIcon(NIM_DELETE, &nid);
+                  ShowWindow(m_pm.GetPaintWindow(), SW_SHOWNORMAL);
+                }
+
+              if(cmd == ID_EXIT)
+                {
+                  Shell_NotifyIcon(NIM_DELETE, &nid);
+                  Close();
+                }
+            }
+            break;
+
+          case WM_LBUTTONDBLCLK:
+            {
+              Shell_NotifyIcon(NIM_DELETE, &nid);
+              ShowWindow(m_pm.GetPaintWindow(), SW_SHOWNORMAL);
+            }
+        }
     }
 
   if(uMsg == WM_TIMER)
@@ -743,4 +744,23 @@ void CMainFrame::DeleteByIo(ULONG_PTR io)
       // break;
       //}
     }
+}
+
+void CMainFrame::ShowTrayIcon()
+{
+  ////显示托盘
+  //它包括选择的图标、回调消息、提示消息和图标对应的窗口等内容。
+  nid.cbSize = (DWORD)sizeof(NOTIFYICONDATA);       //以字节为单位的这个结构的大小
+  nid.hWnd = m_pm.GetPaintWindow();          //接收托盘图标通知消息的窗口句柄
+  nid.uID = IDI_ICON1;    //应用程序定义的该图标的ID号
+  nid.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP ; //设置该图标的属性
+  nid.uCallbackMessage = WM_TRAYICON;             //应用程序定义的消息ID号，此消息传递给hWnd
+  HINSTANCE hh = m_pm.GetInstance();
+  nid.hIcon = LoadIcon(m_pm.GetInstance(), MAKEINTRESOURCE(IDI_ICON1));  //图标的句柄
+  strcpy(nid.szInfoTitle, "提示");
+  strcpy(nid.szTip, "aaaa");    //鼠标停留在图标上显示的提示信息
+  hMenu = CreatePopupMenu();//生成托盘菜单
+  //为托盘菜单添加两个选项
+  AppendMenu(hMenu, MF_STRING, ID_SHOW, TEXT("显示主界面"));
+  AppendMenu(hMenu, MF_STRING, ID_EXIT, TEXT("退出"));
 }

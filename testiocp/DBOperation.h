@@ -1,5 +1,20 @@
 #pragma once
 
+#include "E:\\code\\glib\\h\\glog.h"
+
+#ifdef _DEBUG
+#ifdef _WIN64
+#else
+#pragma comment(lib,"E:\\code\\glib\\lib\\glib_d.lib")
+#endif
+#else
+#ifdef _WIN64
+#pragma comment(lib,"E:\\code\\glib\\x64\\Release\\glib.lib")
+
+#else
+#pragma comment(lib,"E:\\code\\glib\\Release\\glib.lib")
+#endif
+#endif
 #include <map>
 #include <string>
 #import "C:\\Program Files (x86)\\Common Files\\System\\ado\\msado15.dll" no_namespace rename("EOF", "adoEOF")

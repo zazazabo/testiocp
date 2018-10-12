@@ -100,6 +100,7 @@ public:
   {
     IOCP_IO_PTR lp_io;
     BYTE seq;
+	time_t timestamp;
   } _MSGPACK;
 
   map<string, list<MSGPACK>>m_MsgPack;

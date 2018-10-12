@@ -176,8 +176,9 @@ string CDBOperation::GetInsertSql(map<string, _variant_t>&m_str, string table)
 
 void CDBOperation::PrintErrorInfo(_com_error &e)
 {
-    printf("Error infomation are as follows\n");
-    printf("ErrorNo: %d\nError Message:%s\nError Source:%s\nDescription:%s\n", e.Error(), (LPCTSTR)e.ErrorMessage(), (LPCTSTR) e.Source(), (LPCTSTR)e.Description());
+    //printf("Error infomation are as follows\n");
+    //printf("ErrorNo: %d\nError Message:%s\nError Source:%s\nDescription:%s\n", e.Error(), (LPCTSTR)e.ErrorMessage(), (LPCTSTR) e.Source(), (LPCTSTR)e.Description());
+	glog::GetInstance()->AddLine("ErrorNo: %d\nError Message:%s\nError Source:%s\nDescription:%s\n", e.Error(), (LPCTSTR)e.ErrorMessage(), (LPCTSTR) e.Source(), (LPCTSTR)e.Description());
 }
 
 _ConnectionPtr CDBOperation::CreateConnPtr()

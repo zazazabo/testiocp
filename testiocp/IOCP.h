@@ -100,7 +100,8 @@ public:
   {
     IOCP_IO_PTR lp_io;
     BYTE seq;
-	time_t timestamp;
+    Json::Value root;
+    time_t timestamp;
   } _MSGPACK;
 
   map<string, list<MSGPACK>>m_MsgPack;
@@ -127,7 +128,7 @@ public:
   HANDLE              m_h_thread[MAXTHREAD_COUNT];
   HANDLE              m_h_accept_event;
   void        Init();
-  HWND                hWnd; 
+  HWND                hWnd;
 public:
   BOOL                InitAll();
   BOOL                MainLoop();
@@ -141,7 +142,7 @@ public:
   void                dealws(IOCP_IO_PTR& lp_io, string& jsondata);
   //¼¯ÖÐÆ÷
   BOOL                checkFlag(BYTE vv[], int len);
-  void                buildcode(BYTE src[], int srclen, BYTE des[], int& deslen, BOOL& isrespos, IOCP_IO_PTR& lp_io);
+  void                buildcode(BYTE src[], int srclen, IOCP_IO_PTR& lp_io);
   void                buildConCode(BYTE src[], BYTE res[], int& len, BYTE bcon);
   BOOL        CloseMySocket(IOCP_IO_PTR lp_io);
 private:
@@ -159,15 +160,16 @@ private:
   static DWORD WINAPI CompletionRoutine(LPVOID lp_param);
   BOOL                PostAcceptEx();
   BOOL                GetAddrAndPort(char*buf, char ip[], UINT &port);
-  void        DealWebsockMsg(IOCP_IO_PTR& lp_io, IOCP_KEY_PTR& lp_key, BYTE msg[], int len, BOOL bAnswer);
-  BOOL        IsBreakPack(BYTE src[], int len);
+  void        DealWebsockMsg(IOCP_IO_PTR& lp_io, IOCP_KEY_PTR& lp_key, string jsondata);
+  BOOL        IsBreakPack(IOCP_IO_PTR& lp_io, BYTE src[], int len);
 
   BOOL        AppendByte(BYTE src[], int len, pBREAKPCK pack, IOCP_IO_PTR& lp_io);
   static DWORD WINAPI TimeThread(LPVOID lp_param);
   static DWORD WINAPI TimeEmail(LPVOID lp_param);
   int  buidByte(string comaddr, BYTE C, BYTE AFN, BYTE SEQ, SHORT DA, SHORT DT, vector<BYTE>&v_b, BYTE des[]);
   void   CheckForInvalidConnection();
-  void       ExitSocket(IOCP_IO_PTR& lp_io, IOCP_KEY_PTR& lp_key,int errcode);
+  void       ExitSocket(IOCP_IO_PTR& lp_io, IOCP_KEY_PTR& lp_key, int errcode);
+  BOOL       dealRead(IOCP_IO_PTR& lp_io, IOCP_KEY_PTR& lp_key);
 };
 
 //////////////////////////////////////////////////////////////////////////

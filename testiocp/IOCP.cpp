@@ -782,135 +782,254 @@ BOOL CIOCP::CloseMySocket(IOCP_IO_PTR lp_io)
 DWORD CIOCP::TimeThread(LPVOID lp_param)
 {
   CIOCP*          lp_this         = (CIOCP*)lp_param;
+  MSG msg;
+
+  while(::GetMessage(&msg, NULL, 0, 0))
+    {
+      if(msg.message == WM_USER + 1)
+        {
+          //__try
+          //  {
+          IOCP_IO_PTR lo = (IOCP_IO_PTR)msg.wParam;
+          // lp_this->PostLog("%X %X", lo, msg.lParam);
+
+          if(lo)
+            {
+              time_t tmtamp;
+              struct tm *tm1 = NULL;
+              time(&tmtamp) ;
+              tm1 = localtime(&tmtamp) ;
+              tm1->tm_yday;
+              BYTE ii = msg.lParam;
+              int day = (int)(ii >> 4 & 0xf) * 10 + (int)(ii & 0xf);
+
+              if(tm1->tm_mday == day)
+                {
+                  tm1->tm_mday--;
+                  mktime(tm1);
+                  char myday[30] = {0};
+                  strftime(myday, sizeof(myday), "%Y-%m-%d", tm1);
+                  char gayway[20] = {0};
+                  strcpy(gayway, lo->gayway);
+
+                  if(_stricmp(lo->day, myday) != 0)
+                    {
+                      vector<BYTE>v_b;
+                      int n = 0;
+
+                      if(lp_this->m_mcontralcenter.find(gayway) != lp_this->m_mcontralcenter.end())
+                        {
+                          //昨天三相电压
+                          lp_this->PostLog("网关[%s] 请求昨天三相电压数据", gayway);
+                          //unsigned char vol[24] = {0x68, 0x42, 0x00, 0x42, 0x00, 0x68, 0x04, comaddr[1], comaddr[0], comaddr[3], comaddr[2], 0x02, 0xAC, 0x7A, 0x00, 0x00, 0x04, 0x04, 0x00, 0x00, 0x01, 0x05, 0x55, 0x16};
+                          BYTE vol[50] = {0};
+                          n = lp_this->buidByte(gayway, 0x4, 0xAC, 0x71, 0, 0x404, v_b, vol);
+                          lp_this->InitIoContext(lo);
+                          memcpy(lo->buf, vol, n);
+                          lo->wsaBuf.len = n; // sizeof(vol);
+                          lo->wsaBuf.buf = lo->buf;
+                          lo->operation = IOCP_WRITE;
+                          lp_this->DataAction(lo, lo->lp_key);
+                          //昨天三相电流
+                          Sleep(10000);
+                        }
+
+                      if(lp_this->m_mcontralcenter.find(gayway) != lp_this->m_mcontralcenter.end())
+                        {
+                          lp_this->PostLog("网关[%s]请求昨天三相电流数据", gayway);
+                          BYTE electric[50] = {0}; //{0x68, 0x32, 0x00, 0x32, 0x00, 0x68, 0x04, comaddr[1], comaddr[0], comaddr[3], comaddr[2], 0x02, 0xAC, 0x75, 0x00, 0x00, 0x20, 0x04, 0x66, 0x16 };
+                          n = lp_this->buidByte(gayway, 0x4, 0xAC, 0x71, 0, 0x420, v_b, electric);
+                          string data1 = gstring::char2hex((const char*)electric, n);
+                          //glog::GetInstance()->AddLine("电流发送包:%s", data1.c_str());
+                          lp_this->InitIoContext(lo);
+                          memcpy(lo->buf, electric, n);
+                          lo->wsaBuf.len = n;
+                          lo->wsaBuf.buf = lo->buf;
+                          lo->operation = IOCP_WRITE;
+                          lp_this->DataAction(lo, lo->lp_key);
+                          //昨天三相有功功率
+                          Sleep(10000);
+                        }
+
+                      if(lp_this->m_mcontralcenter.find(gayway) != lp_this->m_mcontralcenter.end())
+                        {
+                          lp_this->PostLog("网关[%s]请求昨天三相有功功率数据", gayway);
+                          unsigned char activepower[50] = {0}; // {0x68, 0x42, 0x00, 0x42, 0x00, 0x68, 0x04, comaddr[1], comaddr[0], comaddr[3], comaddr[2], 0x02, 0xAC, 0x76, 0x00, 0x00, 0x01, 0x03, 0x00, 0x00, 0x20, 0x04, 0x6B, 0x16 };
+                          n = lp_this->buidByte(gayway, 0x4, 0xAC, 0x71, 0, 0x301, v_b, activepower);
+                          lp_this->InitIoContext(lo);
+                          memcpy(lo->buf, activepower, n);
+                          lo->wsaBuf.len = n; //sizeof(activepower);
+                          lo->wsaBuf.buf = lo->buf;
+                          lo->operation = IOCP_WRITE;
+                          lp_this->DataAction(lo, lo->lp_key);
+                          ////昨天总功率因数
+                          Sleep(10000);
+                        }
+
+                      if(lp_this->m_mcontralcenter.find(gayway) != lp_this->m_mcontralcenter.end())
+                        {
+                          lp_this->PostLog("网关[%s]请求昨天功率因数", gayway);
+                          unsigned char powerfactor[50] = {0}; //{0x68, 0x42, 0x00, 0x42, 0x00, 0x68, 0x04, comaddr[1], comaddr[0], comaddr[3], comaddr[2], 0x02, 0xAC, 0x78, 0x00, 0x00, 0x40, 0x03, 0x00, 0x00, 0x20, 0x04, 0xAC, 0x16 };
+                          n = lp_this->buidByte(gayway, 0x4, 0xAC, 0x71, 0, 0x340, v_b, powerfactor);
+                          lp_this->InitIoContext(lo);
+                          memcpy(lo->buf, powerfactor, n);
+                          lo->wsaBuf.len = n;
+                          lo->wsaBuf.buf = lo->buf;
+                          lo->operation = IOCP_WRITE;
+                          lp_this->DataAction(lo, lo->lp_key);
+                          //正向功能量
+                          Sleep(10000);
+                        }
+
+                      if(lp_this->m_mcontralcenter.find(gayway) != lp_this->m_mcontralcenter.end())
+                        {
+                          lp_this->PostLog("网关[%s]请求昨天正向功能量", gayway);
+                          unsigned char power[50] = {0};//{0x68, 0x32, 0x00, 0x32, 0x00, 0x68, 0x04,  comaddr[1], comaddr[0], comaddr[3], comaddr[2], 0x02, 0xAC, 0x7B, 0x00, 0x00, 0x01, 0x05, 0x4E, 0x16 };
+                          n = lp_this->buidByte(gayway, 0x4, 0xAC, 0x71, 0, 0x501, v_b, power);
+                          lp_this->InitIoContext(lo);
+                          memcpy(lo->buf, power, n);
+                          lo->wsaBuf.len = n;
+                          lo->wsaBuf.buf = lo->buf;
+                          lo->operation = IOCP_WRITE;
+                          lp_this->DataAction(lo, lo->lp_key);
+                          strcpy(lo->day, myday);
+                        }
+                    }
+                }
+            }
+
+          //  }
+          //__except(GetExceptionCode() == EXCEPTION_ACCESS_VIOLATION ? EXCEPTION_EXECUTE_HANDLER : EXCEPTION_CONTINUE_SEARCH)
+          //  {
+          //  }
+        }
+      else if(WM_USER + 2)
+        {
+          if(msg.wParam == 1000 && msg.lParam == 1000)
+            {
+              lp_this->PostLog("重连数据库");
+              string pdir = lp_this->GetDataDir("config.ini");
+              lp_this->dbopen->ReConnect(pdir);
+            }
+        }
+    }
+
   //string strtime = lp_this->m_configTime;
   //vector<string>v_str;
   //gstring::split(strtime, v_str, ":");
   //int h = atoi(v_str[0].c_str());
   //int m = atoi(v_str[1].c_str());
   //int allm = h * 60 + m;
-
 //  vector<string>v_str;
 //  string strtime=m_configTime;
 //  gstring::split(v_str,m_configTime,":");
-
-  while(TRUE)
-    {
-      time_t tmtamp;
-      struct tm *tm1 = NULL;
-      time(&tmtamp) ;
-      tm1 = localtime(&tmtamp) ;
-      //int allm1 = tm1->tm_hour * 60 + tm1->tm_min;
-      //int difftime1 = allm1 - allm;
-      tm1->tm_mday--;
-      mktime(tm1);
-      char myday[30] = {0};
-      strftime(myday, sizeof(myday), "%Y-%m-%d", tm1);
-      map<string, IOCP_IO_PTR>::iterator  it1 = lp_this->m_mcontralcenter.begin();
-      int len1 = lp_this->m_mcontralcenter.size();
-
-      while(it1 != lp_this->m_mcontralcenter.end())
-        {
-          // glog::trace("\n网关:%s", it1->first.c_str());
-          //lp_this->PostLog("采集电能量");
-          IOCP_IO_PTR lo = it1->second;
-          char gayway[20] = {0};
-          strcpy(gayway, it1->first.c_str());
-
-          if(_stricmp(lo->day, myday) != 0)
-            {
-              vector<BYTE>v_b;
-              int n = 0;
-
-              if(lp_this->m_mcontralcenter.find(gayway) != lp_this->m_mcontralcenter.end())
-                {
-                  //昨天三相电压
-                  lp_this->PostLog("网关[%s] 请求昨天三相电压数据", gayway);
-                  //unsigned char vol[24] = {0x68, 0x42, 0x00, 0x42, 0x00, 0x68, 0x04, comaddr[1], comaddr[0], comaddr[3], comaddr[2], 0x02, 0xAC, 0x7A, 0x00, 0x00, 0x04, 0x04, 0x00, 0x00, 0x01, 0x05, 0x55, 0x16};
-                  BYTE vol[50] = {0};
-                  n = lp_this->buidByte(gayway, 0x4, 0xAC, 0x71, 0, 0x404, v_b, vol);
-                  lp_this->InitIoContext(lo);
-                  memcpy(lo->buf, vol, n);
-                  lo->wsaBuf.len = n; // sizeof(vol);
-                  lo->wsaBuf.buf = lo->buf;
-                  lo->operation = IOCP_WRITE;
-                  lp_this->DataAction(lo, lo->lp_key);
-                  //昨天三相电流
-                  Sleep(10000);
-                }
-
-              if(lp_this->m_mcontralcenter.find(gayway) != lp_this->m_mcontralcenter.end())
-                {
-                  lp_this->PostLog("网关[%s]请求昨天三相电流数据", gayway);
-                  BYTE electric[50] = {0}; //{0x68, 0x32, 0x00, 0x32, 0x00, 0x68, 0x04, comaddr[1], comaddr[0], comaddr[3], comaddr[2], 0x02, 0xAC, 0x75, 0x00, 0x00, 0x20, 0x04, 0x66, 0x16 };
-                  n = lp_this->buidByte(gayway, 0x4, 0xAC, 0x71, 0, 0x420, v_b, electric);
-                  string data1 = gstring::char2hex((const char*)electric, n);
-                  //glog::GetInstance()->AddLine("电流发送包:%s", data1.c_str());
-                  lp_this->InitIoContext(lo);
-                  memcpy(lo->buf, electric, n);
-                  lo->wsaBuf.len = n;
-                  lo->wsaBuf.buf = lo->buf;
-                  lo->operation = IOCP_WRITE;
-                  lp_this->DataAction(lo, lo->lp_key);
-                  //昨天三相有功功率
-                  Sleep(10000);
-                }
-
-              if(lp_this->m_mcontralcenter.find(gayway) != lp_this->m_mcontralcenter.end())
-                {
-                  lp_this->PostLog("网关[%s]请求昨天三相有功功率数据", gayway);
-                  unsigned char activepower[50] = {0}; // {0x68, 0x42, 0x00, 0x42, 0x00, 0x68, 0x04, comaddr[1], comaddr[0], comaddr[3], comaddr[2], 0x02, 0xAC, 0x76, 0x00, 0x00, 0x01, 0x03, 0x00, 0x00, 0x20, 0x04, 0x6B, 0x16 };
-                  n = lp_this->buidByte(gayway, 0x4, 0xAC, 0x71, 0, 0x301, v_b, activepower);
-                  lp_this->InitIoContext(lo);
-                  memcpy(lo->buf, activepower, n);
-                  lo->wsaBuf.len = n; //sizeof(activepower);
-                  lo->wsaBuf.buf = lo->buf;
-                  lo->operation = IOCP_WRITE;
-                  lp_this->DataAction(lo, lo->lp_key);
-                  ////昨天总功率因数
-                  Sleep(10000);
-                }
-
-              if(lp_this->m_mcontralcenter.find(gayway) != lp_this->m_mcontralcenter.end())
-                {
-                  lp_this->PostLog("网关[%s]请求昨天功率因数", gayway);
-                  unsigned char powerfactor[50] = {0}; //{0x68, 0x42, 0x00, 0x42, 0x00, 0x68, 0x04, comaddr[1], comaddr[0], comaddr[3], comaddr[2], 0x02, 0xAC, 0x78, 0x00, 0x00, 0x40, 0x03, 0x00, 0x00, 0x20, 0x04, 0xAC, 0x16 };
-                  n = lp_this->buidByte(gayway, 0x4, 0xAC, 0x71, 0, 0x340, v_b, powerfactor);
-                  lp_this->InitIoContext(lo);
-                  memcpy(lo->buf, powerfactor, n);
-                  lo->wsaBuf.len = n;
-                  lo->wsaBuf.buf = lo->buf;
-                  lo->operation = IOCP_WRITE;
-                  lp_this->DataAction(lo, lo->lp_key);
-                  //正向功能量
-                  Sleep(10000);
-                }
-
-              if(lp_this->m_mcontralcenter.find(gayway) != lp_this->m_mcontralcenter.end())
-                {
-                  lp_this->PostLog("网关[%s]请求昨天正向功能量", gayway);
-                  unsigned char power[50] = {0};//{0x68, 0x32, 0x00, 0x32, 0x00, 0x68, 0x04,  comaddr[1], comaddr[0], comaddr[3], comaddr[2], 0x02, 0xAC, 0x7B, 0x00, 0x00, 0x01, 0x05, 0x4E, 0x16 };
-                  n = lp_this->buidByte(gayway, 0x4, 0xAC, 0x71, 0, 0x501, v_b, power);
-                  lp_this->InitIoContext(lo);
-                  memcpy(lo->buf, power, n);
-                  lo->wsaBuf.len = n;
-                  lo->wsaBuf.buf = lo->buf;
-                  lo->operation = IOCP_WRITE;
-                  lp_this->DataAction(lo, lo->lp_key);
-                  strcpy(lo->day, myday);
-                }
-            }
-
-          if(lp_this->m_mcontralcenter.find(gayway) == lp_this->m_mcontralcenter.end())
-            {
-              break;
-            }
-
-          it1++;
-        }
-
-      Sleep(10000);
-    }
-
+  //while(TRUE)
+  //  {
+  //    time_t tmtamp;
+  //    struct tm *tm1 = NULL;
+  //    time(&tmtamp) ;
+  //    tm1 = localtime(&tmtamp) ;
+  //    //int allm1 = tm1->tm_hour * 60 + tm1->tm_min;
+  //    //int difftime1 = allm1 - allm;
+  //    tm1->tm_mday--;
+  //    mktime(tm1);
+  //    char myday[30] = {0};
+  //    strftime(myday, sizeof(myday), "%Y-%m-%d", tm1);
+  //    map<string, IOCP_IO_PTR>::iterator  it1 = lp_this->m_mcontralcenter.begin();
+  //    int len1 = lp_this->m_mcontralcenter.size();
+  //    while(it1 != lp_this->m_mcontralcenter.end())
+  //      {
+  //        // glog::trace("\n网关:%s", it1->first.c_str());
+  //        //lp_this->PostLog("采集电能量");
+  //        IOCP_IO_PTR lo = it1->second;
+  //        char gayway[20] = {0};
+  //        strcpy(gayway, it1->first.c_str());
+  //        if(_stricmp(lo->day, myday) != 0)
+  //          {
+  //            vector<BYTE>v_b;
+  //            int n = 0;
+  //            if(lp_this->m_mcontralcenter.find(gayway) != lp_this->m_mcontralcenter.end())
+  //              {
+  //                //昨天三相电压
+  //                lp_this->PostLog("网关[%s] 请求昨天三相电压数据", gayway);
+  //                //unsigned char vol[24] = {0x68, 0x42, 0x00, 0x42, 0x00, 0x68, 0x04, comaddr[1], comaddr[0], comaddr[3], comaddr[2], 0x02, 0xAC, 0x7A, 0x00, 0x00, 0x04, 0x04, 0x00, 0x00, 0x01, 0x05, 0x55, 0x16};
+  //                BYTE vol[50] = {0};
+  //                n = lp_this->buidByte(gayway, 0x4, 0xAC, 0x71, 0, 0x404, v_b, vol);
+  //                lp_this->InitIoContext(lo);
+  //                memcpy(lo->buf, vol, n);
+  //                lo->wsaBuf.len = n; // sizeof(vol);
+  //                lo->wsaBuf.buf = lo->buf;
+  //                lo->operation = IOCP_WRITE;
+  //                lp_this->DataAction(lo, lo->lp_key);
+  //                //昨天三相电流
+  //                Sleep(10000);
+  //              }
+  //            if(lp_this->m_mcontralcenter.find(gayway) != lp_this->m_mcontralcenter.end())
+  //              {
+  //                lp_this->PostLog("网关[%s]请求昨天三相电流数据", gayway);
+  //                BYTE electric[50] = {0}; //{0x68, 0x32, 0x00, 0x32, 0x00, 0x68, 0x04, comaddr[1], comaddr[0], comaddr[3], comaddr[2], 0x02, 0xAC, 0x75, 0x00, 0x00, 0x20, 0x04, 0x66, 0x16 };
+  //                n = lp_this->buidByte(gayway, 0x4, 0xAC, 0x71, 0, 0x420, v_b, electric);
+  //                string data1 = gstring::char2hex((const char*)electric, n);
+  //                //glog::GetInstance()->AddLine("电流发送包:%s", data1.c_str());
+  //                lp_this->InitIoContext(lo);
+  //                memcpy(lo->buf, electric, n);
+  //                lo->wsaBuf.len = n;
+  //                lo->wsaBuf.buf = lo->buf;
+  //                lo->operation = IOCP_WRITE;
+  //                lp_this->DataAction(lo, lo->lp_key);
+  //                //昨天三相有功功率
+  //                Sleep(10000);
+  //              }
+  //            if(lp_this->m_mcontralcenter.find(gayway) != lp_this->m_mcontralcenter.end())
+  //              {
+  //                lp_this->PostLog("网关[%s]请求昨天三相有功功率数据", gayway);
+  //                unsigned char activepower[50] = {0}; // {0x68, 0x42, 0x00, 0x42, 0x00, 0x68, 0x04, comaddr[1], comaddr[0], comaddr[3], comaddr[2], 0x02, 0xAC, 0x76, 0x00, 0x00, 0x01, 0x03, 0x00, 0x00, 0x20, 0x04, 0x6B, 0x16 };
+  //                n = lp_this->buidByte(gayway, 0x4, 0xAC, 0x71, 0, 0x301, v_b, activepower);
+  //                lp_this->InitIoContext(lo);
+  //                memcpy(lo->buf, activepower, n);
+  //                lo->wsaBuf.len = n; //sizeof(activepower);
+  //                lo->wsaBuf.buf = lo->buf;
+  //                lo->operation = IOCP_WRITE;
+  //                lp_this->DataAction(lo, lo->lp_key);
+  //                ////昨天总功率因数
+  //                Sleep(10000);
+  //              }
+  //            if(lp_this->m_mcontralcenter.find(gayway) != lp_this->m_mcontralcenter.end())
+  //              {
+  //                lp_this->PostLog("网关[%s]请求昨天功率因数", gayway);
+  //                unsigned char powerfactor[50] = {0}; //{0x68, 0x42, 0x00, 0x42, 0x00, 0x68, 0x04, comaddr[1], comaddr[0], comaddr[3], comaddr[2], 0x02, 0xAC, 0x78, 0x00, 0x00, 0x40, 0x03, 0x00, 0x00, 0x20, 0x04, 0xAC, 0x16 };
+  //                n = lp_this->buidByte(gayway, 0x4, 0xAC, 0x71, 0, 0x340, v_b, powerfactor);
+  //                lp_this->InitIoContext(lo);
+  //                memcpy(lo->buf, powerfactor, n);
+  //                lo->wsaBuf.len = n;
+  //                lo->wsaBuf.buf = lo->buf;
+  //                lo->operation = IOCP_WRITE;
+  //                lp_this->DataAction(lo, lo->lp_key);
+  //                //正向功能量
+  //                Sleep(10000);
+  //              }
+  //            if(lp_this->m_mcontralcenter.find(gayway) != lp_this->m_mcontralcenter.end())
+  //              {
+  //                lp_this->PostLog("网关[%s]请求昨天正向功能量", gayway);
+  //                unsigned char power[50] = {0};//{0x68, 0x32, 0x00, 0x32, 0x00, 0x68, 0x04,  comaddr[1], comaddr[0], comaddr[3], comaddr[2], 0x02, 0xAC, 0x7B, 0x00, 0x00, 0x01, 0x05, 0x4E, 0x16 };
+  //                n = lp_this->buidByte(gayway, 0x4, 0xAC, 0x71, 0, 0x501, v_b, power);
+  //                lp_this->InitIoContext(lo);
+  //                memcpy(lo->buf, power, n);
+  //                lo->wsaBuf.len = n;
+  //                lo->wsaBuf.buf = lo->buf;
+  //                lo->operation = IOCP_WRITE;
+  //                lp_this->DataAction(lo, lo->lp_key);
+  //                strcpy(lo->day, myday);
+  //              }
+  //          }
+  //        if(lp_this->m_mcontralcenter.find(gayway) == lp_this->m_mcontralcenter.end())
+  //          {
+  //            break;
+  //          }
+  //        it1++;
+  //      }
+  //    Sleep(10000);
+  //  }
   return 1;
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -936,32 +1055,27 @@ BOOL CIOCP::InitAll()
   //string out="";
   //BOOL fullpack=FALSE;
   //wsDecodeFrame((char*)hexData,out,16,fullpack);
-  objeamil.SetEmailTitle(string("aaaa"));
-  objeamil.AddTargetEmail(string("277402131@qq.com"));
-  objeamil.SetContent(string("asdfsdfsdfsdfsdf"));
-  objeamil.SendVecotrEmail();
+  //objeamil.SetEmailTitle(string("aaaa"));
+  //objeamil.AddTargetEmail(string("277402131@qq.com"));
+  //objeamil.SetContent(string("asdfsdfsdfsdfsdf"));
+  //objeamil.SendVecotrEmail();
   //CSmtp smtp(25, "smtp.126.com", "z277402131@126.com", /*你的邮箱地址*/"z277402131",/*邮箱密码*/"zhizhuchun@qq.com",/*目的邮箱地址*/"TEST",/*主题*/"测试测试！收到请回复！"  /*邮件正文*/);
   //string filePath("D:\\附件.txt");
   //smtp.AddAttachment(filePath);
   /*还可以调用CSmtp::DeleteAttachment函数删除附件，还有一些函数，自己看头文件吧!*/
   //int err;
-
   //if((err = smtp.SendEmail_Ex()) != 0)
   //  {
   //    if(err == 1)
   //      cout << "错误1: 由于网络不畅通，发送失败!" << endl;
-
   //    if(err == 2)
   //      cout << "错误2: 用户名错误,请核对!" << endl;
-
   //    if(err == 3)
   //      cout << "错误3: 用户密码错误，请核对!" << endl;
-
   //    if(err == 4)
   //      cout << "错误4: 请检查附件目录是否正确，以及文件是否存在!" << endl;
   //  }
-
-  return 0;
+// return 0;
   //string strTarEmail = "12345678@qq.com";
   //smtp.AddTargetEmail(strTarEmail);
   //if((err = smtp.SendVecotrEmail()) != 0) {
@@ -984,16 +1098,16 @@ BOOL CIOCP::InitAll()
   // Address : 0 (0x0)
   // Size    : 63 (0x3F)
   //------------------------------------------------------------
-  unsigned char hexData[63] =
-  {
-    0xB8, 0x04, 0x0E, 0x22, 0xA9, 0x14, 0x0C, 0x33, 0xE8, 0x11, 0x1E, 0x24, 0xB9, 0x04, 0x0E, 0x23,
-    0xA9, 0x14, 0x0E, 0x33, 0xB9, 0x15, 0x1E, 0x23, 0xBA, 0x04, 0x0D, 0x25, 0xA9, 0x14, 0x0E, 0x33,
-    0xB9, 0x14, 0x1E, 0x24, 0xB9, 0x04, 0x0F, 0x25, 0xA9, 0x06, 0x12, 0x31, 0xE5, 0x41, 0x50, 0x31,
-    0xB3, 0x12, 0x07, 0x3F, 0xAB, 0x41, 0x50, 0x77, 0xAB, 0x1E, 0x1C, 0x25, 0xC8, 0x06, 0x43
-  };
-  string outstring = "";
-  BOOL bfullpack = TRUE;
-  int n1 = wsDecodeFrame((char*)hexData, outstring, sizeof(hexData), bfullpack);
+  //unsigned char hexData[63] =
+  //{
+  //  0xB8, 0x04, 0x0E, 0x22, 0xA9, 0x14, 0x0C, 0x33, 0xE8, 0x11, 0x1E, 0x24, 0xB9, 0x04, 0x0E, 0x23,
+  //  0xA9, 0x14, 0x0E, 0x33, 0xB9, 0x15, 0x1E, 0x23, 0xBA, 0x04, 0x0D, 0x25, 0xA9, 0x14, 0x0E, 0x33,
+  //  0xB9, 0x14, 0x1E, 0x24, 0xB9, 0x04, 0x0F, 0x25, 0xA9, 0x06, 0x12, 0x31, 0xE5, 0x41, 0x50, 0x31,
+  //  0xB3, 0x12, 0x07, 0x3F, 0xAB, 0x41, 0x50, 0x77, 0xAB, 0x1E, 0x1C, 0x25, 0xC8, 0x06, 0x43
+  //};
+  //string outstring = "";
+  //BOOL bfullpack = TRUE;
+  //int n1 = wsDecodeFrame((char*)hexData, outstring, sizeof(hexData), bfullpack);
   WSAData data;
 
   if(WSAStartup(MAKEWORD(2, 2), &data) != 0)
@@ -1019,8 +1133,8 @@ BOOL CIOCP::InitAll()
     }
 
   //定时采集线程
-  DWORD tid = 0;
-  HANDLE hTreadTime = CreateThread(NULL, NULL, TimeThread, (LPVOID)this, NULL, &tid);
+  //DWORD tid = 0;
+  HANDLE hTreadTime = CreateThread(NULL, NULL, TimeThread, (LPVOID)this, NULL, &ThreadId);
   CloseHandle(hTreadTime);
   //定时采集线程
   DWORD tidEmail = 0;
@@ -1802,6 +1916,7 @@ void CIOCP::buildcode(BYTE src[], int srclen, IOCP_IO_PTR & lp_io)
             }
           else if(DA[0] == 0 && DA[1] == 0 && DT[1] == 0 && DT[0] == 4)
             {
+              BYTE day = src[22];
               PostLog("网关[%s] 心跳", addrarea);
               lp_io->loginstatus = SOCKET_STATUS_LOGIN;
               BYTE des[50] = {0};
@@ -1811,6 +1926,7 @@ void CIOCP::buildcode(BYTE src[], int srclen, IOCP_IO_PTR & lp_io)
               memcpy(lp_io->buf, des, deslen);
               lp_io->wsaBuf.len = deslen;
               lp_io->operation = IOCP_WRITE;
+              PostThreadMessageA(ThreadId, WM_USER + 1, (WPARAM)lp_io, (LPARAM)day);
             }
         }
     }

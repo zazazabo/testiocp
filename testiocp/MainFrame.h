@@ -20,7 +20,7 @@ class CMainFrame  : public CWindowWnd, public INotifyUI
 public:
 
 
-
+  DWORD  ThreadId;
   HWND                      m_hParanWnd;
   CRichEditUI* m_pRishLog;
   CPaintManagerUI m_pm;

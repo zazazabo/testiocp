@@ -45,6 +45,7 @@ public:
     BOOL  IsHasdata(_RecordsetPtr& rs);
     string GetInsertSql(map<string, _variant_t>&m_str, string table);
     string GetUpdateSql(map<string, _variant_t>&m_str, string table, string strwhere);
+	BOOL   isConectDb();
 
 private:
     void PrintErrorInfo(_com_error&);

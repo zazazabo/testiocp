@@ -110,6 +110,7 @@ bool CSmtp::CreateConn()
     int err = connect(sockClient, (SOCKADDR*)&addrSrv, sizeof(SOCKADDR));   //向服务器发送请求
 
     if(err != 0) {
+		int err=WSAGetLastError();
         return false;
         //printf("链接失败\n");
     }

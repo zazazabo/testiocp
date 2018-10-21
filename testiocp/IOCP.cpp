@@ -301,7 +301,8 @@ BOOL CIOCP::BindAndListenSocket()
 
   if(SOCKET_ERROR == nRet)
     {
-      cout << "listen fail!" << endl;
+      glog::GetInstance()->AddLine("listen fail! error info:%s", getErrorInfo(WSAGetLastError()).c_str());
+      glog::traceErrorInfo("call bind()", WSAGetLastError());
       return FALSE;
     }
 
@@ -668,7 +669,7 @@ void CIOCP::DealWebsockMsg(IOCP_IO_PTR& lp_io, IOCP_KEY_PTR& lp_key, string json
 
           if(tosend.isString() && tosend != "")
             {
-              if(msgType == "AA" || msgType == "A4" || msgType == "A5" || msgType == "AC" || msgType == "00" || msgType == "FE"||msgType=="FF")
+              if(msgType == "AA" || msgType == "A4" || msgType == "A5" || msgType == "AC" || msgType == "00" || msgType == "FE" || msgType == "FF")
                 {
                   string data = tosend.asString();
                   data = gstring::replace(data, " ", "");

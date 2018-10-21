@@ -1917,17 +1917,22 @@ void CIOCP::buildcode(BYTE src[], int srclen, IOCP_IO_PTR & lp_io)
             }
           else if(DA[0] == 0 && DA[1] == 0 && DT[1] == 0 && DT[0] == 4)
             {
-              BYTE day = src[22];
-              PostLog("网关[%s] 心跳", addrarea);
-              lp_io->loginstatus = SOCKET_STATUS_LOGIN;
-              BYTE des[50] = {0};
-              int deslen = 0;
-              buildConCode(src, des, deslen, 1);
-              InitIoContext(lp_io);
-              memcpy(lp_io->buf, des, deslen);
-              lp_io->wsaBuf.len = deslen;
-              lp_io->operation = IOCP_WRITE;
-              PostThreadMessageA(ThreadId, WM_USER + 1, (WPARAM)lp_io, (LPARAM)day);
+				 map<string, IOCP_IO_PTR>::iterator it = m_mcontralcenter.find(addrarea);
+				if(it != m_mcontralcenter.end())
+				{
+					BYTE day = src[22];
+					PostLog("网关[%s] 心跳", addrarea);
+					lp_io->loginstatus = SOCKET_STATUS_LOGIN;
+					BYTE des[50] = {0};
+					int deslen = 0;
+					buildConCode(src, des, deslen, 1);
+					InitIoContext(lp_io);
+					memcpy(lp_io->buf, des, deslen);
+					lp_io->wsaBuf.len = deslen;
+					lp_io->operation = IOCP_WRITE;
+					PostThreadMessageA(ThreadId, WM_USER + 1, (WPARAM)lp_io, (LPARAM)day);
+				}	
+              
             }
         }
     }

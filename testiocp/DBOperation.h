@@ -17,8 +17,9 @@
 #endif
 #include <map>
 #include <string>
-#import "C:\\Program Files (x86)\\Common Files\\System\\ado\\msado15.dll" no_namespace rename("EOF", "adoEOF")
-//#import "F:\\msado15.dll" no_namespace rename("EOF", "adoEOF")
+//#import "C:\\Program Files (x86)\\Common Files\\System\\ado\\msado15.dll" no_namespace rename("EOF", "adoEOF")
+//#import "F:\\msado15.dll" no_namespace rename("EOF", "adoEOF
+#import "msado15.dll" no_namespace rename("EOF", "adoEOF")
 using namespace std;
 class CDBOperation
 {

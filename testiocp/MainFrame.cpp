@@ -40,7 +40,7 @@
 #endif
 #endif
 
-
+UINT WM_TaskbarRestart = 0;
 
 CMainFrame::CMainFrame(void)
 {
@@ -79,7 +79,6 @@ void CMainFrame::Init()
   m_pData->SetText("683200320068040117660002ac7100002004c516");
   m_plistuser->RemoveAll();
   string pdir = GetDataDir("config.ini");
-  //GetPrivateProfileStringA("Config", "time", "", m_configTime, 216, pdir.c_str());
   char source[216] = {0};
   GetPrivateProfileStringA("Config", "source", "", source, 216, pdir.c_str());
   char database[216] = {0};
@@ -88,10 +87,13 @@ void CMainFrame::Init()
   GetPrivateProfileStringA("Config", "uname", "", uname, 216, pdir.c_str());
   char upass[216] = {0};
   GetPrivateProfileStringA("Config", "upass", "", upass, 216, pdir.c_str());
+  glog::GetInstance()->AddLine("aa");
   dbopen = new CDBOperation();
   BOOL bcon = dbopen->ConnToDB(source, database, uname, upass);
+  glog::GetInstance()->AddLine("bb:%d", bcon);
   setOnline("1=1", 0);
-  //dealSql("17020101", "2018-09-28", "bbb", "activepower");
+  glog::GetInstance()->AddLine("cc");
+  ////dealSql("17020101", "2018-09-28", "bbb", "activepower");
   this->m_hParanWnd = this->m_hWnd;
   this->CenterWindow();
   CoInitialize(NULL);
@@ -408,6 +410,12 @@ LRESULT CMainFrame::HandleCustomMessage(UINT uMsg, WPARAM wParam, LPARAM lParam,
       OnUser(uMsg, wParam, lParam, bHandled);
       bHandled = false;
       return 0;
+    }
+
+  if(uMsg == WM_TaskbarRestart)
+    {
+		 Shell_NotifyIcon(NIM_ADD, &nid); //在托盘区添加图标de函数
+		//ShowWindow(m_pm.GetPaintWindow(), SW_SHOWNORMAL);
     }
 
   if(uMsg == WM_TRAYICON)
@@ -768,4 +776,5 @@ void CMainFrame::ShowTrayIcon()
   //为托盘菜单添加两个选项
   AppendMenu(hMenu, MF_STRING, ID_SHOW, TEXT("显示主界面"));
   AppendMenu(hMenu, MF_STRING, ID_EXIT, TEXT("退出"));
+  WM_TaskbarRestart = RegisterWindowMessage(TEXT("TaskbarCreated"));
 }

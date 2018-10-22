@@ -69,6 +69,15 @@ CMainFrame::~CMainFrame(void)
 
 void CMainFrame::Init()
 {
+
+	v_fault.push_back("灯具故障");
+	v_fault.push_back("温度故障");
+	v_fault.push_back("超负荷故障");
+	v_fault.push_back("末用");
+	v_fault.push_back("功率因数过低");
+	v_fault.push_back("末用");
+	v_fault.push_back("时针故障");
+	v_fault.push_back("末用");
   m_pRishLog = static_cast<CRichEditUI*>(m_pm.FindControl(_T("opera")));
   m_plistuser = static_cast<CListUI*>(m_pm.FindControl(_T("socketlist")));
   m_pData = static_cast<CEditUI*>(m_pm.FindControl(_T("data")));

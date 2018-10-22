@@ -26,7 +26,7 @@ public:
   CPaintManagerUI m_pm;
   SHORT     port;
   char      ip[20];
-
+  char      m_pid[216];
   HMENU   hMenu;
   NOTIFYICONDATA nid;    //NOTIFYICONDATA结构包含了系统用来处理托盘图标的信息，
 public:
@@ -35,7 +35,7 @@ public:
   CMainFrame(string skin);
   CSmtp objeamil;
   ~CMainFrame(void);
-
+  vector<string>v_fault;
   string m_strskin;
   CDBOperation*   dbopen;
   CListUI*   m_plistuser;

@@ -42,6 +42,9 @@
 
                    <Button name="senddata" text="发送" width="100" height="30" bkcolor="#FF24759F" hottextcolor="#FF24865F"  padding="10,10" bkcolor2="#3BC7FA"/>
                    
+
+                  <Button name="checklamp" text="巡测" width="100" height="30" bkcolor="#FF24759F" hottextcolor="#FF24865F"  padding="10,10" bkcolor2="#3BC7FA"/>
+
  <!--      <Button name="closesocket" text="关闭socket" width="100" height="30" bkcolor="#FF24759F" hottextcolor="#FF24865F"  padding="10,10" bkcolor2="#3BC7FA"/> -->
 
      

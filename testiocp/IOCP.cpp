@@ -182,6 +182,51 @@ void CIOCP::Notify(TNotifyUI& msg)
               m_plistuser->Remove(p1);
             }
         }
+      else if(msg.pSender->GetName() == "checklamp")
+        {
+
+			string pid="P00001";
+			string sql1="UPDATE t_lamp SET presence = 0 WHERE  l_deplayment = 1 AND l_comaddr IN (SELECT comaddr AS l_comaddr FROM   t_baseinfo WHERE  pid = \'";
+			sql1.append(pid);
+			sql1.append("\'");
+			sql1.append(")");
+
+          string sql = "SELECT l_comaddr,l_code FROM   t_lamp tl\
+			  WHERE  l_deplayment = 1 AND l_comaddr IN (SELECT comaddr AS l_comaddr FROM   t_baseinfo WHERE    pid     = \'P00001\') GROUP BY tl.l_comaddr,tl.l_code ";
+          glog::trace("%s", sql.c_str());
+          _RecordsetPtr rs = dbopen->ExecuteWithResSQL(sql.c_str());
+          map<string, vector<SHORT>>m_lamp;
+
+          while(rs && !rs->adoEOF)
+            {
+              try
+                {
+                  _variant_t l_comaddr = rs->GetCollect("l_comaddr");
+                  _variant_t l_code = rs->GetCollect("l_code");
+                  string comaddr = _com_util::ConvertBSTRToString(l_comaddr.bstrVal);
+                  map<string, vector<SHORT>>::iterator it = m_lamp.find(comaddr);
+
+                  if(it != m_lamp.end())
+                    {
+                      it->second.push_back(l_code);
+                    }
+                  else
+                    {
+                      vector<SHORT>v_l_code;
+                      v_l_code.push_back(l_code);
+                      m_lamp.insert(pair<string, vector<SHORT>>(comaddr, v_l_code));
+                    }
+
+                  rs->MoveNext();
+                }
+              catch(_com_error e)
+                {
+                  break;
+                }
+            }
+
+          int aa = 4;
+        }
     }
 }
 
@@ -1917,22 +1962,22 @@ void CIOCP::buildcode(BYTE src[], int srclen, IOCP_IO_PTR & lp_io)
             }
           else if(DA[0] == 0 && DA[1] == 0 && DT[1] == 0 && DT[0] == 4)
             {
-				 map<string, IOCP_IO_PTR>::iterator it = m_mcontralcenter.find(addrarea);
-				if(it != m_mcontralcenter.end())
-				{
-					BYTE day = src[22];
-					PostLog("网关[%s] 心跳", addrarea);
-					lp_io->loginstatus = SOCKET_STATUS_LOGIN;
-					BYTE des[50] = {0};
-					int deslen = 0;
-					buildConCode(src, des, deslen, 1);
-					InitIoContext(lp_io);
-					memcpy(lp_io->buf, des, deslen);
-					lp_io->wsaBuf.len = deslen;
-					lp_io->operation = IOCP_WRITE;
-					PostThreadMessageA(ThreadId, WM_USER + 1, (WPARAM)lp_io, (LPARAM)day);
-				}	
-              
+              map<string, IOCP_IO_PTR>::iterator it = m_mcontralcenter.find(addrarea);
+
+              if(it != m_mcontralcenter.end())
+                {
+                  BYTE day = src[22];
+                  PostLog("网关[%s] 心跳", addrarea);
+                  lp_io->loginstatus = SOCKET_STATUS_LOGIN;
+                  BYTE des[50] = {0};
+                  int deslen = 0;
+                  buildConCode(src, des, deslen, 1);
+                  InitIoContext(lp_io);
+                  memcpy(lp_io->buf, des, deslen);
+                  lp_io->wsaBuf.len = deslen;
+                  lp_io->operation = IOCP_WRITE;
+                  PostThreadMessageA(ThreadId, WM_USER + 1, (WPARAM)lp_io, (LPARAM)day);
+                }
             }
         }
     }

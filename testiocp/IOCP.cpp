@@ -184,18 +184,19 @@ void CIOCP::Notify(TNotifyUI& msg)
         }
       else if(msg.pSender->GetName() == "checklamp")
         {
-
-			string pid="P00001";
-			string sql1="UPDATE t_lamp SET presence = 0 WHERE  l_deplayment = 1 AND l_comaddr IN (SELECT comaddr AS l_comaddr FROM   t_baseinfo WHERE  pid = \'";
-			sql1.append(pid);
-			sql1.append("\'");
-			sql1.append(")");
-
+          string pid = "P00001";
+          string sql1 = "UPDATE t_lamp SET presence = 0 WHERE  l_deplayment = 1 AND l_comaddr IN (SELECT comaddr AS l_comaddr FROM   t_baseinfo WHERE  pid = \'";
+          sql1.append(pid);
+          sql1.append("\'");
+          sql1.append(")");
+          _RecordsetPtr rs = dbopen->ExecuteWithResSQL(sql1.c_str());
           string sql = "SELECT l_comaddr,l_code FROM   t_lamp tl\
-			  WHERE  l_deplayment = 1 AND l_comaddr IN (SELECT comaddr AS l_comaddr FROM   t_baseinfo WHERE    pid     = \'P00001\') GROUP BY tl.l_comaddr,tl.l_code ";
+			  WHERE  l_deplayment = 1 AND l_comaddr IN (SELECT comaddr AS l_comaddr FROM   t_baseinfo WHERE    pid     = \'";
+		  sql.append(pid);
+		  sql.append("\') GROUP BY tl.l_comaddr,tl.l_code ");
           glog::trace("%s", sql.c_str());
-          _RecordsetPtr rs = dbopen->ExecuteWithResSQL(sql.c_str());
-          map<string, vector<SHORT>>m_lamp;
+          rs = dbopen->ExecuteWithResSQL(sql.c_str());
+          map<string, list<SHORT>>m_lamp;
 
           while(rs && !rs->adoEOF)
             {
@@ -204,7 +205,7 @@ void CIOCP::Notify(TNotifyUI& msg)
                   _variant_t l_comaddr = rs->GetCollect("l_comaddr");
                   _variant_t l_code = rs->GetCollect("l_code");
                   string comaddr = _com_util::ConvertBSTRToString(l_comaddr.bstrVal);
-                  map<string, vector<SHORT>>::iterator it = m_lamp.find(comaddr);
+                  map<string, list<SHORT>>::iterator it = m_lamp.find(comaddr);
 
                   if(it != m_lamp.end())
                     {
@@ -212,9 +213,9 @@ void CIOCP::Notify(TNotifyUI& msg)
                     }
                   else
                     {
-                      vector<SHORT>v_l_code;
+                      list<SHORT>v_l_code;
                       v_l_code.push_back(l_code);
-                      m_lamp.insert(pair<string, vector<SHORT>>(comaddr, v_l_code));
+                      m_lamp.insert(pair<string, list<SHORT>>(comaddr, v_l_code));
                     }
 
                   rs->MoveNext();
@@ -223,6 +224,78 @@ void CIOCP::Notify(TNotifyUI& msg)
                 {
                   break;
                 }
+            }
+
+          for(auto it = m_lamp.begin(); it != m_lamp.end(); it++)
+            {
+              list<SHORT>v_s = it->second;
+              string l_comaddr = it->first;
+              vector<BYTE>v_param;
+              int z = 0;
+
+              for(auto it = v_s.begin(); it != v_s.end();)
+                {
+                  SHORT s = *it;
+                  if(z == 0)
+                    {
+                      v_param.push_back(v_s.size());
+                    }
+
+                  v_s.erase(it++);
+                  z++;
+                  BYTE a =  s >> 8 & 0x00ff;
+                  BYTE b =  s & 0x00ff;
+                  v_param.push_back(b);
+                  v_param.push_back(a);
+				  if (it==v_s.end())
+				  {
+
+					  BYTE vol[1024] = {0};
+					  int  n = buidByte(l_comaddr, 0x4, 0xAC, 0x71, 0, 0x0040, v_param, vol);
+					  string  hh = gstring::char2hex((char*)vol, n);
+					  glog::GetInstance()->AddLine("%s", hh.c_str());
+					   map<string,IOCP_IO_PTR>::iterator itegay= m_mcontralcenter.find(l_comaddr);
+					   if (itegay!=m_mcontralcenter.end())
+					   {
+						   IOCP_IO_PTR lo=itegay->second;
+						   InitIoContext(lo);
+						   memcpy(lo->buf, vol, n);
+						   lo->wsaBuf.len = n; // sizeof(vol);
+						   lo->wsaBuf.buf = lo->buf;
+						   lo->operation = IOCP_WRITE;
+						   DataAction(lo, lo->lp_key);
+						   Sleep(100);
+					   }
+					   break;
+				  }
+                  if(z == 50)
+                    {
+
+						BYTE vol[1024] = {0};
+						 v_param[0] = 50;
+						int  n = buidByte(l_comaddr, 0x4, 0xAC, 0x71, 0, 0x0040, v_param, vol);
+						string  hh = gstring::char2hex((char*)vol, n);
+						glog::GetInstance()->AddLine("%s", hh.c_str());
+						map<string,IOCP_IO_PTR>::iterator itegay= m_mcontralcenter.find(l_comaddr);
+						if (itegay!=m_mcontralcenter.end())
+						{
+							IOCP_IO_PTR lo=itegay->second;
+							InitIoContext(lo);
+							memcpy(lo->buf, vol, n);
+							lo->wsaBuf.len = n; // sizeof(vol);
+							lo->wsaBuf.buf = lo->buf;
+							lo->operation = IOCP_WRITE;
+							DataAction(lo, lo->lp_key);
+							Sleep(100);
+						}
+                     
+                      z = 0;
+					  
+                    }
+
+                }
+
+              
             }
 
           int aa = 4;

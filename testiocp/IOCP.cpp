@@ -1409,21 +1409,27 @@ void CIOCP::CheckForInvalidConnection()
                 {
                     // map<string, IOCP_IO_PTR>::iterator  it; m_mcontralcenter.find(lp_start)
                     glog::GetInstance()->AddLine("通信指针:%p 网关:%s 超时%d秒 主动关闭 容器长度:%d", lp_start, lp_start->gayway, len, m_io_group.GetCount());
-                   
                     //string sql = "update t_baseinfo set online=0 where comaddr=\'";
                     //sql.append(lp_start->gayway);
                     //sql.append("\'");
                     //glog::trace("\n%s", sql.c_str());
                     //_RecordsetPtr rs =   dbopen->ExecuteWithResSQL(sql.c_str());
-                 
                     EnterCriticalSection(&crtc_sec);
+                    map<string, IOCP_IO_PTR>::iterator  it =  m_mcontralcenter.find(lp_start->gayway);
 
-					    map<string, IOCP_IO_PTR>::iterator  it =  m_mcontralcenter.find(lp_start->gayway);
-						if (it->second==lp_start)
-						{
-							 m_mcontralcenter.erase(it);
-							  setOnline(lp_start->gayway, 0);
-						}
+                    if(it == m_mcontralcenter.end())
+                    {
+                        setOnline(lp_start->gayway, 0);
+                    }
+                    else
+                    {
+                        if(it->second == lp_start)
+                        {
+                            setOnline(lp_start->gayway, 0);
+                            m_mcontralcenter.erase(it);
+                        }
+                    }
+
                     //for(it = m_mcontralcenter.begin(); it != m_mcontralcenter.end();)
                     //{
                     //    if(it->second == lp_start)
@@ -1435,7 +1441,6 @@ void CIOCP::CheckForInvalidConnection()
                     //        it++;
                     //    }
                     //}
-
                     LeaveCriticalSection(&crtc_sec);
                     closesocket(lp_start->socket);
                     break;
@@ -2536,10 +2541,10 @@ void CIOCP::buildcode(BYTE src[], int srclen, IOCP_IO_PTR & lp_io)
             {
                 int z = 18;
                 BYTE len = src[z];
-				z=z+1;
+                z = z + 1;
+
                 for(int i = 0; i < len; i++)
                 {
-					
                     int l_code = src[z + 1] * 256 + src[z];
                     //电压
                     glog::trace("\nl_code:%d", l_code);
@@ -2553,9 +2558,9 @@ void CIOCP::buildcode(BYTE src[], int srclen, IOCP_IO_PTR & lp_io)
                     glog::trace("\nvoltage:%s", voltage);
                     //电流
                     z = z + 2;
-                     sw = src[z + 1] >> 4 & 0xf;
-                     gw = src[z + 1] & 0xf;
-                     sfw = src[z] >> 4 & 0xf;
+                    sw = src[z + 1] >> 4 & 0xf;
+                    gw = src[z + 1] & 0xf;
+                    sfw = src[z] >> 4 & 0xf;
                     int bfw = src[z] & 0xf;
                     char electric[20] = {0};
                     sprintf(electric, "%d%d.%d%d", sw, gw, sfw, bfw);
@@ -2563,11 +2568,11 @@ void CIOCP::buildcode(BYTE src[], int srclen, IOCP_IO_PTR & lp_io)
                     //有功功率
                     z = z + 2;
                     int qw = src[z + 3] >> 4 & 0xf;
-                     bw = src[z + 3] & 0xf;
-                     sw = src[z + 2] >> 4 & 0xf;
-                     gw = src[z + 2] & 0xf;
-                     sfw = src[z + 1] >> 4 & 0xf;
-                     bfw = src[z + 1] & 0xf;
+                    bw = src[z + 3] & 0xf;
+                    sw = src[z + 2] >> 4 & 0xf;
+                    gw = src[z + 2] & 0xf;
+                    sfw = src[z + 1] >> 4 & 0xf;
+                    bfw = src[z + 1] & 0xf;
                     int qfw = src[z] >> 4 & 0xf;
                     int wfw = src[z] & 0xf;
                     char activepower[20] = {0};
@@ -2625,21 +2630,17 @@ void CIOCP::buildcode(BYTE src[], int srclen, IOCP_IO_PTR & lp_io)
                     _variant_t  vreadtime(readtime);
                     int ipresence = 1;
                     _variant_t  presence(readtime);
-
                     m_var.insert(pair<string, _variant_t>("voltage", voltage));
                     m_var.insert(pair<string, _variant_t>("electric", velectric));
                     m_var.insert(pair<string, _variant_t>("activepower", vactivepower));
                     m_var.insert(pair<string, _variant_t>("temperature", vtemperature));
-
                     m_var.insert(pair<string, _variant_t>("l_faultdesc", vfaultdesc));
                     m_var.insert(pair<string, _variant_t>("newlyread", vreadtime));
-
-
-					m_var.insert(pair<string, _variant_t>("l_fault", vfault));
-					m_var.insert(pair<string, _variant_t>("status1", vs1));
-					m_var.insert(pair<string, _variant_t>("status2", vs2));
-					m_var.insert(pair<string, _variant_t>("status3", vs3));
-					m_var.insert(pair<string, _variant_t>("status4", vs4));
+                    m_var.insert(pair<string, _variant_t>("l_fault", vfault));
+                    m_var.insert(pair<string, _variant_t>("status1", vs1));
+                    m_var.insert(pair<string, _variant_t>("status2", vs2));
+                    m_var.insert(pair<string, _variant_t>("status3", vs3));
+                    m_var.insert(pair<string, _variant_t>("status4", vs4));
                     m_var.insert(pair<string, _variant_t>("l_value", vl_value));
                     m_var.insert(pair<string, _variant_t>("presence", ipresence));
                     string where = "";

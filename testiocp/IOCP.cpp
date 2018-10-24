@@ -684,6 +684,17 @@ void CIOCP::DealWebsockMsg(IOCP_IO_PTR& lp_io, IOCP_KEY_PTR& lp_key, string json
                         PostThreadMessageA(ThreadId, WM_USER + 3, (WPARAM)m_pid, NULL);
                     }
                 }
+                else if(msgType == "CheckLoop")
+                {
+                    Json::Value pid = root["val"];
+
+                    if(!pid.isNull())
+                    {
+                        memset(m_pid, 0, 216);
+                        strcpy(m_pid, pid.asString().c_str());
+                        PostThreadMessageA(ThreadId, WM_USER + 4, (WPARAM)m_pid, NULL);
+                    }
+                }
 
                 if(msgType == "AA" || msgType == "A4" || msgType == "A5" || msgType == "AC" || msgType == "00" || msgType == "FE" || msgType == "FF")
                 {
@@ -933,17 +944,13 @@ DWORD CIOCP::TimeThread(LPVOID lp_param)
         {
             string pid = (char*)msg.wParam;
             lp_this->PostLog("projectId:%s", pid.c_str());
-            string sql1 = "UPDATE t_lamp SET presence = 0 WHERE  l_deplayment = 1 AND l_comaddr IN (SELECT comaddr AS l_comaddr FROM   t_baseinfo WHERE  pid = \'";
-            sql1.append(pid);
-            sql1.append("\'");
-            sql1.append(")");
-            _RecordsetPtr rs = lp_this->dbopen->ExecuteWithResSQL(sql1.c_str());
+
             string sql = "SELECT l_comaddr,l_code FROM   t_lamp tl\
-					   WHERE  l_deplayment = 1 AND l_comaddr IN (SELECT comaddr AS l_comaddr FROM   t_baseinfo WHERE    pid     = \'";
+					   WHERE  l_deplayment = 1 AND l_comaddr IN (SELECT comaddr AS l_comaddr FROM    t_baseinfo WHERE  online=1 AND  pid     = \'";
             sql.append(pid);
             sql.append("\') GROUP BY tl.l_comaddr,tl.l_code ");
             glog::trace("%s", sql.c_str());
-            rs = lp_this->dbopen->ExecuteWithResSQL(sql.c_str());
+           _RecordsetPtr rs = lp_this->dbopen->ExecuteWithResSQL(sql.c_str());
             map<string, list<SHORT>>m_lamp;
 
             while(rs && !rs->adoEOF)
@@ -973,7 +980,14 @@ DWORD CIOCP::TimeThread(LPVOID lp_param)
                     break;
                 }
             }
-
+			if (m_lamp.size()>0)
+			{
+				string sql1 = "UPDATE t_lamp SET presence = 0 WHERE  l_deplayment = 1 AND l_comaddr IN (SELECT comaddr AS l_comaddr FROM   t_baseinfo WHERE  pid = \'";
+				sql1.append(pid);
+				sql1.append("\'");
+				sql1.append(")");
+				_RecordsetPtr rs = lp_this->dbopen->ExecuteWithResSQL(sql1.c_str());
+			}
             for(auto it = m_lamp.begin(); it != m_lamp.end(); it++)
             {
                 list<SHORT>v_s = it->second;
@@ -1046,124 +1060,9 @@ DWORD CIOCP::TimeThread(LPVOID lp_param)
                 }
             }
         }
+ 
     }
 
-    //string strtime = lp_this->m_configTime;
-    //vector<string>v_str;
-    //gstring::split(strtime, v_str, ":");
-    //int h = atoi(v_str[0].c_str());
-    //int m = atoi(v_str[1].c_str());
-    //int allm = h * 60 + m;
-//  vector<string>v_str;
-//  string strtime=m_configTime;
-//  gstring::split(v_str,m_configTime,":");
-    //while(TRUE)
-    //  {
-    //    time_t tmtamp;
-    //    struct tm *tm1 = NULL;
-    //    time(&tmtamp) ;
-    //    tm1 = localtime(&tmtamp) ;
-    //    //int allm1 = tm1->tm_hour * 60 + tm1->tm_min;
-    //    //int difftime1 = allm1 - allm;
-    //    tm1->tm_mday--;
-    //    mktime(tm1);
-    //    char myday[30] = {0};
-    //    strftime(myday, sizeof(myday), "%Y-%m-%d", tm1);
-    //    map<string, IOCP_IO_PTR>::iterator  it1 = lp_this->m_mcontralcenter.begin();
-    //    int len1 = lp_this->m_mcontralcenter.size();
-    //    while(it1 != lp_this->m_mcontralcenter.end())
-    //      {
-    //        // glog::trace("\n网关:%s", it1->first.c_str());
-    //        //lp_this->PostLog("采集电能量");
-    //        IOCP_IO_PTR lo = it1->second;
-    //        char gayway[20] = {0};
-    //        strcpy(gayway, it1->first.c_str());
-    //        if(_stricmp(lo->day, myday) != 0)
-    //          {
-    //            vector<BYTE>v_b;
-    //            int n = 0;
-    //            if(lp_this->m_mcontralcenter.find(gayway) != lp_this->m_mcontralcenter.end())
-    //              {
-    //                //昨天三相电压
-    //                lp_this->PostLog("网关[%s] 请求昨天三相电压数据", gayway);
-    //                //unsigned char vol[24] = {0x68, 0x42, 0x00, 0x42, 0x00, 0x68, 0x04, comaddr[1], comaddr[0], comaddr[3], comaddr[2], 0x02, 0xAC, 0x7A, 0x00, 0x00, 0x04, 0x04, 0x00, 0x00, 0x01, 0x05, 0x55, 0x16};
-    //                BYTE vol[50] = {0};
-    //                n = lp_this->buidByte(gayway, 0x4, 0xAC, 0x71, 0, 0x404, v_b, vol);
-    //                lp_this->InitIoContext(lo);
-    //                memcpy(lo->buf, vol, n);
-    //                lo->wsaBuf.len = n; // sizeof(vol);
-    //                lo->wsaBuf.buf = lo->buf;
-    //                lo->operation = IOCP_WRITE;
-    //                lp_this->DataAction(lo, lo->lp_key);
-    //                //昨天三相电流
-    //                Sleep(10000);
-    //              }
-    //            if(lp_this->m_mcontralcenter.find(gayway) != lp_this->m_mcontralcenter.end())
-    //              {
-    //                lp_this->PostLog("网关[%s]请求昨天三相电流数据", gayway);
-    //                BYTE electric[50] = {0}; //{0x68, 0x32, 0x00, 0x32, 0x00, 0x68, 0x04, comaddr[1], comaddr[0], comaddr[3], comaddr[2], 0x02, 0xAC, 0x75, 0x00, 0x00, 0x20, 0x04, 0x66, 0x16 };
-    //                n = lp_this->buidByte(gayway, 0x4, 0xAC, 0x71, 0, 0x420, v_b, electric);
-    //                string data1 = gstring::char2hex((const char*)electric, n);
-    //                //glog::GetInstance()->AddLine("电流发送包:%s", data1.c_str());
-    //                lp_this->InitIoContext(lo);
-    //                memcpy(lo->buf, electric, n);
-    //                lo->wsaBuf.len = n;
-    //                lo->wsaBuf.buf = lo->buf;
-    //                lo->operation = IOCP_WRITE;
-    //                lp_this->DataAction(lo, lo->lp_key);
-    //                //昨天三相有功功率
-    //                Sleep(10000);
-    //              }
-    //            if(lp_this->m_mcontralcenter.find(gayway) != lp_this->m_mcontralcenter.end())
-    //              {
-    //                lp_this->PostLog("网关[%s]请求昨天三相有功功率数据", gayway);
-    //                unsigned char activepower[50] = {0}; // {0x68, 0x42, 0x00, 0x42, 0x00, 0x68, 0x04, comaddr[1], comaddr[0], comaddr[3], comaddr[2], 0x02, 0xAC, 0x76, 0x00, 0x00, 0x01, 0x03, 0x00, 0x00, 0x20, 0x04, 0x6B, 0x16 };
-    //                n = lp_this->buidByte(gayway, 0x4, 0xAC, 0x71, 0, 0x301, v_b, activepower);
-    //                lp_this->InitIoContext(lo);
-    //                memcpy(lo->buf, activepower, n);
-    //                lo->wsaBuf.len = n; //sizeof(activepower);
-    //                lo->wsaBuf.buf = lo->buf;
-    //                lo->operation = IOCP_WRITE;
-    //                lp_this->DataAction(lo, lo->lp_key);
-    //                ////昨天总功率因数
-    //                Sleep(10000);
-    //              }
-    //            if(lp_this->m_mcontralcenter.find(gayway) != lp_this->m_mcontralcenter.end())
-    //              {
-    //                lp_this->PostLog("网关[%s]请求昨天功率因数", gayway);
-    //                unsigned char powerfactor[50] = {0}; //{0x68, 0x42, 0x00, 0x42, 0x00, 0x68, 0x04, comaddr[1], comaddr[0], comaddr[3], comaddr[2], 0x02, 0xAC, 0x78, 0x00, 0x00, 0x40, 0x03, 0x00, 0x00, 0x20, 0x04, 0xAC, 0x16 };
-    //                n = lp_this->buidByte(gayway, 0x4, 0xAC, 0x71, 0, 0x340, v_b, powerfactor);
-    //                lp_this->InitIoContext(lo);
-    //                memcpy(lo->buf, powerfactor, n);
-    //                lo->wsaBuf.len = n;
-    //                lo->wsaBuf.buf = lo->buf;
-    //                lo->operation = IOCP_WRITE;
-    //                lp_this->DataAction(lo, lo->lp_key);
-    //                //正向功能量
-    //                Sleep(10000);
-    //              }
-    //            if(lp_this->m_mcontralcenter.find(gayway) != lp_this->m_mcontralcenter.end())
-    //              {
-    //                lp_this->PostLog("网关[%s]请求昨天正向功能量", gayway);
-    //                unsigned char power[50] = {0};//{0x68, 0x32, 0x00, 0x32, 0x00, 0x68, 0x04,  comaddr[1], comaddr[0], comaddr[3], comaddr[2], 0x02, 0xAC, 0x7B, 0x00, 0x00, 0x01, 0x05, 0x4E, 0x16 };
-    //                n = lp_this->buidByte(gayway, 0x4, 0xAC, 0x71, 0, 0x501, v_b, power);
-    //                lp_this->InitIoContext(lo);
-    //                memcpy(lo->buf, power, n);
-    //                lo->wsaBuf.len = n;
-    //                lo->wsaBuf.buf = lo->buf;
-    //                lo->operation = IOCP_WRITE;
-    //                lp_this->DataAction(lo, lo->lp_key);
-    //                strcpy(lo->day, myday);
-    //              }
-    //          }
-    //        if(lp_this->m_mcontralcenter.find(gayway) == lp_this->m_mcontralcenter.end())
-    //          {
-    //            break;
-    //          }
-    //        it1++;
-    //      }
-    //    Sleep(10000);
-    //  }
     return 1;
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2547,7 +2446,6 @@ void CIOCP::buildcode(BYTE src[], int srclen, IOCP_IO_PTR & lp_io)
                 {
                     int l_code = src[z + 1] * 256 + src[z];
                     //电压
-                    glog::trace("\nl_code:%d", l_code);
                     z = z + 2;
                     int bw = src[z + 1] >> 4 & 0xf;
                     int sw = src[z + 1] & 0xf;
@@ -2555,7 +2453,6 @@ void CIOCP::buildcode(BYTE src[], int srclen, IOCP_IO_PTR & lp_io)
                     int sfw = src[z] & 0xf;
                     char voltage[20] = {0};
                     sprintf(voltage, "%d%d%d.%d", bw, sw, gw, sfw);
-                    glog::trace("\nvoltage:%s", voltage);
                     //电流
                     z = z + 2;
                     sw = src[z + 1] >> 4 & 0xf;
@@ -2564,7 +2461,6 @@ void CIOCP::buildcode(BYTE src[], int srclen, IOCP_IO_PTR & lp_io)
                     int bfw = src[z] & 0xf;
                     char electric[20] = {0};
                     sprintf(electric, "%d%d.%d%d", sw, gw, sfw, bfw);
-                    glog::trace("\nelectric:%s", electric);
                     //有功功率
                     z = z + 2;
                     int qw = src[z + 3] >> 4 & 0xf;
@@ -2613,6 +2509,8 @@ void CIOCP::buildcode(BYTE src[], int srclen, IOCP_IO_PTR & lp_io)
                     BYTE ming = src[z] & 0xf;
                     char readtime[30] = {0};
                     sprintf(readtime, "%d%d-%d%d %d%d:%d%d", ms, mg, ds, dg, hs, hg, mins, ming);
+                    PostLog("网关[%s] 装置号:%d 电压:%s 电流:%s 有功功率:%s 温度:%s 调光值:%d 最近抄表时间:%s status1:%d status2:%d status3:%d status4:%d 故障描述:%s", \
+                            addrarea, l_code, voltage, electric, activepower, temperature, l_value, readtime, s1, s2, s3, s4, faultdesc.c_str());
                     map<string, _variant_t>m_var;
                     //dbopen->GetUpdateSql()
                     _variant_t  vvoltage(voltage);
@@ -2650,7 +2548,8 @@ void CIOCP::buildcode(BYTE src[], int srclen, IOCP_IO_PTR & lp_io)
                     where.append(addrarea);
                     where.append("\'");
                     string sql = dbopen->GetUpdateSql(m_var, "t_lamp", where);
-                    PostLog("sql:%s", sql.c_str());
+                    _RecordsetPtr rs =   dbopen->ExecuteWithResSQL(sql.c_str());
+                    //PostLog("sql:%s", sql.c_str());
                 }
             }
 
@@ -3087,9 +2986,14 @@ BOOL CIOCP::dealRead(IOCP_IO_PTR & lp_io, IOCP_KEY_PTR & lp_key)
                 EnterCriticalSection(&crtc_sec);
                 PostLog("断包包尾:lp_io:%p 长度:%d", lp_io, datalen);
                 glog::GetInstance()->AddLine("断包包尾:lp_io:%p 长度:%d", lp_io, datalen);
+
                 //EnterCriticalSection(&lp_this->crtc_sec);
-                AppendByte((BYTE*)lp_io->buf, lp_io->ol.InternalHigh, itepack->second, lp_io);
-                m_pack.erase(itepack);
+                if(m_pack.find(lp_io) != m_pack.end())
+                {
+                    AppendByte((BYTE*)lp_io->buf, lp_io->ol.InternalHigh, itepack->second, lp_io);
+                    m_pack.erase(itepack);
+                }
+
                 LeaveCriticalSection(&crtc_sec);
             }
         }

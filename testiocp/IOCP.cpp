@@ -3320,7 +3320,7 @@ COMPLETEPACK:
     //        }
     //    }
     //}
-    return 1;
+    return 1;   
 }
 
 
@@ -3397,5 +3397,5 @@ int CIOCP::wsPackCheck(BYTE src[], int len)
         }
     }
 
-    return WS_ERROR_PACK;
+     return WS_ERROR_PACK;
 }

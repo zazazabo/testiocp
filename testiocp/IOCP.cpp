@@ -3098,7 +3098,7 @@ BOOL CIOCP::dealRead(IOCP_IO_PTR & lp_io, IOCP_KEY_PTR & lp_key, DWORD dwBytes)
             goto COMPLETEPACK;
         }
 
-        webite =  m_pack.find(lp_io);
+        webite =  m_pack.find(lp_io);    
 
         if(webite != m_pack.end())
         {

@@ -144,14 +144,14 @@ public:
   BOOL                checkFlag(BYTE vv[], int len);
   void                buildcode(BYTE src[], int srclen, IOCP_IO_PTR& lp_io);
   void                buildConCode(BYTE src[], BYTE res[], int& len, BYTE bcon);
-  BOOL        CloseMySocket(IOCP_IO_PTR lp_io);
+  BOOL				  CloseMySocket(IOCP_IO_PTR lp_io);
 private:
   void                InitIoContext(IOCP_IO_PTR lp_io);
   void                Close1();
   BOOL                RegAcceptEvent();
 
   BOOL                DataAction(IOCP_IO_PTR lp_io, IOCP_KEY_PTR lp_key);
-  BOOL                HandleData(IOCP_IO_PTR lp_io, int nFlags, IOCP_KEY_PTR lp_key);
+  BOOL                HandleData(IOCP_IO_PTR lp_io, int nFlags, IOCP_KEY_PTR lp_key,DWORD dwByte);
   BOOL                GetFunPointer();
   BOOL                StartThread();
   BOOL                BindAndListenSocket();
@@ -160,16 +160,17 @@ private:
   static DWORD WINAPI CompletionRoutine(LPVOID lp_param);
   BOOL                PostAcceptEx();
   BOOL                GetAddrAndPort(char*buf, char ip[], UINT &port);
-  void        DealWebsockMsg(IOCP_IO_PTR& lp_io, IOCP_KEY_PTR& lp_key, string jsondata);
+  void        DealWebsockMsg(IOCP_IO_PTR& lp_io, IOCP_KEY_PTR& lp_key, string jsondata,DWORD dwBytes);
   BOOL        IsBreakPack(IOCP_IO_PTR& lp_io, BYTE src[], int len);
 
-  BOOL        AppendByte(BYTE src[], int len, pBREAKPCK pack, IOCP_IO_PTR& lp_io);
+  BOOL        AppendByte(BYTE src[], int& len, pBREAKPCK pack, IOCP_IO_PTR& lp_io);
   static DWORD WINAPI TimeThread(LPVOID lp_param);
   static DWORD WINAPI TimeEmail(LPVOID lp_param);
-  int  buidByte(string comaddr, BYTE C, BYTE AFN, BYTE SEQ, SHORT DA, SHORT DT, vector<BYTE>&v_b, BYTE des[]);
-  void   CheckForInvalidConnection();
+  int		 buidByte(string comaddr, BYTE C, BYTE AFN, BYTE SEQ, SHORT DA, SHORT DT, vector<BYTE>&v_b, BYTE des[]);
+  void		 CheckForInvalidConnection();
   void       ExitSocket(IOCP_IO_PTR& lp_io, IOCP_KEY_PTR& lp_key, int errcode);
-  BOOL       dealRead(IOCP_IO_PTR& lp_io, IOCP_KEY_PTR& lp_key);
+  BOOL       dealRead(IOCP_IO_PTR& lp_io, IOCP_KEY_PTR& lp_key,DWORD dwBytes);
+  int		 wsPackCheck(BYTE src[], int len);
 };
 
 //////////////////////////////////////////////////////////////////////////

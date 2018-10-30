@@ -1763,108 +1763,107 @@ int CIOCP::wsHandshake(string & request, string & response)
 }
 int CIOCP::wsDecodeFrame(char inFrame[], string & outMessage, int len, BOOL & bBreakPack)
 {
-    
-	int ret = WS_OPENING_FRAME;
-	const char *msg = inFrame;
-	const int frameLength = len;
+    int ret = WS_OPENING_FRAME;
+    const char *msg = inFrame;
+    const int frameLength = len;
 
-	if(frameLength < 2)
-	{
-		ret = WS_ERROR_FRAME;
-		return ret;
-	}
+    if(frameLength < 2)
+    {
+        ret = WS_ERROR_FRAME;
+        return ret;
+    }
 
-	BYTE Fin =  msg[0] >> 7 & 1;
-	BYTE RSV1 = msg[0] >> 6 & 0x01;
-	BYTE RSV2 = msg[0] >> 5 & 0x01;
-	BYTE RSV3 = msg[0] >> 4 & 0x01;
-	BYTE Mask =  msg[1] >> 7 & 0x01;
+    BYTE Fin =  msg[0] >> 7 & 1;
+    BYTE RSV1 = msg[0] >> 6 & 0x01;
+    BYTE RSV2 = msg[0] >> 5 & 0x01;
+    BYTE RSV3 = msg[0] >> 4 & 0x01;
+    BYTE Mask =  msg[1] >> 7 & 0x01;
 
-	//FIN:1位，用于描述消息是否结束，如果为1则该消息为消息尾部,如果为零则还有后续数据包;
-	if(Fin != 1)
-	{
-		ret = WS_ERROR_FRAME;
-		return ret;
-	}
+    //FIN:1位，用于描述消息是否结束，如果为1则该消息为消息尾部,如果为零则还有后续数据包;
+    if(Fin != 1)
+    {
+        ret = WS_ERROR_FRAME;
+        return ret;
+    }
 
-	// 检查扩展位并忽略
-	if(RSV1 == 1 || RSV2 == 1 || RSV3 == 1)
-	{
-		ret = WS_ERROR_FRAME;
-		return ret;
-	}
+    // 检查扩展位并忽略
+    if(RSV1 == 1 || RSV2 == 1 || RSV3 == 1)
+    {
+        ret = WS_ERROR_FRAME;
+        return ret;
+    }
 
-	// mask位, 为1表示数据被加密
-	if(Mask != 1)
-	{
-		ret = WS_ERROR_FRAME;
-		return ret;
-	}
+    // mask位, 为1表示数据被加密
+    if(Mask != 1)
+    {
+        ret = WS_ERROR_FRAME;
+        return ret;
+    }
 
-	BYTE opcode = msg[0] & 0x0f;
-	// 操作码
-	uint16_t payloadLength = 0;
-	uint8_t payloadFieldExtraBytes = 0;
+    BYTE opcode = msg[0] & 0x0f;
+    // 操作码
+    uint16_t payloadLength = 0;
+    uint8_t payloadFieldExtraBytes = 0;
 
-	if(opcode == WS_TEXT_FRAME)
-	{
-		// 处理utf-8编码的文本帧
-		payloadLength = static_cast<uint16_t >(msg[1] & 0x7f);
+    if(opcode == WS_TEXT_FRAME)
+    {
+        // 处理utf-8编码的文本帧
+        payloadLength = static_cast<uint16_t >(msg[1] & 0x7f);
 
-		if(payloadLength == 0x7e)   //0111 1110     //126 7e  后面两字节是长度 :  127  7f 后面四字节是长度
-		{
-			uint16_t payloadLength16b = 0;
-			payloadFieldExtraBytes = 2;
-			memcpy(&payloadLength16b, &msg[2], payloadFieldExtraBytes);
-			payloadLength = ntohs(payloadLength16b);
-		}
-		else if(payloadLength == 0x7f)
-		{
-			// 数据过长,暂不支持
-			uint32_t payloadLength32b = 0;
-			payloadFieldExtraBytes = 4;
-			memcpy(&payloadLength32b, &msg[2], payloadFieldExtraBytes);
-			payloadLength = ntohl(payloadLength32b);
-			//ret = WS_ERROR_FRAME;
-		}
-	}
-	else if(opcode == WS_BINARY_FRAME || opcode == WS_PING_FRAME || opcode == WS_PONG_FRAME)
-	{
-		// 二进制/ping/pong帧暂不处理
-	}
-	else if(opcode == WS_CLOSING_FRAME)
-	{
-		ret = WS_CLOSING_FRAME;
-	}
-	else
-	{
-		ret = WS_ERROR_FRAME;
-	}
+        if(payloadLength == 0x7e)   //0111 1110     //126 7e  后面两字节是长度 :  127  7f 后面四字节是长度
+        {
+            uint16_t payloadLength16b = 0;
+            payloadFieldExtraBytes = 2;
+            memcpy(&payloadLength16b, &msg[2], payloadFieldExtraBytes);
+            payloadLength = ntohs(payloadLength16b);
+        }
+        else if(payloadLength == 0x7f)
+        {
+            // 数据过长,暂不支持
+            uint32_t payloadLength32b = 0;
+            payloadFieldExtraBytes = 4;
+            memcpy(&payloadLength32b, &msg[2], payloadFieldExtraBytes);
+            payloadLength = ntohl(payloadLength32b);
+            //ret = WS_ERROR_FRAME;
+        }
+    }
+    else if(opcode == WS_BINARY_FRAME || opcode == WS_PING_FRAME || opcode == WS_PONG_FRAME)
+    {
+        // 二进制/ping/pong帧暂不处理
+    }
+    else if(opcode == WS_CLOSING_FRAME)
+    {
+        ret = WS_CLOSING_FRAME;
+    }
+    else
+    {
+        ret = WS_ERROR_FRAME;
+    }
 
-	// 数据解码
-	if((ret != WS_ERROR_FRAME) && (payloadLength > 0))
-	{
-		if(payloadLength > (len - 2 - payloadFieldExtraBytes - 4))
-		{
-			bBreakPack = TRUE;
-			return ret;
-		}
+    // 数据解码
+    if((ret != WS_ERROR_FRAME) && (payloadLength > 0))
+    {
+        if(payloadLength > (len - 2 - payloadFieldExtraBytes - 4))
+        {
+            bBreakPack = TRUE;
+            return ret;
+        }
 
-		// header: 2字节, masking key: 4字节
-		const char *maskingKey = &msg[2 + payloadFieldExtraBytes];
-		char *payloadData = new char[payloadLength + 1];
-		memset(payloadData, 0, payloadLength + 1);
-		memcpy(payloadData, &msg[2 + payloadFieldExtraBytes + 4], payloadLength);
+        // header: 2字节, masking key: 4字节
+        const char *maskingKey = &msg[2 + payloadFieldExtraBytes];
+        char *payloadData = new char[payloadLength + 1];
+        memset(payloadData, 0, payloadLength + 1);
+        memcpy(payloadData, &msg[2 + payloadFieldExtraBytes + 4], payloadLength);
 
-		for(int i = 0; i < payloadLength; i++)
-		{
-			payloadData[i] = payloadData[i] ^ maskingKey[i % 4];
-		}
+        for(int i = 0; i < payloadLength; i++)
+        {
+            payloadData[i] = payloadData[i] ^ maskingKey[i % 4];
+        }
 
-		outMessage = payloadData;
-	}
+        outMessage = payloadData;
+    }
 
-	return ret;
+    return ret;
 }
 int CIOCP::wsEncodeFrame(string inMessage, char outFrame[], enum WS_FrameType frameType, int& lenret)
 {
@@ -2517,7 +2516,7 @@ void CIOCP::buildcode(BYTE src[], int srclen, IOCP_IO_PTR & lp_io)
                     int qfw = src[z] >> 4 & 0xf;
                     int wfw = src[z] & 0xf;
                     char activepower[20] = {0};
-                    sprintf(activepower, "\n%d%d%d.%d%d%d%d", qw, bw, gw, sfw, bfw, qfw, wfw);
+                    sprintf(activepower, "%d%d%d.%d%d%d%d", qw, bw, gw, sfw, bfw, qfw, wfw);
                     //灯控器状态
                     z = z + 4;
                     int s1 = src[z];
@@ -2553,10 +2552,32 @@ void CIOCP::buildcode(BYTE src[], int srclen, IOCP_IO_PTR & lp_io)
                     BYTE hg = src[z + 1] & 0xf;
                     BYTE mins = src[z] >> 4 & 0xf;
                     BYTE ming = src[z] & 0xf;
+                    BYTE m = ms * 10 + mg;
+                    BYTE d = ds * 10 + dg;
+                    BYTE h = hs * 10 + hg;
+                    BYTE min = mins * 10 + ming;
+                    time_t timecz = GetTickCZ(m, d, h, min);
+                    // PostLog("现在时间离抄表时间相差:%d分钟", timecz);
+                    int ipresence = 0;
+
+                    if(0 <= timecz && timecz <= 5)
+                    {
+                        ipresence = 1;
+                    }
+                    else
+                    {
+                        strcpy(voltage, "000.0");
+                        strcpy(electric, "00.00");
+                        strcpy(activepower, "000.0");
+                        l_value = 0;
+                        strcpy(activepower, "000.0000");
+
+                    }
+
                     char readtime[30] = {0};
                     sprintf(readtime, "%d%d-%d%d %d%d:%d%d", ms, mg, ds, dg, hs, hg, mins, ming);
-                    PostLog("网关[%s] 装置号:%d 电压:%s 电流:%s 有功功率:%s 温度:%s 调光值:%d 最近抄表时间:%s status1:%d status2:%d status3:%d status4:%d 故障描述:%s", \
-                            addrarea, l_code, voltage, electric, activepower, temperature, l_value, readtime, s1, s2, s3, s4, faultdesc.c_str());
+                    PostLog("网关[%s] 装置号:%d 电压:%s 电流:%s 有功功率:%s 温度:%s 调光值:%d 最近抄表时间:%s 分差:%d status1:%d status2:%d status3:%d status4:%d 故障描述:%s", \
+                            addrarea, l_code, voltage, electric, activepower, temperature, l_value, readtime, timecz, s1, s2, s3, s4, faultdesc.c_str());
                     z = z + 4;
                     map<string, _variant_t>m_var;
                     //dbopen->GetUpdateSql()
@@ -2573,7 +2594,6 @@ void CIOCP::buildcode(BYTE src[], int srclen, IOCP_IO_PTR & lp_io)
                     int ifault = faultdesc != "" ? 1 : 0;
                     _variant_t  vfault(ifault);
                     _variant_t  vreadtime(readtime);
-                    int ipresence = 1;
                     _variant_t  presence(readtime);
                     m_var.insert(pair<string, _variant_t>("voltage", voltage));
                     m_var.insert(pair<string, _variant_t>("electric", velectric));
@@ -2692,14 +2712,11 @@ void CIOCP::buildcode(BYTE src[], int srclen, IOCP_IO_PTR & lp_io)
     }
     else if(AFN == 0x0E)             //报警和故障事件
     {
-        string a1 = gstring::char2hex((const char*)src, srclen);
-        glog::GetInstance()->AddLine("故障:%s", a1.c_str());
+        string hexdata = gstring::char2hex((const char*)src, srclen);
+        glog::GetInstance()->AddLine("故障:%s", hexdata.c_str());
         BYTE    con =    src[13] & 0x10;
         BYTE   DirPrmCode = src[6] & 0xc0;   //上行  从动          上行  启动    1100  c0
         BYTE   FC = src[6] & 0xF; //控制域名的功能码
-        char addr1[10] = {0};
-        memcpy(addr1, &src[7], 4);
-        string addrarea = gstring::char2hex(addr1, 4);
         BYTE DA[2] = {0};
         BYTE DT[2] = {0};
         memcpy(DA, &src[14], 2);
@@ -2723,7 +2740,7 @@ void CIOCP::buildcode(BYTE src[], int srclen, IOCP_IO_PTR & lp_io)
                 char cmonth[20] = {0};
                 char cyear[20] = {0};
                 //5字节 时间  后是内容
-                string hexdata = gstring::char2hex((const char*)&src[j + 2], datalen);
+                // string hexdata = gstring::char2hex((const char*)&src[j + 2], datalen);
                 sprintf(cmin, "%d%d", min >> 4 & 0x0f, min & 0xf);
                 sprintf(chour, "%d%d", hour >> 4 & 0x0f, hour & 0xf);
                 sprintf(cday, "%d%d", day >> 4 & 0x0f, day & 0xf);
@@ -2733,36 +2750,120 @@ void CIOCP::buildcode(BYTE src[], int srclen, IOCP_IO_PTR & lp_io)
                 sprintf(date, "%s-%s-%s", cyear, cmonth, cday);
                 char err[20] = {0};
                 sprintf(err, "ERC%d", errcode);
-                string sql = "select * from t_fault where 1=1 and CONVERT(Nvarchar, f_day, 23)=\'";
-                sql.append(date);
-                sql.append("\' and f_comaddr='");
-                sql.append(addrarea);
-                sql.append("\' and f_type=\'");
-                sql.append(err);
-                sql.append("\'");
-                _RecordsetPtr rs = dbopen->ExecuteWithResSQL(sql.c_str());
+                map<string, _variant_t>m_var;
+                _variant_t  vdate(date);
+                _variant_t  vcomaddr(addrarea);
+                _variant_t  verr(err);
+                _variant_t  vdata(hexdata.c_str());
+                _variant_t  vlen(datalen);
+                m_var.insert(pair<string, _variant_t>("f_day", vdate));
+                m_var.insert(pair<string, _variant_t>("f_comaddr", vcomaddr));
+                m_var.insert(pair<string, _variant_t>("f_type", verr));
+                m_var.insert(pair<string, _variant_t>("f_len", srclen));
+                m_var.insert(pair<string, _variant_t>("f_data", vdata));
+                char emailinfo[512] = {0};
 
-                if(rs && dbopen->GetNum(rs) == 0)
+                if(errcode >= 43 && errcode <= 48 || errcode == 50 || errcode == 51)
                 {
-                    map<string, _variant_t>m_var;
-                    _variant_t  vdate(date);
-                    _variant_t  vcomaddr(addrarea.c_str());
-                    _variant_t  verr(err);
-                    _variant_t  vdata(hexdata.c_str());
-                    _variant_t  vlen(datalen);
-                    m_var.insert(pair<string, _variant_t>("f_day", vdate));
-                    m_var.insert(pair<string, _variant_t>("f_comaddr", vcomaddr));
-                    m_var.insert(pair<string, _variant_t>("f_type", verr));
-                    m_var.insert(pair<string, _variant_t>("f_len", vlen));
-                    m_var.insert(pair<string, _variant_t>("f_data", vdata));
-                    string sql = dbopen->GetInsertSql(m_var, "t_fault");
-                    _RecordsetPtr rs1 = dbopen->ExecuteWithResSQL(sql.c_str());
+                    int uptype = 1;
 
-                    if(!rs1)
+                    if(errcode == 43 || errcode == 45)
                     {
-                        glog::GetInstance()->AddLine("插入报警事件失败:sql %s", sql.c_str());
+                        uptype = 0;
                     }
 
+                    errcode % 2 == 1 ? 0 : 1;
+                    int status1 = src[27];
+                    int status2 = src[28];
+                    _variant_t  vstatus1(status1);
+                    _variant_t  vstatus2(status2);
+                    _variant_t  vuptype(uptype);
+                    int setcode = *(SHORT*)&src[25];
+                    _variant_t  vsetcode(setcode);
+                    m_var.insert(pair<string, _variant_t>("f_uptype", vuptype));
+                    m_var.insert(pair<string, _variant_t>("f_status1", vstatus1));
+                    m_var.insert(pair<string, _variant_t>("f_status2", vstatus2));
+                    m_var.insert(pair<string, _variant_t>("f_setcode", vsetcode));
+                    string setname = "";
+
+                    switch(errcode)
+                    {
+                        case 43:
+                            setname = "灯控器预警事件";
+                            break;
+
+                        case 44:
+                            setname = "灯控器报警事件";
+                            break;
+
+                        case 45:
+                            setname = "回路预警事件";
+                            break;
+
+                        case 46:
+                            setname = "回路报警事件";
+                            break;
+
+                        case 47:
+                            setname = "配电箱门开事件";
+                            break;
+
+                        case 48:
+                            setname = "设备通信异常故障事件";
+                            break;
+
+                        case 50:
+                            setname = "回路运行状态事件";
+                            break;
+
+                        case 51:
+                            setname = "配电箱供电异常事件";
+                            break;
+                    }
+
+                    _variant_t  vcomment(setname.c_str());
+                    m_var.insert(pair<string, _variant_t>("f_comment", vcomment));
+                    sprintf(emailinfo, "事件代码:ERC%d\r\n装置号:%d\r\n 状态字1:%d \r\n 状态字:%d \r\n 事件描述:%s \r\n数据:%s \r\n", (int)errcode, setcode, status1, status2, setname.c_str(), hexdata);
+                }
+                else
+                {
+                    string setname = "";
+
+                    switch(errcode)
+                    {
+                        case 49:
+                            setname = "集中器和灯控器通迅中断";
+                            break;
+
+                        case 52:
+                            setname = "灯控器状态改变上报";
+                            break;
+
+                        case 53:
+                            setname = "集中器和灯控器通迅恢复";
+                            break;
+
+                        case 54:
+                            setname = "配电箱线路被盗";
+                            break;
+                    }
+
+                    _variant_t  vcomment(setname.c_str());
+                    m_var.insert(pair<string, _variant_t>("f_comment", vcomment));
+                    sprintf(emailinfo, "事件代码:ERC%d\r\n  事件描述:%s \r\n数据:%s \r\n", (int)errcode, setname.c_str(), hexdata);
+                }
+
+                string sql = dbopen->GetInsertSql(m_var, "t_fault");
+                PostLog("sql:%s", sql.c_str());
+                _RecordsetPtr rs1 = dbopen->ExecuteWithResSQL(sql.c_str());
+
+                if(!rs1)
+                {
+                    glog::GetInstance()->AddLine("插入报警事件失败:sql %s", sql.c_str());
+                }
+
+                if(rs1)
+                {
                     string sql1 = "select * from t_people where u_pid in (select pid from t_baseinfo where comaddr=\'";
                     sql1.append(addrarea);
                     sql1.append("\')");
@@ -2774,13 +2875,11 @@ void CIOCP::buildcode(BYTE src[], int srclen, IOCP_IO_PTR & lp_io)
                         _variant_t vemail = rs->GetCollect("u_email");
                         string name = _com_util::ConvertBSTRToString(vname.bstrVal);
                         string email = _com_util::ConvertBSTRToString(vemail.bstrVal);
-                        objeamil.SetEmailTitle(string(err));
-                        objeamil.SetContent(a1);
+                        objeamil.SetEmailTitle(string("网关故障报告"));
+                        objeamil.SetContent(string(emailinfo));
                         objeamil.AddTargetEmail(email);
                         rs->MoveNext();
                     }
-
-                    //objeamil.AddTargetEmail();
                 }
             }
         }
@@ -2949,9 +3048,8 @@ void CIOCP::ExitSocket(IOCP_IO_PTR & lp_io, IOCP_KEY_PTR & lp_key, int errcode)
             if(it->second == lp_io)
             {
                 setOnline(comaddr, 0);
+                m_mcontralcenter.erase(it);
             }
-
-            m_mcontralcenter.erase(it);
         }
 
         map<string, list<MSGPACK>>::iterator itMsg = m_MsgPack.find(comaddr);
@@ -3098,7 +3196,7 @@ BOOL CIOCP::dealRead(IOCP_IO_PTR & lp_io, IOCP_KEY_PTR & lp_key, DWORD dwBytes)
             goto COMPLETEPACK;
         }
 
-        webite =  m_pack.find(lp_io);    
+        webite =  m_pack.find(lp_io);
 
         if(webite != m_pack.end())
         {
@@ -3320,7 +3418,7 @@ COMPLETEPACK:
     //        }
     //    }
     //}
-    return 1;   
+    return 1;
 }
 
 
@@ -3397,5 +3495,28 @@ int CIOCP::wsPackCheck(BYTE src[], int len)
         }
     }
 
-     return WS_ERROR_PACK;
+    return WS_ERROR_PACK;
+}
+
+int CIOCP::GetTickCZ(BYTE mon, BYTE day, BYTE hour, BYTE min)
+{
+    time_t tmtamp;
+    struct tm *tm1 = NULL;
+    time(&tmtamp) ;
+    tm1 = localtime(&tmtamp) ;
+    time_t t1 = mktime(tm1);
+//     BYTE mon = 10;
+//     BYTE day = 30;
+//     BYTE hour = 14;
+//     BYTE minute = 42;
+    tm1->tm_year = tm1->tm_year;
+    tm1->tm_mon =  mon - 1;
+    tm1->tm_mday = day;
+    tm1->tm_hour = hour;
+    tm1->tm_min = min;
+    tm1->tm_sec = 0;
+    time_t t2 = mktime(tm1);
+    time_t t3 = t1 - t2;
+    BYTE m = t3 / 60;
+    return m;
 }

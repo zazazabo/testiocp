@@ -815,16 +815,13 @@ void CIOCP::DealWebsockMsg(IOCP_IO_PTR& lp_io, IOCP_KEY_PTR& lp_key, string json
 }
 BOOL CIOCP::IsBreakPack(IOCP_IO_PTR & lp_io, BYTE src[], int len)
 {
-    if(lp_io->fromtype == SOCKET_FROM_GAYWAY)
-    {
-        SHORT len1 = *(SHORT*)&src[1];
-        SHORT len2 = *(SHORT*)&src[3];
-        SHORT len3 = len1 >> 2;
+    SHORT len1 = *(SHORT*)&src[1];
+    SHORT len2 = *(SHORT*)&src[3];
+    SHORT len3 = len1 >> 2;
 
-        if((len3 > len - 8) && src[0] == 0x68)
-        {
-            return TRUE;
-        }
+    if((len3 > len - 8) && src[0] == 0x68)
+    {
+        return TRUE;
     }
 
     return FALSE;
@@ -1204,25 +1201,21 @@ BOOL CIOCP::InitAll()
     //------------------------------------------------------------
     //-----------       Created with 010 Editor        -----------
     //------         www.sweetscape.com/010editor/          ------
+    //------------------------------------------------------------
+    //-----------       Created with 010 Editor        -----------
+    //------         www.sweetscape.com/010editor/          ------
     //
     // File    : Untitled1
     // Address : 0 (0x0)
-    // Size    : 147 (0x93)
+    // Size    : 31 (0x1F)
     //------------------------------------------------------------
-    //unsigned char hexData[147] = {
-    //  0x68, 0x2E, 0x02, 0x2E, 0x02, 0x68, 0x88, 0x01, 0x17, 0x66, 0x00, 0x02, 0xAC, 0x01, 0x00, 0x00,
-    //  0x40, 0x00, 0x06, 0x36, 0x00, 0x97, 0x22, 0x37, 0x00, 0x31, 0x04, 0x00, 0x00, 0x00, 0x04, 0x00,
-    //  0x00, 0x20, 0x00, 0x00, 0x44, 0x19, 0x27, 0x10, 0x37, 0x00, 0x99, 0x22, 0x20, 0x00, 0x16, 0x02,
-    //  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0F, 0x00, 0x00, 0x44, 0x19, 0x27, 0x10, 0x38, 0x00, 0x90,
-    //  0x22, 0x19, 0x00, 0x12, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x14, 0x00, 0x00, 0x44, 0x19,
-    //  0x27, 0x10, 0x39, 0x00, 0x09, 0x23, 0x23, 0x00, 0x56, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    //  0x14, 0x00, 0x00, 0x44, 0x19, 0x27, 0x10, 0x3A, 0x00, 0x96, 0x22, 0x24, 0x00, 0x75, 0x02, 0x00,
-    //  0x00, 0x00, 0x00, 0x00, 0x00, 0x14, 0x00, 0x00, 0x44, 0x19, 0x27, 0x10, 0x3B, 0x00, 0x04, 0x23,
-    //  0x22, 0x00, 0x51, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x14, 0x00, 0x00, 0x44, 0x19, 0x27,
-    //  0x10, 0xD6, 0x16
-    //};
-    //IOCP_IO_PTR pp;
-    //buildcode(hexData,sizeof(hexData),pp);
+	//unsigned char hexData[31] =
+	//{
+	//	0x68, 0x5E, 0x00, 0x5E, 0x00, 0x68, 0xC4, 0x02, 0x17, 0x01, 0x01, 0x04, 0x0E, 0x66, 0x00, 0x00,
+	//	0x01, 0x00, 0x2C, 0x09, 0x20, 0x10, 0x31, 0x10, 0x18, 0x37, 0x00, 0x01, 0x00, 0x4E, 0x16
+	//};
+	//IOCP_IO_PTR pp;
+	//buildcode(hexData, sizeof(hexData), pp);
     WSAData data;
 
     if(WSAStartup(MAKEWORD(2, 2), &data) != 0)
@@ -2571,7 +2564,6 @@ void CIOCP::buildcode(BYTE src[], int srclen, IOCP_IO_PTR & lp_io)
                         strcpy(activepower, "000.0");
                         l_value = 0;
                         strcpy(activepower, "000.0000");
-
                     }
 
                     char readtime[30] = {0};
@@ -2747,7 +2739,7 @@ void CIOCP::buildcode(BYTE src[], int srclen, IOCP_IO_PTR & lp_io)
                 sprintf(cmonth, "%d%d", month >> 4 & 0x0f, month & 0xf);
                 sprintf(cyear, "20%d%d", year >> 4 & 0x0f, year & 0xf);
                 char date[30] = {0};
-                sprintf(date, "%s-%s-%s", cyear, cmonth, cday);
+                sprintf(date, "%s-%s-%s %s:%s", cyear, cmonth, cday, chour, cmin);
                 char err[20] = {0};
                 sprintf(err, "ERC%d", errcode);
                 map<string, _variant_t>m_var;
@@ -2762,9 +2754,44 @@ void CIOCP::buildcode(BYTE src[], int srclen, IOCP_IO_PTR & lp_io)
                 m_var.insert(pair<string, _variant_t>("f_len", srclen));
                 m_var.insert(pair<string, _variant_t>("f_data", vdata));
                 char emailinfo[512] = {0};
+                char l_factory[30] = {0};
+                string sql3 = "SELECT tp.name as proname FROM t_project AS tp,t_baseinfo tb WHERE tb.pid=tp.code AND tb.comaddr= \'";
+                sql3.append(addrarea);
+                sql3.append("\'");
+                string pid = "";
+                _RecordsetPtr rspid = dbopen->ExecuteWithResSQL(sql3.c_str());
+
+                while(rspid && !rspid->adoEOF)
+                {
+                    _variant_t vpid = rspid->GetCollect("proname");
+                    pid  = _com_util::ConvertBSTRToString(vpid.bstrVal);
+                    rspid->MoveNext();
+                    break;
+                }
 
                 if(errcode >= 43 && errcode <= 48 || errcode == 50 || errcode == 51)
                 {
+                    if(errcode == 43 || errcode == 44)
+                    {
+                        string sql2 = "select * from t_lamp where l_comaddr=\'";
+                        sql2.append(addrarea);
+                        sql2.append("\' and l_code=");
+                        int setcode1 = *(SHORT*)&src[25];
+                        char l_code[20] = {0};
+                        sprintf(l_code, "%d", setcode1);
+                        sql2.append(l_code);
+                        _RecordsetPtr rs1 = dbopen->ExecuteWithResSQL(sql2.c_str());
+
+                        while(!rs1->adoEOF)
+                        {
+                            _variant_t vfactorycode = rs1->GetCollect("l_factorycode");
+                            string  l_factorycode = _com_util::ConvertBSTRToString(vfactorycode.bstrVal);
+                            strcpy(l_factory, l_factorycode.c_str());
+                            rs1->MoveNext();
+                            break;
+                        }
+                    }
+
                     int uptype = 1;
 
                     if(errcode == 43 || errcode == 45)
@@ -2822,8 +2849,11 @@ void CIOCP::buildcode(BYTE src[], int srclen, IOCP_IO_PTR & lp_io)
                     }
 
                     _variant_t  vcomment(setname.c_str());
+                    _variant_t  vfactorycode1(l_factory);
                     m_var.insert(pair<string, _variant_t>("f_comment", vcomment));
-                    sprintf(emailinfo, "事件代码:ERC%d\r\n装置号:%d\r\n 状态字1:%d \r\n 状态字:%d \r\n 事件描述:%s \r\n数据:%s \r\n", (int)errcode, setcode, status1, status2, setname.c_str(), hexdata);
+                    m_var.insert(pair<string, _variant_t>("l_factorycode", vfactorycode1));
+                    sprintf(emailinfo, "项目:%s\r\n网关:%s\r\n事件代码:ERC%d\r\n装置号:%d\r\n灯具编号:%s\r\n状态字1:%d \r\n状态字2:%d \r\n事件描述:%s \r\n数据:%s \r\n上报日期:%s", \
+                            pid.c_str(), addrarea, (int)errcode, setcode, l_factory, status1, status2, setname.c_str(), hexdata.c_str(), date);
                 }
                 else
                 {
@@ -2850,7 +2880,7 @@ void CIOCP::buildcode(BYTE src[], int srclen, IOCP_IO_PTR & lp_io)
 
                     _variant_t  vcomment(setname.c_str());
                     m_var.insert(pair<string, _variant_t>("f_comment", vcomment));
-                    sprintf(emailinfo, "事件代码:ERC%d\r\n  事件描述:%s \r\n数据:%s \r\n", (int)errcode, setname.c_str(), hexdata);
+                    sprintf(emailinfo, "项目:%s\r\n网关:%s\r\n事件代码:ERC%d\r\n  事件描述:%s \r\n数据:%s \r\n", pid.c_str(), addrarea, (int)errcode, setname.c_str(), hexdata);
                 }
 
                 string sql = dbopen->GetInsertSql(m_var, "t_fault");
@@ -3112,12 +3142,13 @@ BOOL CIOCP::dealRead(IOCP_IO_PTR & lp_io, IOCP_KEY_PTR & lp_key, DWORD dwBytes)
     }
 
     string towrite = "";
-    int datalen = lp_io->ol.InternalHigh;
+    int datalen = dwBytes;
     BYTE* src = (BYTE*)lp_io->buf;
     string data = gstring::char2hex(lp_io->buf, lp_io->ol.InternalHigh);
     lp_io->ol.InternalHigh > 0 ? glog::GetInstance()->AddLine("包长度:%d 包数据:%s", datalen, data.c_str()) : 0;
     towrite = data;
     CListTextElementUI* pElement = (CListTextElementUI*)lp_io->pUserData;
+    map<IOCP_IO_PTR, pBREAKPCK>::iterator itepack;
 
     if(pElement)
     {
@@ -3132,9 +3163,15 @@ BOOL CIOCP::dealRead(IOCP_IO_PTR & lp_io, IOCP_KEY_PTR & lp_key, DWORD dwBytes)
 
     if(lp_io->fromtype == SOCKET_FROM_GAYWAY)
     {
-        //EnterCriticalSection(&crtc_sec);
+        EnterCriticalSection(&crtc_sec);
         int alllenth = dwBytes;
-        map<IOCP_IO_PTR, pBREAKPCK>::iterator itepack =  m_pack.find(lp_io);
+
+        if(checkFlag(src, alllenth))
+        {
+            goto TO;
+        }
+
+        itepack =  m_pack.find(lp_io);
 
         if(itepack != m_pack.end())
         {
@@ -3142,29 +3179,46 @@ BOOL CIOCP::dealRead(IOCP_IO_PTR & lp_io, IOCP_KEY_PTR & lp_key, DWORD dwBytes)
             AppendByte(src, alllenth, pack, lp_io);
             PostLog("断包包尾:lp_io:%p 长度:%d alllenght:%d", lp_io, dwBytes, alllenth);
             glog::GetInstance()->AddLine("断包包尾:lp_io:%p 长度:%d", lp_io, datalen);
-        }
 
-        if(checkFlag((BYTE*)lp_io->buf, alllenth) == FALSE)
-        {
-            if(IsBreakPack(lp_io, src, alllenth))
+            if(alllenth > BUFFER_SIZE)
             {
-                if(m_pack.find(lp_io) == m_pack.end())
+                glog::GetInstance()->AddLine("网关:[%s] 接收到的数据包过大 长度:%d 指针:%p", lp_io->gayway, alllenth, lp_io);
+                PostLog("网关:[%s] 接收到的数据包过大 长度:%d 指针:%p", lp_io->gayway, alllenth, lp_io);
+
+                if(pack)
                 {
-                    pBREAKPCK pack = new BREAK_PACK;
-                    BYTE *b1 = new BYTE[datalen];
-                    memset(b1, 0, datalen);
-                    memcpy(b1, lp_io->buf, datalen);
-                    pack->b = b1;
-                    pack->len = datalen;
-                    m_pack.insert(make_pair(lp_io, pack));
-                    PostLog("断包包头:lp_io:%p 长度:%d", lp_io, datalen);
-                    glog::GetInstance()->AddLine("断包包头:lp_io:%p 长度:%d", lp_io, datalen);
+                    delete pack;
+                    pack = NULL;
                 }
+
+                m_pack.erase(itepack);
+                goto RET;
+                //return 1;
             }
         }
-        else
+
+        if(IsBreakPack(lp_io, src, alllenth))
         {
-            if(itepack != m_pack.end())
+            if(m_pack.find(lp_io) == m_pack.end())
+            {
+                pBREAKPCK pack = new BREAK_PACK;
+                BYTE *b1 = new BYTE[datalen];
+                memset(b1, 0, datalen);
+                memcpy(b1, lp_io->buf, datalen);
+                pack->b = b1;
+                pack->len = datalen;
+                m_pack.insert(make_pair(lp_io, pack));
+                PostLog("断包包头:lp_io:%p 长度:%d", lp_io, datalen);
+                glog::GetInstance()->AddLine("断包包头:lp_io:%p 长度:%d", lp_io, datalen);
+            }
+        }
+
+        if(checkFlag(src, alllenth))
+        {
+TO:
+            map<IOCP_IO_PTR, pBREAKPCK>::iterator itepack1 =  m_pack.find(lp_io);
+
+            if(itepack1 != m_pack.end())
             {
                 pBREAKPCK p1 = itepack->second;
                 delete p1->b;
@@ -3172,15 +3226,15 @@ BOOL CIOCP::dealRead(IOCP_IO_PTR & lp_io, IOCP_KEY_PTR & lp_key, DWORD dwBytes)
                 m_pack.erase(itepack);
             }
 
-            int datalen = alllenth;
             char addrarea[20] = {0};
             sprintf(addrarea, "%02x%02x%02x%02x", src[8], src[7], src[10], src[9]); //网关地址
-            string datastr = gstring::char2hex((char*)src, datalen);
-            PostLog("网关[%s] 包长度:%d 帧序号:%d 包数据:%s 通信指针:%p", addrarea, datalen, src[0xd] & 0x0f, datastr.c_str(), lp_io);
+            string datastr = gstring::char2hex((char*)src, alllenth);
+            PostLog("网关[%s] 包长度:%d 帧序号:%d 包数据:%s 通信指针:%p", addrarea, alllenth, src[0xd] & 0x0f, datastr.c_str(), lp_io);
             buildcode(src, datalen, lp_io);
         }
 
-        //LeaveCriticalSection(&crtc_sec);
+RET:
+        LeaveCriticalSection(&crtc_sec);
         return 1;
     }
 

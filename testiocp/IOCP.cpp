@@ -1205,17 +1205,21 @@ BOOL CIOCP::InitAll()
     //-----------       Created with 010 Editor        -----------
     //------         www.sweetscape.com/010editor/          ------
     //
+    //------------------------------------------------------------
+    //-----------       Created with 010 Editor        -----------
+    //------         www.sweetscape.com/010editor/          ------
+    //
     // File    : Untitled1
     // Address : 0 (0x0)
     // Size    : 31 (0x1F)
     //------------------------------------------------------------
-	//unsigned char hexData[31] =
-	//{
-	//	0x68, 0x5E, 0x00, 0x5E, 0x00, 0x68, 0xC4, 0x02, 0x17, 0x01, 0x01, 0x04, 0x0E, 0x66, 0x00, 0x00,
-	//	0x01, 0x00, 0x2C, 0x09, 0x20, 0x10, 0x31, 0x10, 0x18, 0x37, 0x00, 0x01, 0x00, 0x4E, 0x16
-	//};
-	//IOCP_IO_PTR pp;
-	//buildcode(hexData, sizeof(hexData), pp);
+    //unsigned char hexData[31] =
+    //{
+    //    0x68, 0x5E, 0x00, 0x5E, 0x00, 0x68, 0xC4, 0x02, 0x17, 0x01, 0x01, 0x04, 0x0E, 0x64, 0x00, 0x00,
+    //    0x01, 0x00, 0x31, 0x09, 0x01, 0x00, 0x01, 0x11, 0x18, 0x01, 0x00, 0x38, 0x00, 0xF4, 0x16
+    //};
+    //IOCP_IO_PTR pp;
+    //buildcode(hexData, sizeof(hexData), pp);
     WSAData data;
 
     if(WSAStartup(MAKEWORD(2, 2), &data) != 0)
@@ -1528,12 +1532,12 @@ DWORD CIOCP::CompletionRoutine(LPVOID lp_param)
         op_len = sizeof(op);
         nRet = getsockopt(lp_io->socket, SOL_SOCKET, SO_CONNECT_TIME, (char*)&op, &op_len);
 
-        if(SOCKET_ERROR == nRet)
-        {
-            lp_this->PostLog("lp_io:%p errorcode:%d getsockopt", lp_io, WSAGetLastError(), lp_this->m_io_group.GetCount());
-            closesocket(lp_io->socket);
-            //continue;
-        }
+        //if(SOCKET_ERROR == nRet)
+        //{
+        //    lp_this->PostLog("lp_io:%p errorcode:%d getsockopt", lp_io, WSAGetLastError(), lp_this->m_io_group.GetCount());
+        //    closesocket(lp_io->socket);
+        //    //continue;
+        //}
 
         if(op != 0xffffffff)
         {
@@ -2769,27 +2773,35 @@ void CIOCP::buildcode(BYTE src[], int srclen, IOCP_IO_PTR & lp_io)
                     break;
                 }
 
+                map<int, string>m_lampinfo;
+                m_lampinfo.clear();
+                string sql2 = "select * from t_lamp where l_comaddr=\'";
+                sql2.append(addrarea);
+                sql2.append("\' and l_deplayment=1");
+                //int setcode1 = *(SHORT*)&src[25];
+                //char l_code[20] = {0};
+                //sprintf(l_code, "%d", setcode1);
+                //sql2.append(l_code);
+                _RecordsetPtr rslamp = dbopen->ExecuteWithResSQL(sql2.c_str());
+
+                while(!rslamp->adoEOF)
+                {
+                    _variant_t vfactorycode = rslamp->GetCollect("l_factorycode");
+                    _variant_t vl_code = rslamp->GetCollect("l_code");
+                    string  l_factorycode = _com_util::ConvertBSTRToString(vfactorycode.bstrVal);
+                    int   il_code = vl_code;
+                    m_lampinfo.insert(pair<int, string>(il_code, l_factorycode));
+                    //strcpy(l_factory, l_factorycode.c_str());
+                    rslamp->MoveNext();
+                    // break;
+                }
+
                 if(errcode >= 43 && errcode <= 48 || errcode == 50 || errcode == 51)
                 {
                     if(errcode == 43 || errcode == 44)
                     {
-                        string sql2 = "select * from t_lamp where l_comaddr=\'";
-                        sql2.append(addrarea);
-                        sql2.append("\' and l_code=");
-                        int setcode1 = *(SHORT*)&src[25];
-                        char l_code[20] = {0};
-                        sprintf(l_code, "%d", setcode1);
-                        sql2.append(l_code);
-                        _RecordsetPtr rs1 = dbopen->ExecuteWithResSQL(sql2.c_str());
-
-                        while(!rs1->adoEOF)
-                        {
-                            _variant_t vfactorycode = rs1->GetCollect("l_factorycode");
-                            string  l_factorycode = _com_util::ConvertBSTRToString(vfactorycode.bstrVal);
-                            strcpy(l_factory, l_factorycode.c_str());
-                            rs1->MoveNext();
-                            break;
-                        }
+                        SHORT setcode1 = *(SHORT*)&src[25];
+                        strcpy(l_factory, m_lampinfo[setcode1].c_str());
                     }
 
                     int uptype = 1;
@@ -2858,11 +2870,28 @@ void CIOCP::buildcode(BYTE src[], int srclen, IOCP_IO_PTR & lp_io)
                 else
                 {
                     string setname = "";
+                    char detail[512] = {0};
 
                     switch(errcode)
                     {
                         case 49:
                             setname = "集中器和灯控器通迅中断";
+                            {
+                                int ncount = src[25];
+                                sprintf(detail, "中断数量:%d ", ncount);
+                                int z = 27;
+
+                                for(int i = 0; i < ncount; i++)
+                                {
+                                    SHORT setcode = *(SHORT*)&src[z + 2 * i];
+                                    int isetcode = setcode;
+                                    sprintf(detail, "%s装置号:%d 编号:%s ", detail, setcode, m_lampinfo[isetcode].c_str());
+                                }
+
+                                _variant_t  vdetail(detail);
+                                m_var.insert(pair<string, _variant_t>("f_detail", vdetail));
+                                int n = 5;
+                            }
                             break;
 
                         case 52:
@@ -2880,7 +2909,7 @@ void CIOCP::buildcode(BYTE src[], int srclen, IOCP_IO_PTR & lp_io)
 
                     _variant_t  vcomment(setname.c_str());
                     m_var.insert(pair<string, _variant_t>("f_comment", vcomment));
-                    sprintf(emailinfo, "项目:%s\r\n网关:%s\r\n事件代码:ERC%d\r\n  事件描述:%s \r\n数据:%s \r\n", pid.c_str(), addrarea, (int)errcode, setname.c_str(), hexdata);
+                    sprintf(emailinfo, "项目:%s\r\n网关:%s\r\n事件代码:ERC%d\r\n事件描述:%s\r\n数据:%s \r\n详细:%s\r\n", pid.c_str(), addrarea, (int)errcode, setname.c_str(), hexdata.c_str(), detail);
                 }
 
                 string sql = dbopen->GetInsertSql(m_var, "t_fault");
@@ -2905,7 +2934,7 @@ void CIOCP::buildcode(BYTE src[], int srclen, IOCP_IO_PTR & lp_io)
                         _variant_t vemail = rs->GetCollect("u_email");
                         string name = _com_util::ConvertBSTRToString(vname.bstrVal);
                         string email = _com_util::ConvertBSTRToString(vemail.bstrVal);
-                        objeamil.SetEmailTitle(string("网关故障报告"));
+                        objeamil.SetEmailTitle(string("故障报告"));
                         objeamil.SetContent(string(emailinfo));
                         objeamil.AddTargetEmail(email);
                         rs->MoveNext();
@@ -3220,10 +3249,10 @@ TO:
 
             if(itepack1 != m_pack.end())
             {
-                pBREAKPCK p1 = itepack->second;
+                pBREAKPCK p1 = itepack1->second;
                 delete p1->b;
                 delete p1;
-                m_pack.erase(itepack);
+                m_pack.erase(itepack1);
             }
 
             char addrarea[20] = {0};

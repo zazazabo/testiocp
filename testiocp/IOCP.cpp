@@ -2477,6 +2477,7 @@ void CIOCP::buildcode(BYTE src[], int srclen, IOCP_IO_PTR & lp_io)
                 return;
             }
 
+            //灯具巡测
             if(DA[0] == 0 && DA[1] == 0 && DT[0] == 0x40 && DT[1] == 0x00)
             {
                 int z = 18;
@@ -2614,6 +2615,350 @@ void CIOCP::buildcode(BYTE src[], int srclen, IOCP_IO_PTR & lp_io)
                     _RecordsetPtr rs =   dbopen->ExecuteWithResSQL(sql.c_str());
                     //PostLog("sql:%s", sql.c_str());
                 }
+            }
+
+            //即时交采信息
+            if(DA[0] == 0 && DA[1] == 0 && DT[0] == 0x02 && DT[1] == 0x06)
+            {
+                int z = 18;
+                Json::Value jsonRoot;
+                //A相有功功率
+                char aactpowerphase[20] = {0};
+                BYTE sw = src[z + 2] >> 4 & 0x0f;
+                BYTE gw = src[z + 2] & 0x0f;
+                BYTE sfw = src[z + 1] >> 4 & 0x0f;
+                BYTE bfw = src[z + 1] & 0x0f;
+                BYTE qfw = src[z] >> 4 & 0x0f;
+                BYTE wfw = src[z] & 0x0f;
+                sprintf(aactpowerphase, "%d%d.%d%d%d%d", sw, gw, sfw, bfw, qfw, wfw);
+                //A相无功率
+                z = z + 3;
+                char areactpowerphase[20] = {0};
+                sw = src[z + 2] >> 4 & 0x0f;
+                gw = src[z + 2] & 0x0f;
+                sfw = src[z + 1] >> 4 & 0x0f;
+                bfw = src[z + 1] & 0x0f;
+                qfw = src[z] >> 4 & 0x0f;
+                wfw = src[z] & 0x0f;
+                sprintf(areactpowerphase, "%d%d.%d%d%d%d", sw, gw, sfw, bfw, qfw, wfw);
+                //A相视在功率
+                z = z + 3;
+                char aviewactpowerphase[20] = {0};
+                sw = src[z + 2] >> 4 & 0x0f;
+                gw = src[z + 2] & 0x0f;
+                sfw = src[z + 1] >> 4 & 0x0f;
+                bfw = src[z + 1] & 0x0f;
+                qfw = src[z] >> 4 & 0x0f;
+                wfw = src[z] & 0x0f;
+                sprintf(aviewactpowerphase, "%d%d.%d%d%d%d", sw, gw, sfw, bfw, qfw, wfw);
+                //B相有功功率
+                z = z + 3;
+                char bactpowerphase[20] = {0};
+                sw = src[z + 2] >> 4 & 0x0f;
+                gw = src[z + 2] & 0x0f;
+                sfw = src[z + 1] >> 4 & 0x0f;
+                bfw = src[z + 1] & 0x0f;
+                qfw = src[z] >> 4 & 0x0f;
+                wfw = src[z] & 0x0f;
+                sprintf(bactpowerphase, "%d%d.%d%d%d%d", sw, gw, sfw, bfw, qfw, wfw);
+                //B相无功率
+                z = z + 3;
+                char breactpowerphase[20] = {0};
+                sw = src[z + 2] >> 4 & 0x0f;
+                gw = src[z + 2] & 0x0f;
+                sfw = src[z + 1] >> 4 & 0x0f;
+                bfw = src[z + 1] & 0x0f;
+                qfw = src[z] >> 4 & 0x0f;
+                wfw = src[z] & 0x0f;
+                sprintf(breactpowerphase, "%d%d.%d%d%d%d", sw, gw, sfw, bfw, qfw, wfw);
+                //B相视在功率
+                z = z + 3;
+                char bviewactpowerphase[20] = {0};
+                sw = src[z + 2] >> 4 & 0x0f;
+                gw = src[z + 2] & 0x0f;
+                sfw = src[z + 1] >> 4 & 0x0f;
+                bfw = src[z + 1] & 0x0f;
+                qfw = src[z] >> 4 & 0x0f;
+                wfw = src[z] & 0x0f;
+                sprintf(bviewactpowerphase, "%d%d.%d%d%d%d", sw, gw, sfw, bfw, qfw, wfw);
+                //C相有功功率
+                z = z + 3;
+                char cactpowerphase[20] = {0};
+                sw = src[z + 2] >> 4 & 0x0f;
+                gw = src[z + 2] & 0x0f;
+                sfw = src[z + 1] >> 4 & 0x0f;
+                bfw = src[z + 1] & 0x0f;
+                qfw = src[z] >> 4 & 0x0f;
+                wfw = src[z] & 0x0f;
+                sprintf(cactpowerphase, "%d%d.%d%d%d%d", sw, gw, sfw, bfw, qfw, wfw);
+                //C相无功率
+                z = z + 3;
+                char creactpowerphase[20] = {0};
+                sw = src[z + 2] >> 4 & 0x0f;
+                gw = src[z + 2] & 0x0f;
+                sfw = src[z + 1] >> 4 & 0x0f;
+                bfw = src[z + 1] & 0x0f;
+                qfw = src[z] >> 4 & 0x0f;
+                wfw = src[z] & 0x0f;
+                sprintf(creactpowerphase, "%d%d.%d%d%d%d", sw, gw, sfw, bfw, qfw, wfw);
+                //C相视在功率
+                z = z + 3;
+                char cviewactpowerphase[20] = {0};
+                sw = src[z + 2] >> 4 & 0x0f;
+                gw = src[z + 2] & 0x0f;
+                sfw = src[z + 1] >> 4 & 0x0f;
+                bfw = src[z + 1] & 0x0f;
+                qfw = src[z] >> 4 & 0x0f;
+                wfw = src[z] & 0x0f;
+                sprintf(cviewactpowerphase, "%d%d.%d%d%d%d", sw, gw, sfw, bfw, qfw, wfw);
+                //总功率因数
+                z = z + 3;
+                char allpowerfacotr[20] = {0};
+                gw = src[z + 1] >> 4 & 0x0f;
+                sfw = src[z + 1] & 0x0f;
+                bfw = src[z] >> 4 & 0x0f;
+                qfw = src[z] & 0x0f;
+                sprintf(allpowerfacotr, "%d.%d%d%d", gw, sfw, bfw, qfw);
+                //A相功率因数
+                z = z + 2;
+                char apowerfactor[20] = {0};
+                gw = src[z + 1] >> 4 & 0x0f;
+                sfw = src[z + 1] & 0x0f;
+                bfw = src[z] >> 4 & 0x0f;
+                qfw = src[z] & 0x0f;
+                sprintf(apowerfactor, "%d.%d%d%d", gw, sfw, bfw, qfw);
+                //B相功率因数
+                z = z + 2;
+                char bpowerfactor[20] = {0};
+                gw = src[z + 1] >> 4 & 0x0f;
+                sfw = src[z + 1] & 0x0f;
+                bfw = src[z] >> 4 & 0x0f;
+                qfw = src[z] & 0x0f;
+                sprintf(bpowerfactor, "%d.%d%d%d", gw, sfw, bfw, qfw);
+                //C相功率因数
+                z = z + 2;
+                char cpowerfactor[20] = {0};
+                gw = src[z + 1] >> 4 & 0x0f;
+                sfw = src[z + 1] & 0x0f;
+                bfw = src[z] >> 4 & 0x0f;
+                qfw = src[z] & 0x0f;
+                sprintf(cpowerfactor, "%d.%d%d%d", gw, sfw, bfw, qfw);
+                //总有功功率
+                z = z + 2;
+                char allactpowerphase[20] = {0};
+                sw = src[z + 2] >> 4 & 0x0f;
+                gw = src[z + 2] & 0x0f;
+                sfw = src[z + 1] >> 4 & 0x0f;
+                bfw = src[z + 1] & 0x0f;
+                qfw = src[z] >> 4 & 0x0f;
+                wfw = src[z] & 0x0f;
+                sprintf(allactpowerphase, "%d%d.%d%d%d%d", sw, gw, sfw, bfw, qfw, wfw);
+                //总无功功率
+                z = z + 3;
+                char Allreactpowerphase[20] = {0};
+                sw = src[z + 2] >> 4 & 0x0f;
+                gw = src[z + 2] & 0x0f;
+                sfw = src[z + 1] >> 4 & 0x0f;
+                bfw = src[z + 1] & 0x0f;
+                qfw = src[z] >> 4 & 0x0f;
+                wfw = src[z] & 0x0f;
+                sprintf(Allreactpowerphase, "%d%d.%d%d%d%d", sw, gw, sfw, bfw, qfw, wfw);
+                //总视在功率
+                z = z + 3;
+                char Allviewactpowerphase[20] = {0};
+                sw = src[z + 2] >> 4 & 0x0f;
+                gw = src[z + 2] & 0x0f;
+                sfw = src[z + 1] >> 4 & 0x0f;
+                bfw = src[z + 1] & 0x0f;
+                qfw = src[z] >> 4 & 0x0f;
+                wfw = src[z] & 0x0f;
+                sprintf(Allviewactpowerphase, "%d%d.%d%d%d%d", sw, gw, sfw, bfw, qfw, wfw);
+                //A相电压
+                z = z + 3;
+                char avol[20] = {0};
+                BYTE bw = src[z + 1] >> 4 & 0x0f;
+                sw = src[z + 1] & 0x0f;
+                gw = src[z] >> 4 & 0x0f;
+                sfw = src[z] & 0x0f;
+                sprintf(avol, "%d%d%d.%d", bw, sw, gw, sfw);
+                //B相电压
+                z = z + 2;
+                char bvol[20] = {0};
+                bw = src[z + 1] >> 4 & 0x0f;
+                sw = src[z + 1] & 0x0f;
+                gw = src[z] >> 4 & 0x0f;
+                sfw = src[z] & 0x0f;
+                sprintf(bvol, "%d%d%d.%d", bw, sw, gw, sfw);
+                //C相电压
+                z = z + 2;
+                char cvol[20] = {0};
+                bw = src[z + 1] >> 4 & 0x0f;
+                sw = src[z + 1] & 0x0f;
+                gw = src[z] >> 4 & 0x0f;
+                sfw = src[z] & 0x0f;
+                sprintf(cvol, "%d%d%d.%d", bw, sw, gw, sfw);
+                //A相电流
+                z = z + 2;
+                char aelectric[20] = {0};
+                bw = src[z + 2] >> 4 & 0x0f;
+                sw = src[z + 2] & 0x0f;
+                gw = src[z + 1] >> 4 & 0x0f;
+                sfw = src[z + 1] & 0x0f;
+                bfw = src[z] >> 4 & 0x0f;
+                qfw = src[z] & 0x0f;
+                sprintf(aelectric, "%d%d%d.%d%d%d", bw, sw, gw, sfw, bfw, qfw);
+                //B相电流
+                z = z + 3;
+                char belectric[20] = {0};
+                bw = src[z + 2] >> 4 & 0x0f;
+                sw = src[z + 2] & 0x0f;
+                gw = src[z + 1] >> 4 & 0x0f;
+                sfw = src[z + 1] & 0x0f;
+                bfw = src[z] >> 4 & 0x0f;
+                qfw = src[z] & 0x0f;
+                sprintf(belectric, "%d%d%d.%d%d%d", bw, sw, gw, sfw, bfw, qfw);
+                //C相电流
+                z = z + 3;
+                char celectric[20] = {0};
+                bw = src[z + 2] >> 4 & 0x0f;
+                sw = src[z + 2] & 0x0f;
+                gw = src[z + 1] >> 4 & 0x0f;
+                sfw = src[z + 1] & 0x0f;
+                bfw = src[z] >> 4 & 0x0f;
+                qfw = src[z] & 0x0f;
+                sprintf(celectric, "%d%d%d.%d%d%d", bw, sw, gw, sfw, bfw, qfw);
+                //正向有功总电能量
+                z = z + 3;
+                char actenergy[20] = {0};
+                BYTE sww = src[z + 3] >> 4 & 0x0f;
+                BYTE ww = src[z + 3] & 0x0f;
+                BYTE qw = src[z + 2] >> 4 & 0x0f;
+                bw = src[z + 2] & 0x0f;
+                sw = src[z + 1] >> 4 & 0x0f;
+                gw = src[z + 1] & 0x0f;
+                sfw = src[z] >> 4 & 0x0f;
+                bfw = src[z] & 0x0f;
+                sprintf(actenergy, "%d%d%d%d%d%d.%d%d", sww, ww, qw, bw, sw, gw, sfw, bfw, qfw);
+                //正向无功总电能量
+                z = z + 4;
+                char reactenergy[20] = {0};
+                sww = src[z + 3] >> 4 & 0x0f;
+                ww = src[z + 3] & 0x0f;
+                qw = src[z + 2] >> 4 & 0x0f;
+                bw = src[z + 2] & 0x0f;
+                sw = src[z + 1] >> 4 & 0x0f;
+                gw = src[z + 1] & 0x0f;
+                sfw = src[z] >> 4 & 0x0f;
+                bfw = src[z] & 0x0f;
+                sprintf(reactenergy, "%d%d%d%d%d%d.%d%d", sww, ww, qw, bw, sw, gw, sfw, bfw, qfw);
+                //反向有功功总电能量
+                z = z + 4;
+                char directactenergy[20] = {0};
+                sww = src[z + 3] >> 4 & 0x0f;
+                ww = src[z + 3] & 0x0f;
+                qw = src[z + 2] >> 4 & 0x0f;
+                bw = src[z + 2] & 0x0f;
+                sw = src[z + 1] >> 4 & 0x0f;
+                gw = src[z + 1] & 0x0f;
+                sfw = src[z] >> 4 & 0x0f;
+                bfw = src[z] & 0x0f;
+                sprintf(directactenergy, "%d%d%d%d%d%d.%d%d", sww, ww, qw, bw, sw, gw, sfw, bfw, qfw);
+                //反向无功总电能量
+                z = z + 4;
+                char directreactenergy[20] = {0};
+                sww = src[z + 3] >> 4 & 0x0f;
+                ww = src[z + 3] & 0x0f;
+                qw = src[z + 2] >> 4 & 0x0f;
+                bw = src[z + 2] & 0x0f;
+                sw = src[z + 1] >> 4 & 0x0f;
+                gw = src[z + 1] & 0x0f;
+                sfw = src[z] >> 4 & 0x0f;
+                bfw = src[z] & 0x0f;
+                sprintf(directreactenergy, "%d%d%d%d%d%d.%d%d", sww, ww, qw, bw, sw, gw, sfw, bfw, qfw);
+                //A相电能量
+                z = z + 4;
+                char aenergy[20] = {0};
+                sww = src[z + 3] >> 4 & 0x0f;
+                ww = src[z + 3] & 0x0f;
+                qw = src[z + 2] >> 4 & 0x0f;
+                bw = src[z + 2] & 0x0f;
+                sw = src[z + 1] >> 4 & 0x0f;
+                gw = src[z + 1] & 0x0f;
+                sfw = src[z] >> 4 & 0x0f;
+                bfw = src[z] & 0x0f;
+                sprintf(aenergy, "%d%d%d%d%d%d.%d%d", sww, ww, qw, bw, sw, gw, sfw, bfw, qfw);
+                //B相电能量
+                z = z + 4;
+                char benergy[20] = {0};
+                sww = src[z + 3] >> 4 & 0x0f;
+                ww = src[z + 3] & 0x0f;
+                qw = src[z + 2] >> 4 & 0x0f;
+                bw = src[z + 2] & 0x0f;
+                sw = src[z + 1] >> 4 & 0x0f;
+                gw = src[z + 1] & 0x0f;
+                sfw = src[z] >> 4 & 0x0f;
+                bfw = src[z] & 0x0f;
+                sprintf(benergy, "%d%d%d%d%d%d.%d%d", sww, ww, qw, bw, sw, gw, sfw, bfw, qfw);
+                //B相电能量
+                z = z + 4;
+                char cenergy[20] = {0};
+                sww = src[z + 3] >> 4 & 0x0f;
+                ww = src[z + 3] & 0x0f;
+                qw = src[z + 2] >> 4 & 0x0f;
+                bw = src[z + 2] & 0x0f;
+                sw = src[z + 1] >> 4 & 0x0f;
+                gw = src[z + 1] & 0x0f;
+                sfw = src[z] >> 4 & 0x0f;
+                bfw = src[z] & 0x0f;
+                sprintf(cenergy, "%d%d%d%d%d%d.%d%d", sww, ww, qw, bw, sw, gw, sfw, bfw, qfw);
+                jsonRoot["aactpwr"] = aactpowerphase;
+                jsonRoot["anopwr"] = areactpowerphase;
+                jsonRoot["aviewpwr"] = aviewactpowerphase;
+                jsonRoot["bactpwr"] = bactpowerphase;
+                jsonRoot["bnopwr"] = breactpowerphase;
+                jsonRoot["bviewpwr"] = bviewactpowerphase;
+                jsonRoot["cactpwr"] = cactpowerphase;
+                jsonRoot["cnopwr"] = creactpowerphase;
+                jsonRoot["cviewpwr"] = cviewactpowerphase;
+                jsonRoot["pwrfactor"] = allpowerfacotr;
+                jsonRoot["apwrfactor"] = apowerfactor;
+                jsonRoot["bpwrfactor"] = bpowerfactor;
+                jsonRoot["cpwrfactor"] = cpowerfactor;
+                jsonRoot["sumactpwr"] = allactpowerphase;
+                jsonRoot["sumnopwr"] = Allreactpowerphase;
+                jsonRoot["sumviewpwr"] = Allviewactpowerphase;
+                jsonRoot["avol"] = avol;
+                jsonRoot["bvol"] = bvol;
+                jsonRoot["cvol"] = cvol;
+                jsonRoot["aelectric"] = aelectric;
+                jsonRoot["belectric"] = belectric;
+                jsonRoot["celectric"] = celectric;
+                jsonRoot["actenergy"] = actenergy;
+                jsonRoot["reactenergy"] = reactenergy;
+                jsonRoot["diractenergy"] = directactenergy;
+                jsonRoot["dirreactenergy"] = directreactenergy;
+                jsonRoot["aenergy"] = aenergy;
+                jsonRoot["benergy"] = benergy;
+                jsonRoot["cenergy"] = cenergy;
+                string inmsg = jsonRoot.toStyledString();
+                string sql = "update t_baseinfo set energyinfo=\'";
+                sql.append(inmsg.c_str());
+                sql.append("\'");
+                sql.append(" where comaddr=\'");
+                sql.append(addrarea);
+                sql.append("\'");
+                glog::GetInstance()->AddLine("能量信息:%s", sql.c_str());
+                dbopen->ExecuteWithResSQL(sql.c_str());
+                PostLog("A相有功功率:%s A相无功功率:%s A相视在功率:%s ", aactpowerphase, areactpowerphase, aviewactpowerphase);
+                PostLog("B相有功功率:%s B相无功功率:%s B相视在功率:%s ", bactpowerphase, breactpowerphase, bviewactpowerphase);
+                PostLog("C相有功功率:%s C相无功功率:%s C相视在功率:%s ", cactpowerphase, creactpowerphase, cviewactpowerphase);
+                PostLog("总功率因数:%s A相功率因数:%s B相功率因数:%s  C相功率因数:%s ", allpowerfacotr, apowerfactor, bpowerfactor, cpowerfactor);
+                PostLog("总有功功率:%s 总无功功率:%s 总视在功率:%s ", allactpowerphase, Allreactpowerphase, Allviewactpowerphase);
+                PostLog("A相电压:%s B相电压:%s C相电压:%s ", avol, bvol, cvol);
+                PostLog("A相电流:%s B相电流:%s C相电流:%s ", aelectric, belectric, celectric);
+                PostLog("正向有功总电能量:%s 正向无功总电能量:%s 反向有功总电能量:%s  反向无功总电能量:%s", actenergy, reactenergy, directactenergy, directreactenergy);
+                PostLog("A相电能量:%s B相电能量:%s C相电能量:%s ", aenergy, benergy, cenergy);
+                return;
             }
 
             if(DA[0] == 0 && DA[1] == 0 && DT[0] == 0x20 && DT[1] == 0x00)
@@ -3259,7 +3604,7 @@ TO:
             sprintf(addrarea, "%02x%02x%02x%02x", src[8], src[7], src[10], src[9]); //网关地址
             string datastr = gstring::char2hex((char*)src, alllenth);
             PostLog("网关[%s] 包长度:%d 帧序号:%d 包数据:%s 通信指针:%p", addrarea, alllenth, src[0xd] & 0x0f, datastr.c_str(), lp_io);
-            buildcode(src, datalen, lp_io);
+            buildcode(src, alllenth, lp_io);
         }
 
 RET:

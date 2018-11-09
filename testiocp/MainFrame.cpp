@@ -507,7 +507,7 @@ LRESULT CMainFrame::OnUser(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandl
       m_pRishLog->EndDown();
     }
 
-  if(m_pRishLog->GetLineCount() > 500)
+  if(m_pRishLog->GetLineCount() > 400)
     {
       m_pRishLog->SetText("");
       m_pRishLog->Clear();

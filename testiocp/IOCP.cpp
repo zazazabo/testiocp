@@ -354,7 +354,7 @@ BOOL CIOCP::StartThread()
 -------------------------------------------------------------------------------------------*/
 BOOL CIOCP::PostAcceptEx()
 {
-  int     count = 2;
+  int     count = 10;
   DWORD   dwBytes;
   BOOL    bRet;
 
@@ -443,20 +443,6 @@ BOOL CIOCP::HandleData(IOCP_IO_PTR lp_io, int nFlags, IOCP_KEY_PTR lp_key, DWORD
           if(SOCKET_STATE_CONNECT_AND_READ != lp_io->state)
             {
               lp_io->state = SOCKET_STATE_CONNECT_AND_READ;
-            }
-
-          DWORD dwError = 0L ;
-          tcp_keepalive sKA_Settings = {0}, sReturned = {0} ;
-          sKA_Settings.onoff = 1 ;
-          sKA_Settings.keepalivetime = 5500 ; // Keep Alive in 5.5 sec.
-          sKA_Settings.keepaliveinterval = 3000 ; // Resend if No-Reply
-          DWORD dwBytes = 0;
-
-          if(WSAIoctl(lp_io->socket, SIO_KEEPALIVE_VALS, &sKA_Settings,
-                      sizeof(sKA_Settings), &sReturned, sizeof(sReturned), &dwBytes,
-                      NULL, NULL) != 0)
-            {
-              dwError = WSAGetLastError() ;
             }
 
           char szPeerAddress[50] = {0};
@@ -829,16 +815,13 @@ void CIOCP::DealWebsockMsg(IOCP_IO_PTR& lp_io, IOCP_KEY_PTR& lp_key, string json
 }
 BOOL CIOCP::IsBreakPack(IOCP_IO_PTR & lp_io, BYTE src[], int len)
 {
-  if(lp_io->fromtype == SOCKET_FROM_GAYWAY)
-    {
-      SHORT len1 = *(SHORT*)&src[1];
-      SHORT len2 = *(SHORT*)&src[3];
-      SHORT len3 = len1 >> 2;
+  SHORT len1 = *(SHORT*)&src[1];
+  SHORT len2 = *(SHORT*)&src[3];
+  SHORT len3 = len1 >> 2;
 
-      if((len3 > len - 8) && src[0] == 0x68)
-        {
-          return TRUE;
-        }
+  if((len3 > len - 8) && src[0] == 0x68)
+    {
+      return TRUE;
     }
 
   return FALSE;
@@ -1218,31 +1201,26 @@ BOOL CIOCP::InitAll()
   //------------------------------------------------------------
   //-----------       Created with 010 Editor        -----------
   //------         www.sweetscape.com/010editor/          ------
+  //------------------------------------------------------------
+  //-----------       Created with 010 Editor        -----------
+  //------         www.sweetscape.com/010editor/          ------
   //
   // File    : Untitled1
   // Address : 0 (0x0)
-  // Size    : 147 (0x93)
+  // Size    : 31 (0x1F)
   //------------------------------------------------------------
-  //unsigned char hexData[147] = {
-  //  0x68, 0x2E, 0x02, 0x2E, 0x02, 0x68, 0x88, 0x01, 0x17, 0x66, 0x00, 0x02, 0xAC, 0x01, 0x00, 0x00,
-  //  0x40, 0x00, 0x06, 0x36, 0x00, 0x97, 0x22, 0x37, 0x00, 0x31, 0x04, 0x00, 0x00, 0x00, 0x04, 0x00,
-  //  0x00, 0x20, 0x00, 0x00, 0x44, 0x19, 0x27, 0x10, 0x37, 0x00, 0x99, 0x22, 0x20, 0x00, 0x16, 0x02,
-  //  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0F, 0x00, 0x00, 0x44, 0x19, 0x27, 0x10, 0x38, 0x00, 0x90,
-  //  0x22, 0x19, 0x00, 0x12, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x14, 0x00, 0x00, 0x44, 0x19,
-  //  0x27, 0x10, 0x39, 0x00, 0x09, 0x23, 0x23, 0x00, 0x56, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-  //  0x14, 0x00, 0x00, 0x44, 0x19, 0x27, 0x10, 0x3A, 0x00, 0x96, 0x22, 0x24, 0x00, 0x75, 0x02, 0x00,
-  //  0x00, 0x00, 0x00, 0x00, 0x00, 0x14, 0x00, 0x00, 0x44, 0x19, 0x27, 0x10, 0x3B, 0x00, 0x04, 0x23,
-  //  0x22, 0x00, 0x51, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x14, 0x00, 0x00, 0x44, 0x19, 0x27,
-  //  0x10, 0xD6, 0x16
+  //unsigned char hexData[31] =
+  //{
+  //  0x68, 0x5E, 0x00, 0x5E, 0x00, 0x68, 0xC4, 0x02, 0x17, 0x01, 0x01, 0x04, 0x0E, 0x66, 0x00, 0x00,
+  //  0x01, 0x00, 0x2C, 0x09, 0x20, 0x10, 0x31, 0x10, 0x18, 0x37, 0x00, 0x01, 0x00, 0x4E, 0x16
   //};
   //IOCP_IO_PTR pp;
-  //buildcode(hexData,sizeof(hexData),pp);
+  //buildcode(hexData, sizeof(hexData), pp);
   WSAData data;
 
   if(WSAStartup(MAKEWORD(2, 2), &data) != 0)
     {
-      string ErrInfo = getErrorInfo(WSAGetLastError());
-      glog::GetInstance()->AddLine("InitAll->WSAStartup %s", ErrInfo.c_str());
+      cout << "WSAStartup fail!" << WSAGetLastError() << endl;
       return FALSE;
     }
 
@@ -1250,18 +1228,13 @@ BOOL CIOCP::InitAll()
 
   if(NULL == m_h_iocp)
     {
-      string ErrInfo = getErrorInfo(GetLastError());
-      glog::GetInstance()->AddLine("InitAll->CreateIoCompletionPort %s", ErrInfo.c_str());
-      PostLog("InitAll->CreateIoCompletionPort %s", ErrInfo.c_str());
-      glog::GetInstance()->AddLine("InitAll->CreateIoCompletionPort %s", ErrInfo.c_str());
+      PostLog("CreateIoCompletionPort() failed: errcode:%d", GetLastError());
       return FALSE;
     }
 
   if(!StartThread())
     {
-      string ErrInfo = getErrorInfo(GetLastError());
-      glog::GetInstance()->AddLine("InitAll->StartThread %s", ErrInfo.c_str());
-      PostLog("InitAll->StartThread %s", ErrInfo.c_str());
+      PostLog("start thread fail! errcode:%d", GetLastError());
       PostQueuedCompletionStatus(m_h_iocp, 0, NULL, NULL);
       CloseHandle(m_h_iocp);
       return FALSE;
@@ -1278,20 +1251,16 @@ BOOL CIOCP::InitAll()
 
   if(!InitSocket())
     {
-      string ErrInfo = getErrorInfo(GetLastError());
-      glog::GetInstance()->AddLine("InitAll->InitSocket %s", ErrInfo.c_str());
-      PostLog("InitAll->InitSocket %s", ErrInfo.c_str());
       PostQueuedCompletionStatus(m_h_iocp, 0, NULL, NULL);
+      PostLog("Init sociket fail! errcode:%d", GetLastError());
       CloseHandle(m_h_iocp);
       return FALSE;
     }
 
   if(!BindAndListenSocket())
     {
-      string ErrInfo = getErrorInfo(GetLastError());
-      glog::GetInstance()->AddLine("InitAll->BindAndListenSocket %s", ErrInfo.c_str());
-      PostLog("InitAll->BindAndListenSocket %s", ErrInfo.c_str());
       PostQueuedCompletionStatus(m_h_iocp, 0, NULL, NULL);
+      PostLog("BindAndListenSocket sociket fail! errcode:%d", GetLastError());
       CloseHandle(m_h_iocp);
       closesocket(m_listen_socket);
       return FALSE;
@@ -1299,9 +1268,7 @@ BOOL CIOCP::InitAll()
 
   if(!GetFunPointer())
     {
-      string ErrInfo = getErrorInfo(GetLastError());
-      glog::GetInstance()->AddLine("InitAll->GetFunPointer %s", ErrInfo.c_str());
-      PostLog("InitAll->GetFunPointer %s", ErrInfo.c_str());
+      PostLog("GetFunPointer sociket fail! errcode:%d", GetLastError());
       PostQueuedCompletionStatus(m_h_iocp, 0, NULL, NULL);
       CloseHandle(m_h_iocp);
       closesocket(m_listen_socket);
@@ -1310,10 +1277,8 @@ BOOL CIOCP::InitAll()
 
   if(!PostAcceptEx())
     {
-      string ErrInfo = getErrorInfo(GetLastError());
-      glog::GetInstance()->AddLine("InitAll->PostAcceptEx %s", ErrInfo.c_str());
-      PostLog("InitAll->PostAcceptEx %s", ErrInfo.c_str());
       PostQueuedCompletionStatus(m_h_iocp, 0, NULL, NULL);
+      PostLog("PostAcceptEx sociket fail! errcode:%d", GetLastError());
       CloseHandle(m_h_iocp);
       closesocket(m_listen_socket);
       return FALSE;
@@ -1321,10 +1286,8 @@ BOOL CIOCP::InitAll()
 
   if(!RegAcceptEvent())
     {
-      string ErrInfo = getErrorInfo(GetLastError());
-      glog::GetInstance()->AddLine("InitAll->RegAcceptEvent %s", ErrInfo.c_str());
-      PostLog("InitAll->RegAcceptEvent %s", ErrInfo.c_str());
       PostQueuedCompletionStatus(m_h_iocp, 0, NULL, NULL);
+      PostLog("RegAcceptEvent sociket fail! errcode:%d", GetLastError());
       CloseHandle(m_h_iocp);
       closesocket(m_listen_socket);
       return FALSE;
@@ -1568,7 +1531,7 @@ DWORD CIOCP::CompletionRoutine(LPVOID lp_param)
       if(SOCKET_ERROR == nRet)
         {
           lp_this->PostLog("lp_io:%p errorcode:%d getsockopt", lp_io, WSAGetLastError(), lp_this->m_io_group.GetCount());
-          //closesocket(lp_io->socket);
+          closesocket(lp_io->socket);
           //continue;
         }
 
@@ -2776,7 +2739,7 @@ void CIOCP::buildcode(BYTE src[], int srclen, IOCP_IO_PTR & lp_io)
               sprintf(cmonth, "%d%d", month >> 4 & 0x0f, month & 0xf);
               sprintf(cyear, "20%d%d", year >> 4 & 0x0f, year & 0xf);
               char date[30] = {0};
-              sprintf(date, "%s-%s-%s", cyear, cmonth, cday);
+              sprintf(date, "%s-%s-%s %s:%s", cyear, cmonth, cday, chour, cmin);
               char err[20] = {0};
               sprintf(err, "ERC%d", errcode);
               map<string, _variant_t>m_var;
@@ -2791,9 +2754,44 @@ void CIOCP::buildcode(BYTE src[], int srclen, IOCP_IO_PTR & lp_io)
               m_var.insert(pair<string, _variant_t>("f_len", srclen));
               m_var.insert(pair<string, _variant_t>("f_data", vdata));
               char emailinfo[512] = {0};
+              char l_factory[30] = {0};
+              string sql3 = "SELECT tp.name as proname FROM t_project AS tp,t_baseinfo tb WHERE tb.pid=tp.code AND tb.comaddr= \'";
+              sql3.append(addrarea);
+              sql3.append("\'");
+              string pid = "";
+              _RecordsetPtr rspid = dbopen->ExecuteWithResSQL(sql3.c_str());
+
+              while(rspid && !rspid->adoEOF)
+                {
+                  _variant_t vpid = rspid->GetCollect("proname");
+                  pid  = _com_util::ConvertBSTRToString(vpid.bstrVal);
+                  rspid->MoveNext();
+                  break;
+                }
 
               if(errcode >= 43 && errcode <= 48 || errcode == 50 || errcode == 51)
                 {
+                  if(errcode == 43 || errcode == 44)
+                    {
+                      string sql2 = "select * from t_lamp where l_comaddr=\'";
+                      sql2.append(addrarea);
+                      sql2.append("\' and l_code=");
+                      int setcode1 = *(SHORT*)&src[25];
+                      char l_code[20] = {0};
+                      sprintf(l_code, "%d", setcode1);
+                      sql2.append(l_code);
+                      _RecordsetPtr rs1 = dbopen->ExecuteWithResSQL(sql2.c_str());
+
+                      while(!rs1->adoEOF)
+                        {
+                          _variant_t vfactorycode = rs1->GetCollect("l_factorycode");
+                          string  l_factorycode = _com_util::ConvertBSTRToString(vfactorycode.bstrVal);
+                          strcpy(l_factory, l_factorycode.c_str());
+                          rs1->MoveNext();
+                          break;
+                        }
+                    }
+
                   int uptype = 1;
 
                   if(errcode == 43 || errcode == 45)
@@ -2851,8 +2849,11 @@ void CIOCP::buildcode(BYTE src[], int srclen, IOCP_IO_PTR & lp_io)
                     }
 
                   _variant_t  vcomment(setname.c_str());
+                  _variant_t  vfactorycode1(l_factory);
                   m_var.insert(pair<string, _variant_t>("f_comment", vcomment));
-                  sprintf(emailinfo, "事件代码:ERC%d\r\n装置号:%d\r\n 状态字1:%d \r\n 状态字:%d \r\n 事件描述:%s \r\n数据:%s \r\n", (int)errcode, setcode, status1, status2, setname.c_str(), hexdata);
+                  m_var.insert(pair<string, _variant_t>("l_factorycode", vfactorycode1));
+                  sprintf(emailinfo, "项目:%s\r\n网关:%s\r\n事件代码:ERC%d\r\n装置号:%d\r\n灯具编号:%s\r\n状态字1:%d \r\n状态字2:%d \r\n事件描述:%s \r\n数据:%s \r\n上报日期:%s", \
+                          pid.c_str(), addrarea, (int)errcode, setcode, l_factory, status1, status2, setname.c_str(), hexdata.c_str(), date);
                 }
               else
                 {
@@ -2879,7 +2880,7 @@ void CIOCP::buildcode(BYTE src[], int srclen, IOCP_IO_PTR & lp_io)
 
                   _variant_t  vcomment(setname.c_str());
                   m_var.insert(pair<string, _variant_t>("f_comment", vcomment));
-                  sprintf(emailinfo, "事件代码:ERC%d\r\n  事件描述:%s \r\n数据:%s \r\n", (int)errcode, setname.c_str(), hexdata);
+                  sprintf(emailinfo, "项目:%s\r\n网关:%s\r\n事件代码:ERC%d\r\n  事件描述:%s \r\n数据:%s \r\n", pid.c_str(), addrarea, (int)errcode, setname.c_str(), hexdata);
                 }
 
               string sql = dbopen->GetInsertSql(m_var, "t_fault");
@@ -3048,16 +3049,22 @@ void CIOCP::ExitSocket(IOCP_IO_PTR & lp_io, IOCP_KEY_PTR & lp_key, int errcode)
 {
   string towrite = "";
   PostLog("有客户端下线 通信指针:%p  客户端类型:%d", lp_io, lp_io->fromtype);
-  //if(errcode != 1236)
-  //  {
-  //    lp_io->operation = IOCP_DEFAULT;
-  //    closesocket(lp_io->socket);
-  //  }
+
+  if(errcode != 1236)
+    {
+      lp_io->operation = IOCP_DEFAULT;
+      closesocket(lp_io->socket);
+    }
+
   //int n11 = m_io_group.GetCount();
   //int n00 = m_io_group.GetBlankCount();
   //PostLog("ExitSocket  lp_io:%p  List1 count:%d List2 count:%d 客户端类型:%d", lp_io, n11, n00, lp_io->fromtype);
+  m_io_group.RemoveAt(lp_io);
+  m_key_group.RemoveAt(lp_key);
+  int n11 = m_io_group.GetCount();
+  int n00 = m_io_group.GetBlankCount();
+  PostLog("ExitSocket  lp_io:%p  List1 count:%d List2 count:%d 客户端类型:%d", lp_io, n11, n00, lp_io->fromtype);
   EnterCriticalSection(&crtc_sec);
-  closesocket(lp_io->socket);
 
   if(lp_io->fromtype == SOCKET_FROM_GAYWAY)
     {
@@ -3114,20 +3121,6 @@ void CIOCP::ExitSocket(IOCP_IO_PTR & lp_io, IOCP_KEY_PTR & lp_key, int errcode)
   //消息队列删除   消息队列存的是网页客户端
   //  EnterCriticalSection(&crtc_sec);
   DeleteByIo((ULONG_PTR)lp_io->pUserData);
-  lp_io->socket           = INVALID_SOCKET;
-  lp_io->operation        = IOCP_ACCEPT;
-  lp_io->state            = SOCKET_STATE_NOT_CONNECT;
-  lp_io->fromtype = SOCKET_FROM_UNKNOW;
-  lp_io->loginstatus = SOCKET_STATUS_UNKNOW;
-  lp_io->lp_key = NULL;
-  lp_io->timelen = 0;
-  memset(lp_io->day, 0, 20);
-  memset(lp_io->gayway, 0, 20);
-  m_io_group.RemoveAt(lp_io);
-  m_key_group.RemoveAt(lp_key);
-  int n11 = m_io_group.GetCount();
-  int n00 = m_io_group.GetBlankCount();
-  PostLog("ExitSocket  lp_io:%p  List1 count:%d List2 count:%d 客户端类型:%d", lp_io, n11, n00, lp_io->fromtype);
   LeaveCriticalSection(&crtc_sec);
 }
 DWORD WINAPI CIOCP::TimeEmail(LPVOID lp_param)
@@ -3151,10 +3144,11 @@ BOOL CIOCP::dealRead(IOCP_IO_PTR & lp_io, IOCP_KEY_PTR & lp_key, DWORD dwBytes)
   string towrite = "";
   int datalen = dwBytes;
   BYTE* src = (BYTE*)lp_io->buf;
-  string data = gstring::char2hex(lp_io->buf, dwBytes);
-  dwBytes > 0 ? glog::GetInstance()->AddLine("包长度:%d 包数据:%s", datalen, data.c_str()) : 0;
+  string data = gstring::char2hex(lp_io->buf, lp_io->ol.InternalHigh);
+  lp_io->ol.InternalHigh > 0 ? glog::GetInstance()->AddLine("包长度:%d 包数据:%s", datalen, data.c_str()) : 0;
   towrite = data;
   CListTextElementUI* pElement = (CListTextElementUI*)lp_io->pUserData;
+  map<IOCP_IO_PTR, pBREAKPCK>::iterator itepack;
 
   if(pElement)
     {
@@ -3169,9 +3163,15 @@ BOOL CIOCP::dealRead(IOCP_IO_PTR & lp_io, IOCP_KEY_PTR & lp_key, DWORD dwBytes)
 
   if(lp_io->fromtype == SOCKET_FROM_GAYWAY)
     {
-      //EnterCriticalSection(&crtc_sec);
+      EnterCriticalSection(&crtc_sec);
       int alllenth = dwBytes;
-      map<IOCP_IO_PTR, pBREAKPCK>::iterator itepack =  m_pack.find(lp_io);
+
+      if(checkFlag(src, alllenth))
+        {
+          goto TO;
+        }
+
+      itepack =  m_pack.find(lp_io);
 
       if(itepack != m_pack.end())
         {
@@ -3192,31 +3192,33 @@ BOOL CIOCP::dealRead(IOCP_IO_PTR & lp_io, IOCP_KEY_PTR & lp_key, DWORD dwBytes)
                 }
 
               m_pack.erase(itepack);
-              return 1;
+              goto RET;
+              //return 1;
             }
         }
 
-      if(checkFlag((BYTE*)lp_io->buf, alllenth) == FALSE)
+      if(IsBreakPack(lp_io, src, alllenth))
         {
-          if(IsBreakPack(lp_io, src, alllenth))
+          if(m_pack.find(lp_io) == m_pack.end())
             {
-              if(m_pack.find(lp_io) == m_pack.end())
-                {
-                  pBREAKPCK pack = new BREAK_PACK;
-                  BYTE *b1 = new BYTE[datalen];
-                  memset(b1, 0, datalen);
-                  memcpy(b1, lp_io->buf, datalen);
-                  pack->b = b1;
-                  pack->len = datalen;
-                  m_pack.insert(make_pair(lp_io, pack));
-                  PostLog("断包包头:lp_io:%p 长度:%d", lp_io, datalen);
-                  glog::GetInstance()->AddLine("断包包头:lp_io:%p 长度:%d", lp_io, datalen);
-                }
+              pBREAKPCK pack = new BREAK_PACK;
+              BYTE *b1 = new BYTE[datalen];
+              memset(b1, 0, datalen);
+              memcpy(b1, lp_io->buf, datalen);
+              pack->b = b1;
+              pack->len = datalen;
+              m_pack.insert(make_pair(lp_io, pack));
+              PostLog("断包包头:lp_io:%p 长度:%d", lp_io, datalen);
+              glog::GetInstance()->AddLine("断包包头:lp_io:%p 长度:%d", lp_io, datalen);
             }
         }
-      else
+
+      if(checkFlag(src, alllenth))
         {
-          if(itepack != m_pack.end())
+TO:
+          map<IOCP_IO_PTR, pBREAKPCK>::iterator itepack1 =  m_pack.find(lp_io);
+
+          if(itepack1 != m_pack.end())
             {
               pBREAKPCK p1 = itepack->second;
               delete p1->b;
@@ -3224,15 +3226,15 @@ BOOL CIOCP::dealRead(IOCP_IO_PTR & lp_io, IOCP_KEY_PTR & lp_key, DWORD dwBytes)
               m_pack.erase(itepack);
             }
 
-          int datalen = alllenth;
           char addrarea[20] = {0};
           sprintf(addrarea, "%02x%02x%02x%02x", src[8], src[7], src[10], src[9]); //网关地址
-          string datastr = gstring::char2hex((char*)src, datalen);
-          PostLog("网关[%s] 包长度:%d 帧序号:%d 包数据:%s 通信指针:%p", addrarea, datalen, src[0xd] & 0x0f, datastr.c_str(), lp_io);
+          string datastr = gstring::char2hex((char*)src, alllenth);
+          PostLog("网关[%s] 包长度:%d 帧序号:%d 包数据:%s 通信指针:%p", addrarea, alllenth, src[0xd] & 0x0f, datastr.c_str(), lp_io);
           buildcode(src, datalen, lp_io);
         }
 
-      //LeaveCriticalSection(&crtc_sec);
+RET:
+      LeaveCriticalSection(&crtc_sec);
       return 1;
     }
 

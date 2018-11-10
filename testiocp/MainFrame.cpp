@@ -96,12 +96,10 @@ void CMainFrame::Init()
   GetPrivateProfileStringA("Config", "uname", "", uname, 216, pdir.c_str());
   char upass[216] = {0};
   GetPrivateProfileStringA("Config", "upass", "", upass, 216, pdir.c_str());
-  glog::GetInstance()->AddLine("aa");
   dbopen = new CDBOperation();
   BOOL bcon = dbopen->ConnToDB(source, database, uname, upass);
-  glog::GetInstance()->AddLine("bb:%d", bcon);
+  glog::GetInstance()->AddLine("连接是否成功:%d", bcon);
   setOnline("1=1", 0);
-  glog::GetInstance()->AddLine("cc");
   ////dealSql("17020101", "2018-09-28", "bbb", "activepower");
   this->m_hParanWnd = this->m_hWnd;
   this->CenterWindow();
@@ -509,7 +507,7 @@ LRESULT CMainFrame::OnUser(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandl
       m_pRishLog->EndDown();
     }
 
-  if(m_pRishLog->GetLineCount() > 500)
+  if(m_pRishLog->GetLineCount() > 400)
     {
       m_pRishLog->SetText("");
       m_pRishLog->Clear();

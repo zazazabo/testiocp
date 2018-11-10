@@ -1198,24 +1198,14 @@ BOOL CIOCP::InitAll()
   //string outstring = "";
   //BOOL bfullpack = TRUE;
   //int n1 = wsDecodeFrame((char*)hexData, outstring, sizeof(hexData), bfullpack);
-  //------------------------------------------------------------
-  //-----------       Created with 010 Editor        -----------
-  //------         www.sweetscape.com/010editor/          ------
-  //------------------------------------------------------------
-  //-----------       Created with 010 Editor        -----------
-  //------         www.sweetscape.com/010editor/          ------
-  //
-  // File    : Untitled1
-  // Address : 0 (0x0)
-  // Size    : 31 (0x1F)
-  //------------------------------------------------------------
-  //unsigned char hexData[31] =
-  //{
-  //  0x68, 0x5E, 0x00, 0x5E, 0x00, 0x68, 0xC4, 0x02, 0x17, 0x01, 0x01, 0x04, 0x0E, 0x66, 0x00, 0x00,
-  //  0x01, 0x00, 0x2C, 0x09, 0x20, 0x10, 0x31, 0x10, 0x18, 0x37, 0x00, 0x01, 0x00, 0x4E, 0x16
-  //};
-  //IOCP_IO_PTR pp;
-  //buildcode(hexData, sizeof(hexData), pp);
+  unsigned char hexData[33] =
+  {
+    0x68, 0x66, 0x00, 0x66, 0x00, 0x68, 0xC4, 0x01, 0x17, 0x66, 0x00, 0x04, 0x0E, 0x65, 0x00, 0x00,
+    0x01, 0x00, 0x31, 0x0B, 0x00, 0x00, 0x10, 0x11, 0x18, 0x02, 0x00, 0x3A, 0x00, 0x3C, 0x00, 0xA7,
+    0x16
+  };
+  IOCP_IO_PTR pp;
+  buildcode(hexData, sizeof(hexData), pp);
   WSAData data;
 
   if(WSAStartup(MAKEWORD(2, 2), &data) != 0)
@@ -1528,12 +1518,12 @@ DWORD CIOCP::CompletionRoutine(LPVOID lp_param)
       op_len = sizeof(op);
       nRet = getsockopt(lp_io->socket, SOL_SOCKET, SO_CONNECT_TIME, (char*)&op, &op_len);
 
-      if(SOCKET_ERROR == nRet)
-        {
-          lp_this->PostLog("lp_io:%p errorcode:%d getsockopt", lp_io, WSAGetLastError(), lp_this->m_io_group.GetCount());
-          closesocket(lp_io->socket);
-          //continue;
-        }
+      //if(SOCKET_ERROR == nRet)
+      //{
+      //    lp_this->PostLog("lp_io:%p errorcode:%d getsockopt", lp_io, WSAGetLastError(), lp_this->m_io_group.GetCount());
+      //    closesocket(lp_io->socket);
+      //    //continue;
+      //}
 
       if(op != 0xffffffff)
         {
@@ -2473,6 +2463,7 @@ void CIOCP::buildcode(BYTE src[], int srclen, IOCP_IO_PTR & lp_io)
               return;
             }
 
+          //灯具巡测
           if(DA[0] == 0 && DA[1] == 0 && DT[0] == 0x40 && DT[1] == 0x00)
             {
               int z = 18;
@@ -2610,6 +2601,350 @@ void CIOCP::buildcode(BYTE src[], int srclen, IOCP_IO_PTR & lp_io)
                   _RecordsetPtr rs =   dbopen->ExecuteWithResSQL(sql.c_str());
                   //PostLog("sql:%s", sql.c_str());
                 }
+            }
+
+          //即时交采信息
+          if(DA[0] == 0 && DA[1] == 0 && DT[0] == 0x02 && DT[1] == 0x06)
+            {
+              int z = 18;
+              Json::Value jsonRoot;
+              //A相有功功率
+              char aactpowerphase[20] = {0};
+              BYTE sw = src[z + 2] >> 4 & 0x0f;
+              BYTE gw = src[z + 2] & 0x0f;
+              BYTE sfw = src[z + 1] >> 4 & 0x0f;
+              BYTE bfw = src[z + 1] & 0x0f;
+              BYTE qfw = src[z] >> 4 & 0x0f;
+              BYTE wfw = src[z] & 0x0f;
+              sprintf(aactpowerphase, "%d%d.%d%d%d%d", sw, gw, sfw, bfw, qfw, wfw);
+              //A相无功率
+              z = z + 3;
+              char areactpowerphase[20] = {0};
+              sw = src[z + 2] >> 4 & 0x0f;
+              gw = src[z + 2] & 0x0f;
+              sfw = src[z + 1] >> 4 & 0x0f;
+              bfw = src[z + 1] & 0x0f;
+              qfw = src[z] >> 4 & 0x0f;
+              wfw = src[z] & 0x0f;
+              sprintf(areactpowerphase, "%d%d.%d%d%d%d", sw, gw, sfw, bfw, qfw, wfw);
+              //A相视在功率
+              z = z + 3;
+              char aviewactpowerphase[20] = {0};
+              sw = src[z + 2] >> 4 & 0x0f;
+              gw = src[z + 2] & 0x0f;
+              sfw = src[z + 1] >> 4 & 0x0f;
+              bfw = src[z + 1] & 0x0f;
+              qfw = src[z] >> 4 & 0x0f;
+              wfw = src[z] & 0x0f;
+              sprintf(aviewactpowerphase, "%d%d.%d%d%d%d", sw, gw, sfw, bfw, qfw, wfw);
+              //B相有功功率
+              z = z + 3;
+              char bactpowerphase[20] = {0};
+              sw = src[z + 2] >> 4 & 0x0f;
+              gw = src[z + 2] & 0x0f;
+              sfw = src[z + 1] >> 4 & 0x0f;
+              bfw = src[z + 1] & 0x0f;
+              qfw = src[z] >> 4 & 0x0f;
+              wfw = src[z] & 0x0f;
+              sprintf(bactpowerphase, "%d%d.%d%d%d%d", sw, gw, sfw, bfw, qfw, wfw);
+              //B相无功率
+              z = z + 3;
+              char breactpowerphase[20] = {0};
+              sw = src[z + 2] >> 4 & 0x0f;
+              gw = src[z + 2] & 0x0f;
+              sfw = src[z + 1] >> 4 & 0x0f;
+              bfw = src[z + 1] & 0x0f;
+              qfw = src[z] >> 4 & 0x0f;
+              wfw = src[z] & 0x0f;
+              sprintf(breactpowerphase, "%d%d.%d%d%d%d", sw, gw, sfw, bfw, qfw, wfw);
+              //B相视在功率
+              z = z + 3;
+              char bviewactpowerphase[20] = {0};
+              sw = src[z + 2] >> 4 & 0x0f;
+              gw = src[z + 2] & 0x0f;
+              sfw = src[z + 1] >> 4 & 0x0f;
+              bfw = src[z + 1] & 0x0f;
+              qfw = src[z] >> 4 & 0x0f;
+              wfw = src[z] & 0x0f;
+              sprintf(bviewactpowerphase, "%d%d.%d%d%d%d", sw, gw, sfw, bfw, qfw, wfw);
+              //C相有功功率
+              z = z + 3;
+              char cactpowerphase[20] = {0};
+              sw = src[z + 2] >> 4 & 0x0f;
+              gw = src[z + 2] & 0x0f;
+              sfw = src[z + 1] >> 4 & 0x0f;
+              bfw = src[z + 1] & 0x0f;
+              qfw = src[z] >> 4 & 0x0f;
+              wfw = src[z] & 0x0f;
+              sprintf(cactpowerphase, "%d%d.%d%d%d%d", sw, gw, sfw, bfw, qfw, wfw);
+              //C相无功率
+              z = z + 3;
+              char creactpowerphase[20] = {0};
+              sw = src[z + 2] >> 4 & 0x0f;
+              gw = src[z + 2] & 0x0f;
+              sfw = src[z + 1] >> 4 & 0x0f;
+              bfw = src[z + 1] & 0x0f;
+              qfw = src[z] >> 4 & 0x0f;
+              wfw = src[z] & 0x0f;
+              sprintf(creactpowerphase, "%d%d.%d%d%d%d", sw, gw, sfw, bfw, qfw, wfw);
+              //C相视在功率
+              z = z + 3;
+              char cviewactpowerphase[20] = {0};
+              sw = src[z + 2] >> 4 & 0x0f;
+              gw = src[z + 2] & 0x0f;
+              sfw = src[z + 1] >> 4 & 0x0f;
+              bfw = src[z + 1] & 0x0f;
+              qfw = src[z] >> 4 & 0x0f;
+              wfw = src[z] & 0x0f;
+              sprintf(cviewactpowerphase, "%d%d.%d%d%d%d", sw, gw, sfw, bfw, qfw, wfw);
+              //总功率因数
+              z = z + 3;
+              char allpowerfacotr[20] = {0};
+              gw = src[z + 1] >> 4 & 0x0f;
+              sfw = src[z + 1] & 0x0f;
+              bfw = src[z] >> 4 & 0x0f;
+              qfw = src[z] & 0x0f;
+              sprintf(allpowerfacotr, "%d.%d%d%d", gw, sfw, bfw, qfw);
+              //A相功率因数
+              z = z + 2;
+              char apowerfactor[20] = {0};
+              gw = src[z + 1] >> 4 & 0x0f;
+              sfw = src[z + 1] & 0x0f;
+              bfw = src[z] >> 4 & 0x0f;
+              qfw = src[z] & 0x0f;
+              sprintf(apowerfactor, "%d.%d%d%d", gw, sfw, bfw, qfw);
+              //B相功率因数
+              z = z + 2;
+              char bpowerfactor[20] = {0};
+              gw = src[z + 1] >> 4 & 0x0f;
+              sfw = src[z + 1] & 0x0f;
+              bfw = src[z] >> 4 & 0x0f;
+              qfw = src[z] & 0x0f;
+              sprintf(bpowerfactor, "%d.%d%d%d", gw, sfw, bfw, qfw);
+              //C相功率因数
+              z = z + 2;
+              char cpowerfactor[20] = {0};
+              gw = src[z + 1] >> 4 & 0x0f;
+              sfw = src[z + 1] & 0x0f;
+              bfw = src[z] >> 4 & 0x0f;
+              qfw = src[z] & 0x0f;
+              sprintf(cpowerfactor, "%d.%d%d%d", gw, sfw, bfw, qfw);
+              //总有功功率
+              z = z + 2;
+              char allactpowerphase[20] = {0};
+              sw = src[z + 2] >> 4 & 0x0f;
+              gw = src[z + 2] & 0x0f;
+              sfw = src[z + 1] >> 4 & 0x0f;
+              bfw = src[z + 1] & 0x0f;
+              qfw = src[z] >> 4 & 0x0f;
+              wfw = src[z] & 0x0f;
+              sprintf(allactpowerphase, "%d%d.%d%d%d%d", sw, gw, sfw, bfw, qfw, wfw);
+              //总无功功率
+              z = z + 3;
+              char Allreactpowerphase[20] = {0};
+              sw = src[z + 2] >> 4 & 0x0f;
+              gw = src[z + 2] & 0x0f;
+              sfw = src[z + 1] >> 4 & 0x0f;
+              bfw = src[z + 1] & 0x0f;
+              qfw = src[z] >> 4 & 0x0f;
+              wfw = src[z] & 0x0f;
+              sprintf(Allreactpowerphase, "%d%d.%d%d%d%d", sw, gw, sfw, bfw, qfw, wfw);
+              //总视在功率
+              z = z + 3;
+              char Allviewactpowerphase[20] = {0};
+              sw = src[z + 2] >> 4 & 0x0f;
+              gw = src[z + 2] & 0x0f;
+              sfw = src[z + 1] >> 4 & 0x0f;
+              bfw = src[z + 1] & 0x0f;
+              qfw = src[z] >> 4 & 0x0f;
+              wfw = src[z] & 0x0f;
+              sprintf(Allviewactpowerphase, "%d%d.%d%d%d%d", sw, gw, sfw, bfw, qfw, wfw);
+              //A相电压
+              z = z + 3;
+              char avol[20] = {0};
+              BYTE bw = src[z + 1] >> 4 & 0x0f;
+              sw = src[z + 1] & 0x0f;
+              gw = src[z] >> 4 & 0x0f;
+              sfw = src[z] & 0x0f;
+              sprintf(avol, "%d%d%d.%d", bw, sw, gw, sfw);
+              //B相电压
+              z = z + 2;
+              char bvol[20] = {0};
+              bw = src[z + 1] >> 4 & 0x0f;
+              sw = src[z + 1] & 0x0f;
+              gw = src[z] >> 4 & 0x0f;
+              sfw = src[z] & 0x0f;
+              sprintf(bvol, "%d%d%d.%d", bw, sw, gw, sfw);
+              //C相电压
+              z = z + 2;
+              char cvol[20] = {0};
+              bw = src[z + 1] >> 4 & 0x0f;
+              sw = src[z + 1] & 0x0f;
+              gw = src[z] >> 4 & 0x0f;
+              sfw = src[z] & 0x0f;
+              sprintf(cvol, "%d%d%d.%d", bw, sw, gw, sfw);
+              //A相电流
+              z = z + 2;
+              char aelectric[20] = {0};
+              bw = src[z + 2] >> 4 & 0x0f;
+              sw = src[z + 2] & 0x0f;
+              gw = src[z + 1] >> 4 & 0x0f;
+              sfw = src[z + 1] & 0x0f;
+              bfw = src[z] >> 4 & 0x0f;
+              qfw = src[z] & 0x0f;
+              sprintf(aelectric, "%d%d%d.%d%d%d", bw, sw, gw, sfw, bfw, qfw);
+              //B相电流
+              z = z + 3;
+              char belectric[20] = {0};
+              bw = src[z + 2] >> 4 & 0x0f;
+              sw = src[z + 2] & 0x0f;
+              gw = src[z + 1] >> 4 & 0x0f;
+              sfw = src[z + 1] & 0x0f;
+              bfw = src[z] >> 4 & 0x0f;
+              qfw = src[z] & 0x0f;
+              sprintf(belectric, "%d%d%d.%d%d%d", bw, sw, gw, sfw, bfw, qfw);
+              //C相电流
+              z = z + 3;
+              char celectric[20] = {0};
+              bw = src[z + 2] >> 4 & 0x0f;
+              sw = src[z + 2] & 0x0f;
+              gw = src[z + 1] >> 4 & 0x0f;
+              sfw = src[z + 1] & 0x0f;
+              bfw = src[z] >> 4 & 0x0f;
+              qfw = src[z] & 0x0f;
+              sprintf(celectric, "%d%d%d.%d%d%d", bw, sw, gw, sfw, bfw, qfw);
+              //正向有功总电能量
+              z = z + 3;
+              char actenergy[20] = {0};
+              BYTE sww = src[z + 3] >> 4 & 0x0f;
+              BYTE ww = src[z + 3] & 0x0f;
+              BYTE qw = src[z + 2] >> 4 & 0x0f;
+              bw = src[z + 2] & 0x0f;
+              sw = src[z + 1] >> 4 & 0x0f;
+              gw = src[z + 1] & 0x0f;
+              sfw = src[z] >> 4 & 0x0f;
+              bfw = src[z] & 0x0f;
+              sprintf(actenergy, "%d%d%d%d%d%d.%d%d", sww, ww, qw, bw, sw, gw, sfw, bfw, qfw);
+              //正向无功总电能量
+              z = z + 4;
+              char reactenergy[20] = {0};
+              sww = src[z + 3] >> 4 & 0x0f;
+              ww = src[z + 3] & 0x0f;
+              qw = src[z + 2] >> 4 & 0x0f;
+              bw = src[z + 2] & 0x0f;
+              sw = src[z + 1] >> 4 & 0x0f;
+              gw = src[z + 1] & 0x0f;
+              sfw = src[z] >> 4 & 0x0f;
+              bfw = src[z] & 0x0f;
+              sprintf(reactenergy, "%d%d%d%d%d%d.%d%d", sww, ww, qw, bw, sw, gw, sfw, bfw, qfw);
+              //反向有功功总电能量
+              z = z + 4;
+              char directactenergy[20] = {0};
+              sww = src[z + 3] >> 4 & 0x0f;
+              ww = src[z + 3] & 0x0f;
+              qw = src[z + 2] >> 4 & 0x0f;
+              bw = src[z + 2] & 0x0f;
+              sw = src[z + 1] >> 4 & 0x0f;
+              gw = src[z + 1] & 0x0f;
+              sfw = src[z] >> 4 & 0x0f;
+              bfw = src[z] & 0x0f;
+              sprintf(directactenergy, "%d%d%d%d%d%d.%d%d", sww, ww, qw, bw, sw, gw, sfw, bfw, qfw);
+              //反向无功总电能量
+              z = z + 4;
+              char directreactenergy[20] = {0};
+              sww = src[z + 3] >> 4 & 0x0f;
+              ww = src[z + 3] & 0x0f;
+              qw = src[z + 2] >> 4 & 0x0f;
+              bw = src[z + 2] & 0x0f;
+              sw = src[z + 1] >> 4 & 0x0f;
+              gw = src[z + 1] & 0x0f;
+              sfw = src[z] >> 4 & 0x0f;
+              bfw = src[z] & 0x0f;
+              sprintf(directreactenergy, "%d%d%d%d%d%d.%d%d", sww, ww, qw, bw, sw, gw, sfw, bfw, qfw);
+              //A相电能量
+              z = z + 4;
+              char aenergy[20] = {0};
+              sww = src[z + 3] >> 4 & 0x0f;
+              ww = src[z + 3] & 0x0f;
+              qw = src[z + 2] >> 4 & 0x0f;
+              bw = src[z + 2] & 0x0f;
+              sw = src[z + 1] >> 4 & 0x0f;
+              gw = src[z + 1] & 0x0f;
+              sfw = src[z] >> 4 & 0x0f;
+              bfw = src[z] & 0x0f;
+              sprintf(aenergy, "%d%d%d%d%d%d.%d%d", sww, ww, qw, bw, sw, gw, sfw, bfw, qfw);
+              //B相电能量
+              z = z + 4;
+              char benergy[20] = {0};
+              sww = src[z + 3] >> 4 & 0x0f;
+              ww = src[z + 3] & 0x0f;
+              qw = src[z + 2] >> 4 & 0x0f;
+              bw = src[z + 2] & 0x0f;
+              sw = src[z + 1] >> 4 & 0x0f;
+              gw = src[z + 1] & 0x0f;
+              sfw = src[z] >> 4 & 0x0f;
+              bfw = src[z] & 0x0f;
+              sprintf(benergy, "%d%d%d%d%d%d.%d%d", sww, ww, qw, bw, sw, gw, sfw, bfw, qfw);
+              //B相电能量
+              z = z + 4;
+              char cenergy[20] = {0};
+              sww = src[z + 3] >> 4 & 0x0f;
+              ww = src[z + 3] & 0x0f;
+              qw = src[z + 2] >> 4 & 0x0f;
+              bw = src[z + 2] & 0x0f;
+              sw = src[z + 1] >> 4 & 0x0f;
+              gw = src[z + 1] & 0x0f;
+              sfw = src[z] >> 4 & 0x0f;
+              bfw = src[z] & 0x0f;
+              sprintf(cenergy, "%d%d%d%d%d%d.%d%d", sww, ww, qw, bw, sw, gw, sfw, bfw, qfw);
+              jsonRoot["aactpwr"] = aactpowerphase;
+              jsonRoot["anopwr"] = areactpowerphase;
+              jsonRoot["aviewpwr"] = aviewactpowerphase;
+              jsonRoot["bactpwr"] = bactpowerphase;
+              jsonRoot["bnopwr"] = breactpowerphase;
+              jsonRoot["bviewpwr"] = bviewactpowerphase;
+              jsonRoot["cactpwr"] = cactpowerphase;
+              jsonRoot["cnopwr"] = creactpowerphase;
+              jsonRoot["cviewpwr"] = cviewactpowerphase;
+              jsonRoot["pwrfactor"] = allpowerfacotr;
+              jsonRoot["apwrfactor"] = apowerfactor;
+              jsonRoot["bpwrfactor"] = bpowerfactor;
+              jsonRoot["cpwrfactor"] = cpowerfactor;
+              jsonRoot["sumactpwr"] = allactpowerphase;
+              jsonRoot["sumnopwr"] = Allreactpowerphase;
+              jsonRoot["sumviewpwr"] = Allviewactpowerphase;
+              jsonRoot["avol"] = avol;
+              jsonRoot["bvol"] = bvol;
+              jsonRoot["cvol"] = cvol;
+              jsonRoot["aelectric"] = aelectric;
+              jsonRoot["belectric"] = belectric;
+              jsonRoot["celectric"] = celectric;
+              jsonRoot["actenergy"] = actenergy;
+              jsonRoot["reactenergy"] = reactenergy;
+              jsonRoot["diractenergy"] = directactenergy;
+              jsonRoot["dirreactenergy"] = directreactenergy;
+              jsonRoot["aenergy"] = aenergy;
+              jsonRoot["benergy"] = benergy;
+              jsonRoot["cenergy"] = cenergy;
+              string inmsg = jsonRoot.toStyledString();
+              string sql = "update t_baseinfo set energyinfo=\'";
+              sql.append(inmsg.c_str());
+              sql.append("\'");
+              sql.append(" where comaddr=\'");
+              sql.append(addrarea);
+              sql.append("\'");
+              glog::GetInstance()->AddLine("能量信息:%s", sql.c_str());
+              dbopen->ExecuteWithResSQL(sql.c_str());
+              PostLog("A相有功功率:%s A相无功功率:%s A相视在功率:%s ", aactpowerphase, areactpowerphase, aviewactpowerphase);
+              PostLog("B相有功功率:%s B相无功功率:%s B相视在功率:%s ", bactpowerphase, breactpowerphase, bviewactpowerphase);
+              PostLog("C相有功功率:%s C相无功功率:%s C相视在功率:%s ", cactpowerphase, creactpowerphase, cviewactpowerphase);
+              PostLog("总功率因数:%s A相功率因数:%s B相功率因数:%s  C相功率因数:%s ", allpowerfacotr, apowerfactor, bpowerfactor, cpowerfactor);
+              PostLog("总有功功率:%s 总无功功率:%s 总视在功率:%s ", allactpowerphase, Allreactpowerphase, Allviewactpowerphase);
+              PostLog("A相电压:%s B相电压:%s C相电压:%s ", avol, bvol, cvol);
+              PostLog("A相电流:%s B相电流:%s C相电流:%s ", aelectric, belectric, celectric);
+              PostLog("正向有功总电能量:%s 正向无功总电能量:%s 反向有功总电能量:%s  反向无功总电能量:%s", actenergy, reactenergy, directactenergy, directreactenergy);
+              PostLog("A相电能量:%s B相电能量:%s C相电能量:%s ", aenergy, benergy, cenergy);
+              return;
             }
 
           if(DA[0] == 0 && DA[1] == 0 && DT[0] == 0x20 && DT[1] == 0x00)
@@ -2769,27 +3104,35 @@ void CIOCP::buildcode(BYTE src[], int srclen, IOCP_IO_PTR & lp_io)
                   break;
                 }
 
+              map<int, string>m_lampinfo;
+              m_lampinfo.clear();
+              string sql2 = "select * from t_lamp where l_comaddr=\'";
+              sql2.append(addrarea);
+              sql2.append("\' and l_deplayment=1");
+              //int setcode1 = *(SHORT*)&src[25];
+              //char l_code[20] = {0};
+              //sprintf(l_code, "%d", setcode1);
+              //sql2.append(l_code);
+              _RecordsetPtr rslamp = dbopen->ExecuteWithResSQL(sql2.c_str());
+
+              while(!rslamp->adoEOF)
+                {
+                  _variant_t vfactorycode = rslamp->GetCollect("l_factorycode");
+                  _variant_t vl_code = rslamp->GetCollect("l_code");
+                  string  l_factorycode = _com_util::ConvertBSTRToString(vfactorycode.bstrVal);
+                  int   il_code = vl_code;
+                  m_lampinfo.insert(pair<int, string>(il_code, l_factorycode));
+                  //strcpy(l_factory, l_factorycode.c_str());
+                  rslamp->MoveNext();
+                  // break;
+                }
+
               if(errcode >= 43 && errcode <= 48 || errcode == 50 || errcode == 51)
                 {
                   if(errcode == 43 || errcode == 44)
                     {
-                      string sql2 = "select * from t_lamp where l_comaddr=\'";
-                      sql2.append(addrarea);
-                      sql2.append("\' and l_code=");
-                      int setcode1 = *(SHORT*)&src[25];
-                      char l_code[20] = {0};
-                      sprintf(l_code, "%d", setcode1);
-                      sql2.append(l_code);
-                      _RecordsetPtr rs1 = dbopen->ExecuteWithResSQL(sql2.c_str());
-
-                      while(!rs1->adoEOF)
-                        {
-                          _variant_t vfactorycode = rs1->GetCollect("l_factorycode");
-                          string  l_factorycode = _com_util::ConvertBSTRToString(vfactorycode.bstrVal);
-                          strcpy(l_factory, l_factorycode.c_str());
-                          rs1->MoveNext();
-                          break;
-                        }
+                      SHORT setcode1 = *(SHORT*)&src[25];
+                      strcpy(l_factory, m_lampinfo[setcode1].c_str());
                     }
 
                   int uptype = 1;
@@ -2858,11 +3201,48 @@ void CIOCP::buildcode(BYTE src[], int srclen, IOCP_IO_PTR & lp_io)
               else
                 {
                   string setname = "";
+                  char detail[512] = {0};
 
                   switch(errcode)
                     {
                       case 49:
                         setname = "集中器和灯控器通迅中断";
+                        {
+                          int ncount = src[25];
+                          sprintf(detail, "中断数量:%d ", ncount);
+                          int z = 27;
+                          _variant_t  vcomment(setname.c_str());
+                          m_var.insert(pair<string, _variant_t>("f_comment", vcomment));
+
+                          for(int i = 0; i < ncount; i++)
+                            {
+                              SHORT setcode = *(SHORT*)&src[z + 2 * i];
+                              int isetcode = setcode;
+                              char aaa[30] = {0};
+                              sprintf(aaa, "装置号:%d 编号:%s", setcode, m_lampinfo[isetcode].c_str());
+                              sprintf(detail, "%s装置号:%d 编号:%s ", detail, setcode, m_lampinfo[isetcode].c_str());
+
+                              if(m_var.find("f_detail") != m_var.end())
+                                {
+                                  _variant_t  vdetail(aaa);
+                                  m_var["f_detail"] = vdetail;
+                                }
+                              else
+                                {
+                                  _variant_t  vdetail(aaa);
+                                  m_var.insert(pair<string, _variant_t>("f_detail", vdetail));
+                                }
+
+                              string sql = dbopen->GetInsertSql(m_var, "t_fault");
+                              // PostLog("sql:%s", sql.c_str());
+                              _RecordsetPtr rs2 = dbopen->ExecuteWithResSQL(sql.c_str());
+                              string sql3 = "update t_lamp set l_fault=1,l_faultdesc=\'灯控器通迅中断\',l_value=0 where l_comaddr=\'";
+                              sql3.append(addrarea);
+                              sql3.append("\' and l_code=");
+                              sql3.append(gstring::int2str(setcode).c_str());
+                              rs2 = dbopen->ExecuteWithResSQL(sql3.c_str());
+                            }
+                        }
                         break;
 
                       case 52:
@@ -2880,36 +3260,31 @@ void CIOCP::buildcode(BYTE src[], int srclen, IOCP_IO_PTR & lp_io)
 
                   _variant_t  vcomment(setname.c_str());
                   m_var.insert(pair<string, _variant_t>("f_comment", vcomment));
-                  sprintf(emailinfo, "项目:%s\r\n网关:%s\r\n事件代码:ERC%d\r\n  事件描述:%s \r\n数据:%s \r\n", pid.c_str(), addrarea, (int)errcode, setname.c_str(), hexdata);
+                  sprintf(emailinfo, "项目:%s\r\n网关:%s\r\n事件代码:ERC%d\r\n事件描述:%s\r\n数据:%s \r\n详细:%s\r\n", pid.c_str(), addrarea, (int)errcode, setname.c_str(), hexdata.c_str(), detail);
                 }
 
-              string sql = dbopen->GetInsertSql(m_var, "t_fault");
-              PostLog("sql:%s", sql.c_str());
-              _RecordsetPtr rs1 = dbopen->ExecuteWithResSQL(sql.c_str());
-
-              if(!rs1)
+              if(errcode != 49)
                 {
-                  glog::GetInstance()->AddLine("插入报警事件失败:sql %s", sql.c_str());
+                  string sql = dbopen->GetInsertSql(m_var, "t_fault");
+                  PostLog("sql:%s", sql.c_str());
+                  _RecordsetPtr rs1 =  dbopen->ExecuteWithResSQL(sql.c_str());
                 }
 
-              if(rs1)
-                {
-                  string sql1 = "select * from t_people where u_pid in (select pid from t_baseinfo where comaddr=\'";
-                  sql1.append(addrarea);
-                  sql1.append("\')");
-                  _RecordsetPtr rs = dbopen->ExecuteWithResSQL(sql1.c_str());
+              string sql1 = "select * from t_people where u_pid in (select pid from t_baseinfo where comaddr=\'";
+              sql1.append(addrarea);
+              sql1.append("\')");
+              _RecordsetPtr rs = dbopen->ExecuteWithResSQL(sql1.c_str());
 
-                  while(!rs->adoEOF)
-                    {
-                      _variant_t vname = rs->GetCollect("u_name");
-                      _variant_t vemail = rs->GetCollect("u_email");
-                      string name = _com_util::ConvertBSTRToString(vname.bstrVal);
-                      string email = _com_util::ConvertBSTRToString(vemail.bstrVal);
-                      objeamil.SetEmailTitle(string("网关故障报告"));
-                      objeamil.SetContent(string(emailinfo));
-                      objeamil.AddTargetEmail(email);
-                      rs->MoveNext();
-                    }
+              while(!rs->adoEOF)
+                {
+                  _variant_t vname = rs->GetCollect("u_name");
+                  _variant_t vemail = rs->GetCollect("u_email");
+                  string name = _com_util::ConvertBSTRToString(vname.bstrVal);
+                  string email = _com_util::ConvertBSTRToString(vemail.bstrVal);
+                  objeamil.SetEmailTitle(string("故障报告"));
+                  objeamil.SetContent(string(emailinfo));
+                  objeamil.AddTargetEmail(email);
+                  rs->MoveNext();
                 }
             }
         }
@@ -3220,17 +3595,17 @@ TO:
 
           if(itepack1 != m_pack.end())
             {
-              pBREAKPCK p1 = itepack->second;
+              pBREAKPCK p1 = itepack1->second;
               delete p1->b;
               delete p1;
-              m_pack.erase(itepack);
+              m_pack.erase(itepack1);
             }
 
           char addrarea[20] = {0};
           sprintf(addrarea, "%02x%02x%02x%02x", src[8], src[7], src[10], src[9]); //网关地址
           string datastr = gstring::char2hex((char*)src, alllenth);
           PostLog("网关[%s] 包长度:%d 帧序号:%d 包数据:%s 通信指针:%p", addrarea, alllenth, src[0xd] & 0x0f, datastr.c_str(), lp_io);
-          buildcode(src, datalen, lp_io);
+          buildcode(src, alllenth, lp_io);
         }
 
 RET:

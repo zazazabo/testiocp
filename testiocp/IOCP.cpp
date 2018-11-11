@@ -3213,24 +3213,33 @@ void CIOCP::buildcode(BYTE src[], int srclen, IOCP_IO_PTR & lp_io)
                           int z = 27;
                           _variant_t  vcomment(setname.c_str());
                           m_var.insert(pair<string, _variant_t>("f_comment", vcomment));
-
                           for(int i = 0; i < ncount; i++)
                             {
                               SHORT setcode = *(SHORT*)&src[z + 2 * i];
                               int isetcode = setcode;
                               char aaa[30] = {0};
                               sprintf(aaa, "×°ÖÃºÅ:%d ±àºÅ:%s", setcode, m_lampinfo[isetcode].c_str());
-                              sprintf(detail, "%s×°ÖÃºÅ:%d ±àºÅ:%s ", detail, setcode, m_lampinfo[isetcode].c_str());
 
-                              if(m_var.find("f_detail") != m_var.end())
+                              if(m_var.find("f_setcode") == m_var.end())
                                 {
-                                  _variant_t  vdetail(aaa);
-                                  m_var["f_detail"] = vdetail;
+                                  _variant_t  vsetcode(isetcode);
+                                  m_var.insert(pair<string, _variant_t>("f_setcode", vsetcode));
                                 }
                               else
                                 {
-                                  _variant_t  vdetail(aaa);
-                                  m_var.insert(pair<string, _variant_t>("f_detail", vdetail));
+                                  _variant_t  vsetcode(isetcode);
+                                  m_var["f_setcode"] = vsetcode;
+                                }
+
+                              if(m_var.find("l_factorycode") == m_var.end())
+                                {
+									_variant_t  vfactorycode1(m_lampinfo[isetcode].c_str());
+									m_var.insert(pair<string, _variant_t>("l_factorycode", vfactorycode1));
+                                }
+                              else
+                                {
+                                  _variant_t  vfactorycode1(m_lampinfo[isetcode].c_str());
+                                  m_var["l_factorycode"] = vfactorycode1;
                                 }
 
                               string sql = dbopen->GetInsertSql(m_var, "t_fault");
@@ -3277,14 +3286,14 @@ void CIOCP::buildcode(BYTE src[], int srclen, IOCP_IO_PTR & lp_io)
 
               while(!rs->adoEOF)
                 {
-                  _variant_t vname = rs->GetCollect("u_name");
-                  _variant_t vemail = rs->GetCollect("u_email");
-                  string name = _com_util::ConvertBSTRToString(vname.bstrVal);
-                  string email = _com_util::ConvertBSTRToString(vemail.bstrVal);
-                  objeamil.SetEmailTitle(string("¹ÊÕÏ±¨¸æ"));
-                  objeamil.SetContent(string(emailinfo));
-                  objeamil.AddTargetEmail(email);
-                  rs->MoveNext();
+					_variant_t vname = rs->GetCollect("u_name");
+					_variant_t vemail = rs->GetCollect("u_email");
+					string name = _com_util::ConvertBSTRToString(vname.bstrVal);
+					string email = _com_util::ConvertBSTRToString(vemail.bstrVal);
+					objeamil.SetEmailTitle(string("¹ÊÕÏ±¨¸æ"));
+					objeamil.SetContent(string(emailinfo));
+					objeamil.AddTargetEmail(email);
+					rs->MoveNext();
                 }
             }
         }

@@ -491,13 +491,19 @@ int CSmtp::SendVecotrEmail()
     }
 
   int nRet = 0;
-  auto it = m_vectorTargetEamil.begin();
 
-  while(it != m_vectorTargetEamil.end())
+  if(getflag() == true)
     {
-      targetAddr = it->first;
-      SendEmail_Ex();
-      m_vectorTargetEamil.erase(it++);
+      auto it = m_vectorTargetEamil.begin();
+
+      while(it != m_vectorTargetEamil.end())
+        {
+          targetAddr = it->first;
+          SendEmail_Ex();
+          m_vectorTargetEamil.erase(it++);
+        }
+
+      setflag(false);
     }
 
   /*
@@ -528,4 +534,14 @@ void CSmtp::AddTargetEmail(string &strTargetEmail)
   //if(it == m_vectorTargetEamil.end()) {
   //    m_vectorTargetEamil.push_back(strTargetEmail);
   //}
+}
+
+void CSmtp::setflag(BOOL bb)
+{
+  m_bflag = bb;
+}
+
+bool CSmtp::getflag()
+{
+  return m_bflag;
 }

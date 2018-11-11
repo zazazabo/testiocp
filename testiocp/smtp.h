@@ -68,8 +68,10 @@ private:
   //bool SendAttachment();        //发送附件
   int SendAttachment_Ex();
   bool SendEnd();
-
+  bool m_bflag;
 public:
+  void setflag(BOOL bb);
+  bool getflag();
   void AddAttachment(string &filePath); //添加附件
   void DeleteAttachment(string &filePath); //删除附件
   void DeleteAllAttachment(); //删除所有的附件

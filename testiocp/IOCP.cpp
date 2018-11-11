@@ -1197,15 +1197,15 @@ BOOL CIOCP::InitAll()
   //};
   //string outstring = "";
   //BOOL bfullpack = TRUE;
-  //int n1 = wsDecodeFrame((char*)hexData, outstring, sizeof(hexData), bfullpack);
-  //unsigned char hexData[33] =
-  //{
-  //  0x68, 0x66, 0x00, 0x66, 0x00, 0x68, 0xC4, 0x01, 0x17, 0x66, 0x00, 0x04, 0x0E, 0x65, 0x00, 0x00,
-  //  0x01, 0x00, 0x31, 0x0B, 0x00, 0x00, 0x10, 0x11, 0x18, 0x02, 0x00, 0x3A, 0x00, 0x3C, 0x00, 0xA7,
-  //  0x16
-  //};
-  //IOCP_IO_PTR pp;
-  //buildcode(hexData, sizeof(hexData), pp);
+ // int n1 = wsDecodeFrame((char*)hexData, outstring, sizeof(hexData), bfullpack);
+  unsigned char hexData[33] =
+  {
+	  0x68, 0x66, 0x00, 0x66, 0x00, 0x68, 0xC4, 0x01, 0x17, 0x66, 0x00, 0x04, 0x0E, 0x65, 0x00, 0x00,
+	  0x01, 0x00, 0x31, 0x0B, 0x00, 0x00, 0x10, 0x11, 0x18, 0x02, 0x00, 0x3A, 0x00, 0x3C, 0x00, 0xA7,
+	  0x16
+  };
+  IOCP_IO_PTR pp;
+  buildcode(hexData, sizeof(hexData), pp);
   WSAData data;
 
   if(WSAStartup(MAKEWORD(2, 2), &data) != 0)
@@ -3288,13 +3288,13 @@ void CIOCP::buildcode(BYTE src[], int srclen, IOCP_IO_PTR & lp_io)
 
               while(!rs->adoEOF)
                 {
-                  _variant_t vname = rs->GetCollect("u_name");
-                  _variant_t vemail = rs->GetCollect("u_email");
-                  string name = _com_util::ConvertBSTRToString(vname.bstrVal);
-                  string email = _com_util::ConvertBSTRToString(vemail.bstrVal);
-                  objeamil.SetEmailTitle(string("故障报告"));
-                  objeamil.SetContent(string(emailinfo));
-                  objeamil.AddTargetEmail(email);
+					_variant_t vname = rs->GetCollect("u_name");
+					_variant_t vemail = rs->GetCollect("u_email");
+					string name = _com_util::ConvertBSTRToString(vname.bstrVal);
+					string email = _com_util::ConvertBSTRToString(vemail.bstrVal);
+					objeamil.SetEmailTitle(string("故障报告"));
+					objeamil.SetContent(string(emailinfo));
+					objeamil.AddTargetEmail(email);
                   rs->MoveNext();
                 }
             }

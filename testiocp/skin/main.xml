@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Window caption="0,0,0,36" roundcorner="5,5" size="1200,650" sizebox="6,6,6,6" mininfo="80,60">
+<Window caption="0,0,0,36" roundcorner="5,5" size="1000,650" sizebox="6,6,6,6" mininfo="80,60">
   <Font name="微软雅黑" size="12" bold="false" default="true" />
   <Font name="微软雅黑" size="12" bold="true"/>  
    <Include source="scrollbar.xml" />
@@ -27,23 +27,23 @@
 
 
       		<HorizontalLayout>
-      			<Button name="start" text="启动服务端" width="100" height="30" bkcolor="#FF24759F" hottextcolor="#FF24865F"  padding="10,10" bkcolor2="#3BC7FA"/>
+      			<!-- <Button name="start" text="启动服务端" width="100" height="30" bkcolor="#FF24759F" hottextcolor="#FF24865F"  padding="10,10" bkcolor2="#3BC7FA"/> -->
 
             <Button name="clear" text="清空日志" width="100" height="30" bkcolor="#FF24759F" hottextcolor="#FF24865F"  padding="10,10" bkcolor2="#3BC7FA"/>
 
       		 <Button name="gaywaylist" text="集中器列表" width="100" height="30" bkcolor="#FF24759F" hottextcolor="#FF24865F"  padding="10,10" bkcolor2="#3BC7FA"/>
 <!--      <Button name="weblist" text="sql查询" width="100" height="30" bkcolor="#FF24759F" hottextcolor="#FF24865F"  padding="10,10" bkcolor2="#3BC7FA"/>
  -->
-               <Label text="数据:" width="30" height="30"  padding="10,10" />
+<!--                <Label text="数据:" width="30" height="30"  padding="10,10" />
                <Edit name="data"  borderround="4,4,4,4" nativebkcolor="#ff5AD2F6" bkcolor="#ff5AD2F6"  width="400" height="30"  padding="1,10" />  
 
 
                <Button name="setdata" text="设置" width="100" height="30" bkcolor="#FF24759F" hottextcolor="#FF24865F"  padding="10,10" bkcolor2="#3BC7FA"/>
 
-                   <Button name="senddata" text="发送" width="100" height="30" bkcolor="#FF24759F" hottextcolor="#FF24865F"  padding="10,10" bkcolor2="#3BC7FA"/>
+                   <Button name="senddata" text="发送" width="100" height="30" bkcolor="#FF24759F" hottextcolor="#FF24865F"  padding="10,10" bkcolor2="#3BC7FA"/> -->
                    
 
-                  <Button name="checklamp" text="巡测" width="100" height="30" bkcolor="#FF24759F" hottextcolor="#FF24865F"  padding="10,10" bkcolor2="#3BC7FA"/>
+                  <!-- <Button name="checklamp" text="巡测" width="100" height="30" bkcolor="#FF24759F" hottextcolor="#FF24865F"  padding="10,10" bkcolor2="#3BC7FA"/> -->
 
  <!--      <Button name="closesocket" text="关闭socket" width="100" height="30" bkcolor="#FF24759F" hottextcolor="#FF24865F"  padding="10,10" bkcolor2="#3BC7FA"/> -->
 
@@ -60,13 +60,13 @@
 
                                                            <ListHeaderItem font="1" hotimage="file='list_header_hot.png'" pushedimage="file='list_header_pushed.png'" userdata="num" sepimage="file='list_header_sep.png'" sepwidth="1" text="IP" width="130"/>
 
-                                                          <ListHeaderItem font="1" hotimage="file='list_header_hot.png'" pushedimage="file='list_header_pushed.png'" sepimage="file='list_header_sep.png'" sepwidth="1" text="通信指针" width="100"/>
+             <!--                                              <ListHeaderItem font="1" hotimage="file='list_header_hot.png'" pushedimage="file='list_header_pushed.png'" sepimage="file='list_header_sep.png'" sepwidth="1" text="通信指针" width="100"/>
     <ListHeaderItem font="1" hotimage="file='list_header_hot.png'" pushedimage="file='list_header_pushed.png'" sepimage="file='list_header_sep.png'" sepwidth="1" text="Key" width="100"/>
                                                          
                                                           <ListHeaderItem font="1" hotimage="file='list_header_hot.png'" pushedimage="file='list_header_pushed.png'" sepimage="file='list_header_sep.png'" sepwidth="1" text="设置发送的数据" width="280"/>
                                                           <ListHeaderItem font="1" hotimage="file='list_header_hot.png'" pushedimage="file='list_header_pushed.png'" sepimage="file='list_header_sep.png'" sepwidth="1" text="收到十六进制数据" width="200"/>
                                                           <ListHeaderItem font="1" hotimage="file='list_header_hot.png'" pushedimage="file='list_header_pushed.png'" sepimage="file='list_header_sep.png'" sepwidth="1" text="收到的ascii码" width="200"/>
-                                                          <ListHeaderItem font="1" hotimage="file='list_header_hot.png'" pushedimage="file='list_header_pushed.png'" sepimage="file='list_header_sep.png'" sepwidth="1" text="长度" width="50"/>
+                                                          <ListHeaderItem font="1" hotimage="file='list_header_hot.png'" pushedimage="file='list_header_pushed.png'" sepimage="file='list_header_sep.png'" sepwidth="1" text="长度" width="50"/> -->
                                                         
                                                               <ListHeaderItem font="1" hotimage="file='list_header_hot.png'" pushedimage="file='list_header_pushed.png'" sepimage="file='list_header_sep.png'" sepwidth="1" text="客户端类型" width="80"/>
 

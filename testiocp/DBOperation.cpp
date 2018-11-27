@@ -92,6 +92,11 @@ BOOL CDBOperation::IsNUll(_RecordsetPtr& rs)
 
 int CDBOperation::GetNum(_RecordsetPtr& rs)
 {
+
+	if (rs==NULL)
+	{
+		return 0;
+	}
   __try
     {
       int i = 0;

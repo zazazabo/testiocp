@@ -80,12 +80,12 @@ void CMainFrame::Init()
 	v_fault.push_back("Ä©ÓÃ");
   m_pRishLog = static_cast<CRichEditUI*>(m_pm.FindControl(_T("opera")));
   m_plistuser = static_cast<CListUI*>(m_pm.FindControl(_T("socketlist")));
-  m_pData = static_cast<CEditUI*>(m_pm.FindControl(_T("data")));
+//  m_pData = static_cast<CEditUI*>(m_pm.FindControl(_T("data")));
   m_pDate =  static_cast<CLabelUI*>(m_pm.FindControl(_T("nowdate")));
   m_pUserName = static_cast<CLabelUI*>(m_pm.FindControl(_T("loguser")));
   m_pDate->SetText(gstring::getday().c_str());
   m_pUserName->SetText("....");
-  m_pData->SetText("683200320068040117660002ac7100002004c516");
+ // m_pData->SetText("683200320068040117660002ac7100002004c516");
   m_plistuser->RemoveAll();
   string pdir = GetDataDir("config.ini");
   char source[216] = {0};
@@ -403,7 +403,11 @@ void CMainFrame::PostLog(const char* pData, ...)
   va_start(args, pData);
   n = vsprintf(chlog, pData, args);
   va_end(args);
-  ::SendMessageA(this->m_hParanWnd, WM_USER + 1, (WPARAM)chlog, (LPARAM)0);
+  if (n<2048)
+  {
+	    ::SendMessageA(this->m_hParanWnd, WM_USER + 1, (WPARAM)chlog, (LPARAM)0);
+  }
+
 }
 
 

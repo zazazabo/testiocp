@@ -134,9 +134,9 @@ void CIOCP::Notify(TNotifyUI& msg)
       else if(msg.pSender->GetName() == "senddata")
         {
           int n = m_plistuser->GetCurSel();
-          string lpiostr =   getItemText(m_plistuser, m_plistuser->GetCurSel(), 2);
-          string lpkeystr =   getItemText(m_plistuser, m_plistuser->GetCurSel(), 3);
-          string data =   getItemText(m_plistuser, m_plistuser->GetCurSel(), 4);
+          string lpiostr =   getItemText(m_plistuser, m_plistuser->GetCurSel(), 4);
+          string lpkeystr =   getItemText(m_plistuser, m_plistuser->GetCurSel(), 5);
+          string data =   getItemText(m_plistuser, m_plistuser->GetCurSel(), 3);
           ULONG_PTR io = (ULONG_PTR)strtol(lpiostr.c_str(), NULL, 16);
           ULONG_PTR ik = (ULONG_PTR)strtol(lpiostr.c_str(), NULL, 16);
 
@@ -151,7 +151,7 @@ void CIOCP::Notify(TNotifyUI& msg)
       else if(msg.pSender->GetName() == "setdata")
         {
           string data = m_pData->GetText();
-          setItemText(m_plistuser, m_plistuser->GetCurSel(), 4, data);
+          setItemText(m_plistuser, m_plistuser->GetCurSel(), 3, data);
         }
       else if(msg.pSender->GetName() == "deletebtn")
         {
@@ -393,28 +393,28 @@ BOOL CIOCP::HandleData(IOCP_IO_PTR lp_io, int nFlags, IOCP_KEY_PTR lp_key, DWORD
     {
       case IOCP_COMPLETE_ACCEPT:
         {
-          char szPeerAddress[50];
-          SOCKADDR_IN *addrClient = NULL, *addrLocal = NULL;
-          char ip[50] = {0};
-          int nClientLen = sizeof(SOCKADDR_IN), nLocalLen = sizeof(SOCKADDR_IN);
-          lpGetAcceptExSockaddrs(lp_io->buf, 0, sizeof(SOCKADDR_IN) + 16, sizeof(SOCKADDR_IN) + 16, (LPSOCKADDR*)&addrLocal, &nLocalLen, (LPSOCKADDR*)&addrClient, &nClientLen);
-          char* ip1 = inet_ntoa(addrClient->sin_addr);
-          sprintf(szPeerAddress, "%s:%d", ip1, addrClient->sin_port);
-          CListTextElementUI* pListElement = new CListTextElementUI;
-          m_plistuser->Add(pListElement);
-          lp_io->pUserData = pListElement;
-          // m_pData->SetText(gstring::int2str((int)pListElement, 16).c_str());
-          char vvv[20] = {0};
-          int n = m_plistuser->GetCount();
-          sprintf(vvv, "%d", n);
-          pListElement->SetText(0, vvv);
-          pListElement->SetText(1, szPeerAddress);
-          //sprintf(vvv, "%p", lp_io);
-          //pListElement->SetText(2, vvv);
-          //sprintf(vvv, "%p", lp_key);
-          //pListElement->SetText(3, vvv);
-          glog::GetInstance()->AddLine("客户端上线:%s lp_io:%p     lp_key:%p", szPeerAddress, lp_io, lp_key);
-          PostLog("客户端上线:%s lp_io:%p     lp_key:%p", szPeerAddress, lp_io, lp_key);
+          //char szPeerAddress[50];
+          //SOCKADDR_IN *addrClient = NULL, *addrLocal = NULL;
+          //char ip[50] = {0};
+          //int nClientLen = sizeof(SOCKADDR_IN), nLocalLen = sizeof(SOCKADDR_IN);
+          //lpGetAcceptExSockaddrs(lp_io->buf, 0, sizeof(SOCKADDR_IN) + 16, sizeof(SOCKADDR_IN) + 16, (LPSOCKADDR*)&addrLocal, &nLocalLen, (LPSOCKADDR*)&addrClient, &nClientLen);
+          //char* ip1 = inet_ntoa(addrClient->sin_addr);
+          //sprintf(szPeerAddress, "%s:%d", ip1, addrClient->sin_port);
+          //CListTextElementUI* pListElement = new CListTextElementUI;
+          //m_plistuser->Add(pListElement);
+          //lp_io->pUserData = pListElement;
+          //// m_pData->SetText(gstring::int2str((int)pListElement, 16).c_str());
+          //char vvv[20] = {0};
+          //int n = m_plistuser->GetCount();
+          //sprintf(vvv, "%d", n);
+          //pListElement->SetText(0, vvv);
+          //pListElement->SetText(1, szPeerAddress);
+          ////sprintf(vvv, "%p", lp_io);
+          ////pListElement->SetText(2, vvv);
+          ////sprintf(vvv, "%p", lp_key);
+          ////pListElement->SetText(3, vvv);
+          //glog::GetInstance()->AddLine("客户端上线:%s lp_io:%p     lp_key:%p", szPeerAddress, lp_io, lp_key);
+          //PostLog("客户端上线:%s lp_io:%p     lp_key:%p", szPeerAddress, lp_io, lp_key);
           lp_io->operation    = IOCP_READ;
         }
         break;
@@ -448,19 +448,19 @@ BOOL CIOCP::HandleData(IOCP_IO_PTR lp_io, int nFlags, IOCP_KEY_PTR lp_key, DWORD
           sprintf(vvv, "%d", n);
           pListElement->SetText(0, vvv);
           pListElement->SetText(1, szPeerAddress);
-//                 sprintf(vvv, "%p", lp_io);
-//                 pListElement->SetText(2, vvv);
-//                 sprintf(vvv, "%p", lp_key);
-//                 pListElement->SetText(3, vvv);
+          sprintf(vvv, "%p", lp_io);
+          pListElement->SetText(4, vvv);
+          sprintf(vvv, "%p", lp_key);
+          pListElement->SetText(5, vvv);
 //                 string data = gstring::char2hex(lp_io->buf, dwByte);
           // glog::GetInstance()->AddLine("包长度:%d 包数据:%s", dwByte, data.c_str());
           //pListElement->SetText(5, data.c_str());
           //pListElement->SetText(6, lp_io->buf);
-          char lenstr[20] = {0};
-          sprintf(lenstr, "%d", dwByte);
-          pListElement->SetText(7, lenstr);
+          //char lenstr[20] = {0};
+          //sprintf(lenstr, "%d", dwByte);
+          //pListElement->SetText(7, lenstr);
           glog::GetInstance()->AddLine("客户端上线:%s lp_io:%p     lp_key:%p", szPeerAddress, lp_io, lp_key);
-          PostLog("客户端上线:%s lp_io:%p     lp_key:%p", szPeerAddress, lp_io, lp_key);
+          PostLog("客户端上线:%s", szPeerAddress);
           string req = lp_io->buf;
           string res;
           int wsconn = wsHandshake(req, res);
@@ -483,7 +483,7 @@ BOOL CIOCP::HandleData(IOCP_IO_PTR lp_io, int nFlags, IOCP_KEY_PTR lp_key, DWORD
             {
               PostLog("集中器上线....");
               buildcode((BYTE*)lp_io->buf, dwByte, lp_io);
-              pListElement->SetText(8, lp_io->gayway);
+              pListElement->SetText(2, lp_io->gayway);
               break;
             }
 
@@ -884,6 +884,8 @@ DWORD CIOCP::TimeThread(LPVOID lp_param)
                           //unsigned char vol[24] = {0x68, 0x42, 0x00, 0x42, 0x00, 0x68, 0x04, comaddr[1], comaddr[0], comaddr[3], comaddr[2], 0x02, 0xAC, 0x7A, 0x00, 0x00, 0x04, 0x04, 0x00, 0x00, 0x01, 0x05, 0x55, 0x16};
                           BYTE vol[50] = {0};
                           n = lp_this->buidByte(gayway, 0x4, 0xAC, 0x71, 0, 0x404, v_b, vol);
+                          string data1 = gstring::char2hex((const char*)vol, n);
+                          glog::GetInstance()->AddLine("电压发送包:%s", data1.c_str());
                           lp_this->InitIoContext(lo);
                           memcpy(lo->buf, vol, n);
                           lo->wsaBuf.len = n; // sizeof(vol);
@@ -916,6 +918,8 @@ DWORD CIOCP::TimeThread(LPVOID lp_param)
                           lp_this->PostLog("集控器[%s]请求昨天三相有功功率数据", gayway);
                           unsigned char activepower[50] = {0}; // {0x68, 0x42, 0x00, 0x42, 0x00, 0x68, 0x04, comaddr[1], comaddr[0], comaddr[3], comaddr[2], 0x02, 0xAC, 0x76, 0x00, 0x00, 0x01, 0x03, 0x00, 0x00, 0x20, 0x04, 0x6B, 0x16 };
                           n = lp_this->buidByte(gayway, 0x4, 0xAC, 0x71, 0, 0x301, v_b, activepower);
+                          string data1 = gstring::char2hex((const char*)activepower, n);
+                          glog::GetInstance()->AddLine("有功功率发送包:%s", data1.c_str());
                           lp_this->InitIoContext(lo);
                           memcpy(lo->buf, activepower, n);
                           lo->wsaBuf.len = n; //sizeof(activepower);
@@ -931,6 +935,8 @@ DWORD CIOCP::TimeThread(LPVOID lp_param)
                           lp_this->PostLog("集控器[%s]请求昨天功率因数", gayway);
                           unsigned char powerfactor[50] = {0}; //{0x68, 0x42, 0x00, 0x42, 0x00, 0x68, 0x04, comaddr[1], comaddr[0], comaddr[3], comaddr[2], 0x02, 0xAC, 0x78, 0x00, 0x00, 0x40, 0x03, 0x00, 0x00, 0x20, 0x04, 0xAC, 0x16 };
                           n = lp_this->buidByte(gayway, 0x4, 0xAC, 0x71, 0, 0x340, v_b, powerfactor);
+                          string data1 = gstring::char2hex((const char*)powerfactor, n);
+                          glog::GetInstance()->AddLine("功率因数发送包:%s", data1.c_str());
                           lp_this->InitIoContext(lo);
                           memcpy(lo->buf, powerfactor, n);
                           lo->wsaBuf.len = n;
@@ -946,6 +952,8 @@ DWORD CIOCP::TimeThread(LPVOID lp_param)
                           lp_this->PostLog("集控器[%s]请求昨天正向功能量", gayway);
                           unsigned char power[50] = {0};//{0x68, 0x32, 0x00, 0x32, 0x00, 0x68, 0x04,  comaddr[1], comaddr[0], comaddr[3], comaddr[2], 0x02, 0xAC, 0x7B, 0x00, 0x00, 0x01, 0x05, 0x4E, 0x16 };
                           n = lp_this->buidByte(gayway, 0x4, 0xAC, 0x71, 0, 0x501, v_b, power);
+                          string data1 = gstring::char2hex((const char*)power, n);
+                          glog::GetInstance()->AddLine("正向功能量发送包:%s", data1.c_str());
                           lp_this->InitIoContext(lo);
                           memcpy(lo->buf, power, n);
                           lo->wsaBuf.len = n;
@@ -1226,14 +1234,21 @@ BOOL CIOCP::InitAll()
   //
   // File    : Untitled1
   // Address : 0 (0x0)
-  // Size    : 31 (0x1F)
+  // Size    : 114 (0x72)
   //------------------------------------------------------------
-  //unsigned char hexData[31] =
-  //{
-  //  0x68, 0x5E, 0x00, 0x5E, 0x00, 0x68, 0xC4, 0x01, 0x18, 0x13, 0x04, 0x04, 0x0E, 0x61, 0x00, 0x00,
-  //  0x01, 0x00, 0x2C, 0x09, 0x18, 0x17, 0x20, 0x11, 0x18, 0x3A, 0x00, 0x01, 0x00, 0x50, 0x16
-  //};
-  //IOCP_IO_PTR pp;
+  unsigned char hexData[114] =
+  {
+    0x68, 0xB2, 0x0D, 0xB2, 0x0D, 0x68, 0x88, 0x02, 0x17, 0x01, 0x01, 0x02, 0xAC, 0x01, 0x00, 0x00,
+    0x20, 0x04, 0x45, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x45, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x45, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x45, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x45, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x45,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x45, 0x00, 0x00, 0x46, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x46, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x46, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x47, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x48,
+    0x00, 0x00
+  };
+  //IOCP_IO_PTR p1;
+  //IsBreakPack(p1,hexData,sizeof(hexData));
   //buildcode(hexData, sizeof(hexData), pp);
   WSAData data;
 
@@ -1547,17 +1562,24 @@ DWORD CIOCP::CompletionRoutine(LPVOID lp_param)
       op_len = sizeof(op);
       nRet = getsockopt(lp_io->socket, SOL_SOCKET, SO_CONNECT_TIME, (char*)&op, &op_len);
 
+      if(op != 0xffffffff)
+        {
+          lp_io->timelen = op;
+        }
+
       //if(SOCKET_ERROR == nRet)
       //{
       //    lp_this->PostLog("lp_io:%p errorcode:%d getsockopt", lp_io, WSAGetLastError(), lp_this->m_io_group.GetCount());
       //    closesocket(lp_io->socket);
       //    //continue;
       //}
-
-      if(op != 0xffffffff)
-        {
-          lp_io->timelen = op;
-        }
+      //EnterCriticalSection(&lp_this->crtc_sec);
+      //BYTE src1[BUFFER_SIZE] = {0};
+      //int lencpy =   dwBytes > BUFFER_SIZE ? BUFFER_SIZE : dwBytes;
+      //memcpy(src1, lp_io->buf, dwBytes);
+      //string data = gstring::char2hex((const char*)src1, lencpy);
+      //glog::GetInstance()->AddLine("包长度:%d 包数据:%s", lencpy, data.c_str());
+      //LeaveCriticalSection(&lp_this->crtc_sec);
 
       switch(lp_io->operation)
         {
@@ -1619,10 +1641,10 @@ DWORD CIOCP::CompletionRoutine(LPVOID lp_param)
 
           case IOCP_READ:
             {
+              EnterCriticalSection(&lp_this->crtc_sec);
               lp_this->dealRead(lp_io, lp_key, dwBytes);
-ToMsg:
               bRet = lp_this->DataAction(lp_io, lp_new_key);
-
+			   LeaveCriticalSection(&lp_this->crtc_sec);
               if(FALSE == bRet)
                 {
                   continue;
@@ -3181,7 +3203,7 @@ void CIOCP::buildcode(BYTE src[], int srclen, IOCP_IO_PTR & lp_io)
               m_var.insert(pair<string, _variant_t>("f_len", srclen));
               m_var.insert(pair<string, _variant_t>("f_data", vdata));
               m_var.insert(pair<string, _variant_t>("f_update", vuptime));
-              char emailinfo[1024] = {0};
+              char emailinfo[4096] = {0};
               string sql3 = "SELECT tp.name as projectName,tb.comaddr,tb.name as gaywayName,tp.lang as lang FROM t_project AS tp,t_baseinfo tb WHERE tb.pid=tp.code AND tb.comaddr= \'";
               sql3.append(addrarea);
               sql3.append("\'");
@@ -3208,7 +3230,7 @@ void CIOCP::buildcode(BYTE src[], int srclen, IOCP_IO_PTR & lp_io)
 
               if(ProjectLang != 1 || ProjectLang != 2 || ProjectLang != 3)
                 {
-                  ProjectLang = 3;
+                  ProjectLang = 1;
                 }
 
               map<int, LAMPINFO>m_lampinfo;
@@ -3244,6 +3266,18 @@ void CIOCP::buildcode(BYTE src[], int srclen, IOCP_IO_PTR & lp_io)
                       if(pname)
                         {
                           strcpy(lampinfo.lampName, pname);
+                        }
+                    }
+
+                  _variant_t vlamppost = rslamp->GetCollect("l_lampnumber");
+
+                  if(vlamppost.vt == VT_BSTR)
+                    {
+                      char*  lamppost = _com_util::ConvertBSTRToString(vlamppost.bstrVal);
+
+                      if(lamppost)
+                        {
+                          strcpy(lampinfo.lampPost, lamppost);
                         }
                     }
 
@@ -3358,7 +3392,7 @@ void CIOCP::buildcode(BYTE src[], int srclen, IOCP_IO_PTR & lp_io)
                     }
 
                   string sql = dbopen->GetInsertSql(m_var, "t_fault");
-                  PostLog("sql:%s", sql.c_str());
+                  // PostLog("sql:%s", sql.c_str());
                   _RecordsetPtr rs1 =  dbopen->ExecuteWithResSQL(sql.c_str());
 
                   switch(ProjectLang)
@@ -3385,6 +3419,8 @@ void CIOCP::buildcode(BYTE src[], int srclen, IOCP_IO_PTR & lp_io)
                     {
                       int ncount = src[25];
                       int z = 27;
+                      _variant_t  vdetail("通信中断");
+                      m_var.insert(pair<string, _variant_t>("f_detail", vdetail));
 
                       for(int i = 0; i < ncount; i++)
                         {
@@ -3466,7 +3502,7 @@ void CIOCP::buildcode(BYTE src[], int srclen, IOCP_IO_PTR & lp_io)
                             }
 
                           string sql3 = dbopen->GetInsertSql(m_var, "t_fault");
-                          PostLog("sql3:%s", sql3.c_str());
+                          // PostLog("sql3:%s", sql3.c_str());
                           _RecordsetPtr  rs2 = dbopen->ExecuteWithResSQL(sql3.c_str());
                         }
 
@@ -3714,12 +3750,10 @@ int CIOCP::buidByte(string comaddr, BYTE C, BYTE AFN, BYTE SEQ, SHORT DA, SHORT 
       hexData[4] = a;
       int v1 = 0;
       int len3 = 18 + v_b.size();
-
-      for(int i = 6; i < len3; i++)
-        {
+      {
+        for(int i = 6; i < len3; i++)
           v1 = v1 + hexData[i];
-        }
-
+      }
       int jyw = 18 + v_b.size();
       hexData[len3] = v1 % 256;
       hexData[len3 + 1] = 0x16;
@@ -3820,6 +3854,7 @@ DWORD WINAPI CIOCP::TimeEmail(LPVOID lp_param)
 }
 BOOL CIOCP::dealRead(IOCP_IO_PTR & lp_io, IOCP_KEY_PTR & lp_key, DWORD dwBytes)
 {
+  //EnterCriticalSection(&crtc_sec);
   if(SOCKET_STATE_CONNECT_AND_READ != lp_io->state)
     {
       lp_io->state = SOCKET_STATE_CONNECT_AND_READ;
@@ -3828,29 +3863,36 @@ BOOL CIOCP::dealRead(IOCP_IO_PTR & lp_io, IOCP_KEY_PTR & lp_key, DWORD dwBytes)
   string towrite = "";
   int datalen = dwBytes;
   BYTE* src = (BYTE*)lp_io->buf;
-  string data = gstring::char2hex(lp_io->buf, datalen);
-  datalen > 0 ? glog::GetInstance()->AddLine("包长度:%d 包数据:%s", datalen, data.c_str()) : glog::GetInstance()->AddLine("包长度:%d", datalen);
-  towrite = data;
-  CListTextElementUI* pElement = (CListTextElementUI*)lp_io->pUserData;
+
+
+  //glog::GetInstance()->AddLine("dsfdsf");
+  //BYTE src1[BUFFER_SIZE] = {0};
+  //int lencpy =   dwBytes > BUFFER_SIZE ? BUFFER_SIZE : dwBytes;
+  //memcpy(src1, lp_io->buf, dwBytes);
+  //string data = gstring::char2hex((const char*)src1, dwBytes);
+  //glog::GetInstance()->AddLine("包长度:%d 包数据:%s", dwBytes, data.c_str());
+  //towrite = data;
+// CListTextElementUI* pElement = (CListTextElementUI*)lp_io->pUserData;
+  //LeaveCriticalSection(&crtc_sec);
   map<IOCP_IO_PTR, pBREAKPCK>::iterator itepack;
 
-  if(pElement)
-    {
-      pElement->SetText(2, lp_io->gayway);
-      //pElement->SetText(5, data.c_str());
-      //pElement->SetText(6, lp_io->buf);
-      //char lenstr[20] = {0};
-      //sprintf(lenstr, "%d", datalen);
-      //pElement->SetText(6, lp_io->buf);
-      //pElement->SetText(7, lenstr);
-    }
+  //if(pElement)
+  //  {
+  //    // pElement->SetText(2, lp_io->gayway);
+  //    //pElement->SetText(5, data.c_str());
+  //    //pElement->SetText(6, lp_io->buf);
+  //    //char lenstr[20] = {0};
+  //    //sprintf(lenstr, "%d", datalen);
+  //    //pElement->SetText(6, lp_io->buf);
+  //    //pElement->SetText(7, lenstr);
+  //  }
 
   if(lp_io->fromtype == SOCKET_FROM_GAYWAY)
     {
-      EnterCriticalSection(&crtc_sec);
+      //EnterCriticalSection(&crtc_sec);
       int alllenth = dwBytes;
 
-      if(checkFlag(src, alllenth))
+      if(checkFlag(src, dwBytes))
         {
           goto TO;
         }
@@ -3881,6 +3923,7 @@ BOOL CIOCP::dealRead(IOCP_IO_PTR & lp_io, IOCP_KEY_PTR & lp_key, DWORD dwBytes)
             }
         }
 
+
       if(IsBreakPack(lp_io, src, alllenth))
         {
           if(m_pack.find(lp_io) == m_pack.end())
@@ -3892,6 +3935,12 @@ BOOL CIOCP::dealRead(IOCP_IO_PTR & lp_io, IOCP_KEY_PTR & lp_key, DWORD dwBytes)
               pack->b = b1;
               pack->len = datalen;
               m_pack.insert(make_pair(lp_io, pack));
+
+
+			  string data = gstring::char2hex((const char*)src, dwBytes);
+			  glog::GetInstance()->AddLine("包长度:%d 包数据:%s", dwBytes, data.c_str());
+
+
               PostLog("断包包头:lp_io:%p 长度:%d", lp_io, datalen);
               glog::GetInstance()->AddLine("断包包头:lp_io:%p 长度:%d", lp_io, datalen);
             }
@@ -3918,7 +3967,7 @@ TO:
         }
 
 RET:
-      LeaveCriticalSection(&crtc_sec);
+     // LeaveCriticalSection(&crtc_sec);
       return 1;
     }
 
@@ -4014,148 +4063,6 @@ COMPLETEPACK:
       return 1;
     }
 
-  //if(lp_io->fromtype == SOCKET_FROM_GAYWAY)
-  //{
-  //    if(checkFlag((BYTE*)lp_io->buf, lp_io->ol.InternalHigh) == FALSE)
-  //    {
-  //        //集中器断包处理
-  //        map<IOCP_IO_PTR, pBREAKPCK>::iterator itepack =  m_pack.find(lp_io);
-  //        if(itepack == m_pack.end())
-  //        {
-  //            if(IsBreakPack(lp_io, src, datalen))
-  //            {
-  //                pBREAKPCK pack = new BREAK_PACK;
-  //                BYTE *b1 = new BYTE[datalen];
-  //                memset(b1, 0, datalen);
-  //                memcpy(b1, lp_io->buf, datalen);
-  //                pack->b = b1;
-  //                pack->len = datalen;
-  //                m_pack.insert(make_pair(lp_io, pack));
-  //                PostLog("断包包头:lp_io:%p 长度:%d", lp_io, datalen);
-  //                glog::GetInstance()->AddLine("断包包头:lp_io:%p 长度:%d", lp_io, datalen);
-  //            }
-  //        }
-  //        else
-  //        {
-  //            EnterCriticalSection(&crtc_sec);
-  //            PostLog("断包包尾:lp_io:%p 长度:%d", lp_io, datalen);
-  //            glog::GetInstance()->AddLine("断包包尾:lp_io:%p 长度:%d", lp_io, datalen);
-  //            //EnterCriticalSection(&lp_this->crtc_sec);
-  //            if(m_pack.find(lp_io) != m_pack.end())
-  //            {
-  //                AppendByte((BYTE*)lp_io->buf, lp_io->ol.InternalHigh, itepack->second, lp_io);
-  //                m_pack.erase(itepack);
-  //            }
-  //            LeaveCriticalSection(&crtc_sec);
-  //        }
-  //    }
-  //}
-  //datalen = lp_io->ol.InternalHigh;
-  //if(checkFlag(src, datalen) == TRUE)
-  //{
-  //    int datalen = lp_io->ol.InternalHigh;
-  //    BYTE* src = (BYTE*)lp_io->buf;
-  //    char addrarea[20] = {0};
-  //    sprintf(addrarea, "%02x%02x%02x%02x", src[8], src[7], src[10], src[9]); //集控器地址
-  //    string datastr = gstring::char2hex((char*)src, datalen);
-  //    PostLog("集控器[%s] 包长度:%d 帧序号:%d 包数据:%s 通信指针:%p", addrarea, datalen, src[0xd] & 0x0f, datastr.c_str(), lp_io);
-  //    buildcode(src, datalen, lp_io);
-  //    return 1;
-  //}
-  //if(lp_io->fromtype == SOCKET_FROM_UNKNOW)
-  //{
-  //    string strdata = lp_io->buf;
-  //    string strret;
-  //    int wsconn = wsHandshake(strdata, strret);
-  //    if(wsconn == WS_STATUS_CONNECT)
-  //    {
-  //        InitIoContext(lp_io);
-  //        lp_io->operation = IOCP_WRITE;
-  //        lp_io->fromtype = SOCKET_FROM_WEBSOCKET;
-  //        if(pElement)
-  //        {
-  //            pElement->SetText(8, "web客户端");
-  //        }
-  //        strcpy(lp_io->gayway, "web客户端(2)");
-  //        lp_io->loginstatus = SOCKET_STATUS_LOGIN;
-  //        memcpy(lp_io->buf, strret.c_str(), strret.size());
-  //        PostLog("web端上线....");
-  //        lp_io->wsaBuf.len = strret.size();
-  //    }
-  //}
-  //else if(lp_io->fromtype == SOCKET_FROM_WEBSOCKET)
-  //{
-  //    string  strret = "";
-  //    BOOL bFullPack = TRUE;
-  //    int lenread = wsDecodeFrame(lp_io->buf, strret, lp_io->ol.InternalHigh, bFullPack);
-  //    //PostLog("lenread:%d bFullPack:%d", lenread, bFullPack);
-  //    if(lenread == WS_OPENING_FRAME && bFullPack == TRUE)
-  //    {
-  //        DealWebsockMsg(lp_io, lp_key, strret);
-  //    }
-  //    else if(lenread == WS_OPENING_FRAME && bFullPack == FALSE)
-  //    {
-  //        map<IOCP_IO_PTR, pBREAKPCK>::iterator itepack =  m_pack.find(lp_io);
-  //        if(itepack == m_pack.end())
-  //        {
-  //            //websocket断包处理
-  //            pBREAKPCK webpack = new BREAK_PACK;
-  //            BYTE *b1 = new BYTE[datalen];
-  //            memset(b1, 0, datalen);
-  //            memcpy(b1, src, datalen);
-  //            webpack->b = b1;
-  //            webpack->len = datalen;
-  //            m_pack.insert(make_pair(lp_io, webpack));
-  //            PostLog("web 断包包头:lp_io:%p 长度:%d", lp_io, datalen);
-  //        }
-  //    }
-  //    else if(lenread == WS_CLOSING_FRAME)
-  //    {
-  //        PostLog("web端退出 通信指针:%p", lp_io);
-  //        lp_io->operation = IOCP_END;
-  //    }
-  //    else
-  //    {
-  //        map<IOCP_IO_PTR, pBREAKPCK>::iterator webite =  m_pack.find(lp_io);
-  //        if(webite != m_pack.end())
-  //        {
-  //            pBREAKPCK pack = webite->second;
-  //            // 处理utf-8编码的文本帧
-  //            DWORD payloadLength = static_cast<uint16_t >(pack->b[1] & 0x7f);
-  //            DWORD payloadFieldExtraBytes = 0;
-  //            if(payloadLength == 0x7e)   //0111 1110     //126 7e  后面两字节是长度 :  127  7f 后面四字节是长度
-  //            {
-  //                uint16_t payloadLength16b = 0;
-  //                BYTE payloadFieldExtraBytes = 2;
-  //                memcpy(&payloadLength16b, &pack->b[2], payloadFieldExtraBytes);
-  //                payloadLength = ntohs(payloadLength16b);
-  //            }
-  //            int len = pack->len + datalen;
-  //            if(payloadLength = (len - 2 - payloadFieldExtraBytes - 4))
-  //            {
-  //                AppendByte((BYTE*)lp_io->buf, lp_io->ol.InternalHigh, webite->second, lp_io);
-  //                m_pack.erase(webite);
-  //                PostLog("web 断包包尾:lp_io:%p 长度:%d", lp_io, datalen);
-  //                string  strret = "";
-  //                BOOL bFullPack = TRUE;
-  //                int lenread1 = wsDecodeFrame(lp_io->buf, strret, lp_io->ol.InternalHigh, bFullPack);
-  //                if(lenread1 == WS_OPENING_FRAME && bFullPack == TRUE)
-  //                {
-  //                    DealWebsockMsg(lp_io, lp_key, strret);
-  //                }
-  //                else if(lenread1 == WS_CLOSING_FRAME)
-  //                {
-  //                    PostLog("断包 web端退出 通信指针:%p", lp_io);
-  //                    lp_io->operation = IOCP_END;
-  //                }
-  //            }
-  //            else
-  //            {
-  //                glog::GetInstance()->AddLine("有断包头没有断包尾");
-  //            }
-  //        }
-  //    }
-  //}
   return 1;
 }
 

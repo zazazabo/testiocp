@@ -92,6 +92,7 @@ typedef struct
 	char						gayway[20];
 	PVOID						pUserData;
 	int							timelen;
+
 	volatile int				state;
 	
 }IOCP_IO,*IOCP_IO_PTR;

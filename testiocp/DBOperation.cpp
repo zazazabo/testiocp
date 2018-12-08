@@ -102,7 +102,7 @@ int CDBOperation::GetNum(_RecordsetPtr& rs)
       int i = 0;
       BOOL bret = FALSE;
 
-      while(!rs->adoEOF)
+      while(rs&&!rs->adoEOF)
         {
           i++;
           rs->MoveNext();
@@ -126,7 +126,7 @@ BOOL CDBOperation::IsHasdata(_RecordsetPtr& rs)
 {
   BOOL bret = FALSE;
 
-  while(!rs->adoEOF)
+  while(rs&&!rs->adoEOF)
     {
       bret = TRUE;
       rs->MoveNext();

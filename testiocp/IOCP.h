@@ -190,6 +190,7 @@ private:
     BOOL       dealRead(IOCP_IO_PTR& lp_io, IOCP_KEY_PTR& lp_key, DWORD dwBytes);
     int        wsPackCheck(BYTE src[], int len);
     int        GetTickCZ(BYTE mon, BYTE day, BYTE hour, BYTE min);
+	int		   getOnlineNum(int type);
 };
 
 //////////////////////////////////////////////////////////////////////////

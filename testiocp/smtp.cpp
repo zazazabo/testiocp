@@ -115,24 +115,31 @@ bool CSmtp::CreateConn()
   SOCKADDR_IN addrSrv;
   HOSTENT* pHostent;
   pHostent = gethostbyname(domain.c_str());  //得到有关于域名的信息
-  addrSrv.sin_addr.S_un.S_addr = *((DWORD *)pHostent->h_addr_list[0]); //得到smtp服务器的网络字节序的ip地址
-  addrSrv.sin_family = AF_INET;
-  addrSrv.sin_port = htons(port);
-  int err = connect(sockClient, (SOCKADDR*)&addrSrv, sizeof(SOCKADDR));   //向服务器发送请求
+  if (pHostent)
+  {
 
-  if(err != 0)
-    {
-      int err = WSAGetLastError();
-      return false;
-      //printf("链接失败\n");
-    }
+	  addrSrv.sin_addr.S_un.S_addr = *((DWORD *)pHostent->h_addr_list[0]); //得到smtp服务器的网络字节序的ip地址
+	  addrSrv.sin_family = AF_INET;
+	  addrSrv.sin_port = htons(port);
+	  int err = connect(sockClient, (SOCKADDR*)&addrSrv, sizeof(SOCKADDR));   //向服务器发送请求
 
-  this->sockClient = sockClient;
+	  if(err != 0)
+	  {
+		  int err = WSAGetLastError();
+		  return false;
+		  //printf("链接失败\n");
+	  }
 
-  if(false == Recv())
-    {
-      return false;
-    }
+	  this->sockClient = sockClient;
+
+	  if(false == Recv())
+	  {
+		  return false;
+	  }
+
+
+  }
+
 
   return true;
 }

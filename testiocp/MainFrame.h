@@ -23,6 +23,8 @@ public:
   DWORD  ThreadId;
   HWND                      m_hParanWnd;
   CRichEditUI* m_pRishLog;
+  CLabelUI*     m_lbgaywayNum;
+  CLabelUI*     m_lbWebNum;
   CPaintManagerUI m_pm;
   SHORT     port;
   char      ip[20];

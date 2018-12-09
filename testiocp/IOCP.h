@@ -78,11 +78,31 @@ enum WS_FrameType
 
 typedef struct _LAMPINFO
 {
-    int l_code;             //装置号
-    char lampName[100];       //灯名
-    char lampPost[100];    //灯杆
-    char lampfactory[100];       //通信地址
+    int l_code;						//装置号
+    char lampName[100];			    //灯名
+    char lampPost[100];			    //灯杆
+    char lampfactory[100];          //通信地址
 } LAMPINFO, *pLAMPINFO;
+
+
+typedef struct _LOOPINFO
+{
+	int l_code;						//装置号
+	char loopName[100];			    //回路名字
+	char loopfactory[100];          //编号
+} LOOPINFO, *pLOOPINFO;
+
+typedef struct _GAYWAYINFO
+{
+	char address[50];				//网关地址
+	char name[100];			    //网关名字
+	char proname[200];          //项目名字
+	char procode[50];			//项目编号
+	int  lang;          //项目语言
+
+} GAYWAYINFO, *pGAYWAYINFO;
+
+
 
 typedef struct _FAULTDESC
 {
@@ -191,6 +211,9 @@ private:
     int        wsPackCheck(BYTE src[], int len);
     int        GetTickCZ(BYTE mon, BYTE day, BYTE hour, BYTE min);
 	int		   getOnlineNum(int type);
+	void       getLampInfo(map<int,LAMPINFO>&info,string addrarea);
+	void       getLoopInfo(map<int,LOOPINFO>&info,string addrarea);
+	void       getProjectInfo(map<string,GAYWAYINFO>&info,string addrarea);
 };
 
 //////////////////////////////////////////////////////////////////////////

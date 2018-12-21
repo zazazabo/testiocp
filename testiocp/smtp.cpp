@@ -2,6 +2,26 @@
 #include "smtp.h"
 #include <iostream>
 #include <fstream>
+
+
+#include "E:\\code\\glib\\h\\gstring.h"
+
+#include "E:\\code\\glib\\h\\glog.h"
+
+#ifdef _DEBUG
+#ifdef _WIN64
+#else
+#pragma comment(lib,"E:\\code\\glib\\lib\\glib_d.lib")
+#endif
+#else
+#ifdef _WIN64
+#pragma comment(lib,"E:\\code\\glib\\x64\\Release\\glib.lib")
+#else
+#pragma comment(lib,"E:\\code\\glib\\Release\\glib.lib")
+
+#endif
+#endif
+
 using namespace std;
 
 #pragma  comment(lib, "ws2_32.lib") /*链接ws2_32.lib动态链接库*/
@@ -121,11 +141,13 @@ bool CSmtp::CreateConn()
 	  addrSrv.sin_addr.S_un.S_addr = *((DWORD *)pHostent->h_addr_list[0]); //得到smtp服务器的网络字节序的ip地址
 	  addrSrv.sin_family = AF_INET;
 	  addrSrv.sin_port = htons(port);
+	  glog::GetInstance()->AddLine("%d",port);
 	  int err = connect(sockClient, (SOCKADDR*)&addrSrv, sizeof(SOCKADDR));   //向服务器发送请求
 
 	  if(err != 0)
 	  {
 		  int err = WSAGetLastError();
+		   glog::GetInstance()->AddLine("err:%d",err);
 		  return false;
 		  //printf("链接失败\n");
 	  }
@@ -387,6 +409,7 @@ int CSmtp::SendEmail_Ex()
 {
   if(false == CreateConn())
     {
+		glog::GetInstance()->AddLine("CreateConn Error");
       return 1;
     }
 
@@ -395,16 +418,19 @@ int CSmtp::SendEmail_Ex()
 
   if(err != 0)
     {
+		glog::GetInstance()->AddLine("Login Error");
       return err; //错误代码必须要返回
     }
 
   if(false == SendEmailHead())   //发送EMAIL头部信息
     {
+		glog::GetInstance()->AddLine("SendEmailHead Error");
       return 1; /*错误码1是由于网络的错误*/
     }
 
   if(false == SendTextBody())
     {
+		glog::GetInstance()->AddLine("SendTextBody Error");
       return 1; /*错误码1是由于网络的错误*/
     }
 
@@ -412,14 +438,17 @@ int CSmtp::SendEmail_Ex()
 
   if(err != 0)
     {
+		glog::GetInstance()->AddLine("SendAttachment_Ex Error");
       return err;
     }
 
   if(false == SendEnd())
     {
+		glog::GetInstance()->AddLine("SendEnd Error");
       return 1; /*错误码1是由于网络的错误*/
     }
 
+  glog::GetInstance()->AddLine(" success");
   return 0; /*0表示没有出错*/
 }
 
@@ -509,7 +538,6 @@ int CSmtp::SendVecotrEmail()
           SendEmail_Ex();
           m_vectorTargetEamil.erase(it++);
         }
-
       setflag(false);
     }
 

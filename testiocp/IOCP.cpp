@@ -1308,25 +1308,34 @@ BOOL CIOCP::InitAll()
   //BOOL fullpack=FALSE;
   //wsDecodeFrame((char*)hexData,out,16,fullpack);
   //objeamil.SetEmailTitle(string("aaaa"));
-  //objeamil.AddTargetEmail(string("277402131@qq.com"));
+  ////objeamil.AddTargetEmail(string("smled@lighting-hm.com"));
   //objeamil.SetContent(string("asdfsdfsdfsdfsdf"));
-  //objeamil.SendVecotrEmail();
-  //CSmtp smtp(25, "smtp.126.com", "z277402131@126.com", /*你的邮箱地址*/"z277402131",/*邮箱密码*/"zhizhuchun@qq.com",/*目的邮箱地址*/"TEST",/*主题*/"测试测试！收到请回复！"  /*邮件正文*/);
-  //string filePath("D:\\附件.txt");
-  //smtp.AddAttachment(filePath);
+  //string emailtosend="zhizhuchun@qq.com";
+  //objeamil.SetTargetEmail(emailtosend);
+  //objeamil.SendEmail_Ex();
+// objeamil.SendVecotrEmail();
+  CSmtp smtp(465, "smtp.exmail.qq.com", "smled@lighting-hm.com", /*你的邮箱地址*/"3218Hm",/*邮箱密码*/"smled@lighting-hm.com",/*目的邮箱地址*/"TEST",/*主题*/"测试测试！收到请回复！"  /*邮件正文*/);
+  string filePath("D:\\1.txt");
+  smtp.AddAttachment(filePath);
+  //smtp.SendEmail_Ex();
   /*还可以调用CSmtp::DeleteAttachment函数删除附件，还有一些函数，自己看头文件吧!*/
-  //int err;
-  //if((err = smtp.SendEmail_Ex()) != 0)
-  //  {
-  //    if(err == 1)
-  //      cout << "错误1: 由于网络不畅通，发送失败!" << endl;
-  //    if(err == 2)
-  //      cout << "错误2: 用户名错误,请核对!" << endl;
-  //    if(err == 3)
-  //      cout << "错误3: 用户密码错误，请核对!" << endl;
-  //    if(err == 4)
-  //      cout << "错误4: 请检查附件目录是否正确，以及文件是否存在!" << endl;
-  //  }
+  int err;
+
+  if((err = smtp.SendEmail_Ex()) != 0)
+    {
+      if(err == 1)
+        cout << "错误1: 由于网络不畅通，发送失败!" << endl;
+
+      if(err == 2)
+        cout << "错误2: 用户名错误,请核对!" << endl;
+
+      if(err == 3)
+        cout << "错误3: 用户密码错误，请核对!" << endl;
+
+      if(err == 4)
+        cout << "错误4: 请检查附件目录是否正确，以及文件是否存在!" << endl;
+    }
+
 // return 0;
   //string strTarEmail = "12345678@qq.com";
   //smtp.AddTargetEmail(strTarEmail);
@@ -3420,7 +3429,7 @@ void CIOCP::buildcode(BYTE src[], int srclen, IOCP_IO_PTR & lp_io)
 
               vector<int>v_lampcode;
               v_lampcode.clear();
-              char detail[1024*10] = {0};
+              char detail[1024 * 10] = {0};
               string alldetail = "";
 
               if((errcode >= 43 && errcode <= 48) || (errcode == 50) || (errcode == 51))
@@ -3756,10 +3765,7 @@ void CIOCP::buildcode(BYTE src[], int srclen, IOCP_IO_PTR & lp_io)
                       int z = 27;
                       _variant_t  vdetail("灯控器状态改变数量");
                       sprintf(detail, "状态改变数量:%d ", ncount);
-          
-            
                       m_var.insert(pair<string, _variant_t>("f_detail", vdetail));
-         
 
                       for(int i = 0; i < ncount; i++)
                         {
@@ -3835,7 +3841,6 @@ void CIOCP::buildcode(BYTE src[], int srclen, IOCP_IO_PTR & lp_io)
                                     break;
                                 }
                             }
-
 
                           string sql3 = dbopen->GetInsertSql(m_var, "t_fault");
                           // PostLog("sql3:%s", sql3.c_str());

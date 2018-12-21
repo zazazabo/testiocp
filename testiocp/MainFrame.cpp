@@ -117,6 +117,12 @@ void CMainFrame::Init()
     GetPrivateProfileStringA("Config", "emailpass", "", temp, 216, pdir.c_str());
     string strpass = temp;
     objeamil.SetPass(strpass);
+
+	GetPrivateProfileStringA("Config", "emailport", "", temp, 216, pdir.c_str());
+	string mailport = temp;
+	objeamil.SetPort(atoi(mailport.c_str()));
+
+
     GetPrivateProfileStringA("Config", "ip", "", ip, 216, pdir.c_str());
     GetPrivateProfileStringA("Config", "port", "", temp, 216, pdir.c_str());
     port = atoi(temp);

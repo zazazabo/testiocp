@@ -411,9 +411,9 @@ int CSmtp::SendEmail_Ex()
   err = SendAttachment_Ex();
 
   if(err != 0)
-    {
-      return err;
-    }
+  {
+	  return err;
+  }
 
   if(false == SendEnd())
     {

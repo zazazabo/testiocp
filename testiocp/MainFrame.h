@@ -1,4 +1,5 @@
 #pragma once
+#include "gSmtp.h"
 #include "smtp.h"
 #include <windows.h>
 #include "resource.h"
@@ -36,6 +37,7 @@ public:
   CMainFrame(void);
   CMainFrame(string skin);
   CSmtp objeamil;
+  gSmtp m_objemail;
   ~CMainFrame(void);
   vector<string>v_fault;
   string m_strskin;

@@ -80,6 +80,7 @@ typedef enum
 //
 typedef struct 
 {
+
 	WSAOVERLAPPED				ol;
 	char						buf[BUFFER_SIZE];
 	WSABUF						wsaBuf;
@@ -92,7 +93,6 @@ typedef struct
 	char						gayway[20];
 	PVOID						pUserData;
 	int							timelen;
-
 	volatile int				state;
 	
 }IOCP_IO,*IOCP_IO_PTR;

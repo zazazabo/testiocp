@@ -152,6 +152,7 @@ void CDoubleList<T, COUNT>::Base_InitSize(LIST &list, int count)
     for(int i = 0; i < count; i++)
     {
         lp_t = new T;
+		
         list.push_back(lp_t);
     }
 }

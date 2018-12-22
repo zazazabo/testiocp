@@ -30,16 +30,16 @@
     <ClInclude Include="IOCP.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="SHA1.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="DBOperation.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="smtp.h">
+    <ClInclude Include="MainFrame.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="MainFrame.h">
+    <ClInclude Include="SHA1.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="smtp.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
@@ -50,16 +50,16 @@
     <ClCompile Include="IOCP.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="SHA1.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="DBOperation.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="smtp.cpp">
+    <ClCompile Include="MainFrame.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="MainFrame.cpp">
+    <ClCompile Include="SHA1.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="smtp.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

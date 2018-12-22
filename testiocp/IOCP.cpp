@@ -494,6 +494,7 @@ BOOL CIOCP::HandleData(IOCP_IO_PTR lp_io, int nFlags, IOCP_KEY_PTR lp_key, DWORD
                     char strnum[20] = {0};
                     sprintf(strnum, "%d", num);
                     m_lbgaywayNum->SetText(strnum);
+			
                     break;
                 }
 
@@ -1393,17 +1394,18 @@ BOOL CIOCP::InitAll()
 	//
 	// File    : Untitled1
 	// Address : 0 (0x0)
-	// Size    : 33 (0x21)
+	// Size    : 31 (0x1F)
 	//------------------------------------------------------------
-	unsigned char hexData[33] = {
-		0x68, 0x66, 0x00, 0x66, 0x00, 0x68, 0xC4, 0x01, 0x18, 0x13, 0x04, 0x04, 0x0E, 0x64, 0x00, 0x00,
-		0x01, 0x00, 0x31, 0x0B, 0x00, 0x00, 0x19, 0x12, 0x18, 0x02, 0x00, 0x37, 0x00, 0x3D, 0x00, 0x60,
-		0x16 
-	};
+	//unsigned char hexData[31] = {
+	//	0x68, 0x5E, 0x00, 0x5E, 0x00, 0x68, 0xC4, 0x01, 0x18, 0x13, 0x04, 0x04, 0x0E, 0x61, 0x00, 0x00,
+	//	0x01, 0x00, 0x2C, 0x09, 0x18, 0x17, 0x20, 0x11, 0x18, 0x3A, 0x00, 0x01, 0x00, 0x50, 0x16 
+	//};
 
-    IOCP_IO_PTR p1;
-    //IsBreakPack(p1,hexData,sizeof(hexData));
-    buildcode(hexData, sizeof(hexData), p1);
+
+
+ //   IOCP_IO_PTR p1;
+ //   //IsBreakPack(p1,hexData,sizeof(hexData));
+ //   buildcode(hexData, sizeof(hexData), p1);
     WSAData data;
 
     if(WSAStartup(MAKEWORD(2, 2), &data) != 0)
@@ -3873,25 +3875,50 @@ void CIOCP::buildcode(BYTE src[], int srclen, IOCP_IO_PTR & lp_io)
                     sql1.append("\')");
 					PostLog("%s",sql1.c_str());
                     _RecordsetPtr rs = dbopen->ExecuteWithResSQL(sql1.c_str());
-
+					int nnn=0;
                     while(rs && !rs->adoEOF)
                     {
                         _variant_t vname = rs->GetCollect("u_name");
                         _variant_t vemail = rs->GetCollect("u_email");
                         string name = _com_util::ConvertBSTRToString(vname.bstrVal);
                         string email = _com_util::ConvertBSTRToString(vemail.bstrVal);
-                        objeamil.SetEmailTitle(string("故障报告"));
-                        objeamil.SetContent(string(emailinfo));
-                        objeamil.AddTargetEmail(email);
-				       PostLog("%s",email.c_str());
-				
-                        rs->MoveNext();
-                        if(rs->adoEOF != FALSE)
-                        {
-							PostLog("begin send");
 
-                            objeamil.setflag(TRUE);
-                        }
+						if(nnn == 0)
+						{
+							m_objemail.SetSubject("故障报告");
+							m_objemail.AddMsgLine(emailinfo);
+						}
+						m_objemail.AddRecipient(email.c_str());
+						//objeamil.SetEmailTitle(string("故障报告"));
+						//objeamil.SetContent(string(emailinfo));
+						//objeamil.AddTargetEmail(email);
+						rs->MoveNext();
+
+						if(rs->adoEOF != FALSE)
+						{
+							m_objemail.setSendFlag(TRUE);
+							//objeamil.setflag(TRUE);
+						}
+
+
+
+
+
+
+
+
+       //                 objeamil.SetEmailTitle(string("故障报告"));
+       //                 objeamil.SetContent(string(emailinfo));
+       //                 objeamil.AddTargetEmail(email);
+				   //    PostLog("%s",email.c_str());
+				
+       //                 rs->MoveNext();
+       //                 if(rs->adoEOF != FALSE)
+       //                 {
+							//PostLog("begin send");
+
+       //                     //objeamil.setflag(TRUE);
+       //                 }
                     }
                 }
             }
@@ -4116,7 +4143,30 @@ DWORD WINAPI CIOCP::TimeEmail(LPVOID lp_param)
     while(TRUE)
     {
         CIOCP* pThis = (CIOCP*)lp_param;
-        pThis->objeamil.SendVecotrEmail();
+
+		if(pThis->m_objemail.m_bsendflag)
+		{
+			int ncout =  pThis->m_objemail.GetRecipientCount();
+
+			if(ncout > 0)
+			{
+				try
+				{
+					pThis->m_objemail.Send();
+					pThis->m_objemail.DelMsgLines();
+					pThis->m_objemail.DelRecipients();
+				}
+				catch(ECSmtp e)
+				{
+					glog::GetInstance()->AddLine("%d", e.GetErrorText());
+				}
+			}
+
+			pThis->m_objemail.DelMsgLines();
+			pThis->m_objemail.DelRecipients();
+			pThis->m_objemail.setSendFlag(FALSE);
+		}
+       // pThis->objeamil.SendVecotrEmail();
         Sleep(5000);
     }
 

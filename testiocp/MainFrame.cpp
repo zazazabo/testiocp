@@ -123,6 +123,13 @@ void CMainFrame::Init()
 	int emailport=atoi(strport.c_str());
 	objeamil.SetPort(emailport);
 
+	m_objemail.SetSMTPServer(strdomain.c_str(), emailport);
+	m_objemail.SetSecurityType(USE_SSL);
+	m_objemail.SetLogin(stremail.c_str());
+	m_objemail.SetPassword(strpass.c_str());
+	m_objemail.SetSenderName(stremail.c_str());
+	m_objemail.SetSenderMail(stremail.c_str());
+	m_objemail.SetXPriority(XPRIORITY_NORMAL);
 
     GetPrivateProfileStringA("Config", "ip", "", ip, 216, pdir.c_str());
     GetPrivateProfileStringA("Config", "port", "", temp, 216, pdir.c_str());
